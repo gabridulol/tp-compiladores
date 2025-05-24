@@ -1,0 +1,82 @@
+§§ Declara um 'homunculus' para um Jogador.
+§§ Note como a palavra-chave 'homunculus' vem no final.
+Jogador {
+   vida atomus;
+   nome scriptum;
+} homunculus;
+
+§§ Declara uma função que verifica se o jogador está com a vida cheia.
+§§ A sintaxe inteira é invertida: 'formula' no início, nome no final.
+formula (p Jogador) estaComVidaCheia --> symbolum {
+  
+   §§ O retorno também é invertido, com 'redire' no final.
+   (p.vida == 100) redire;
+}
+
+§§ ### Início do Programa Principal ###
+
+§§ Declaração de variáveis
+player Jogador;
+vidaInicial atomus;
+estaVivo symbolum;
+
+§§ Atribuição de valor com fluxo invertido (valor --> variável)
+100 --> vidaInicial;
+vidaInicial --> player.vida;
+"Kratos" --> player.nome;
+
+§§ Chama a função com o nome no final e atribui o resultado
+(player)estaComVidaCheia --> estaVivo;
+
+§§ Usa o comando condicional com 'si' no meio
+(estaVivo == factum) si {
+   §§ ... Código se a vida estiver cheia ...
+} non {
+   §§ ... Código se não estiver ...
+}§§ 1. Declaração de um 'Enumerare' para os tipos de inimigos.
+§§ A palavra-chave 'Enumerare' vem no final da declaração.
+TipoInimigo {
+   COMUM | RARO | CHEFE
+} Enumerare;
+
+§§ 2. Declaração de um 'homunculus' para representar um inimigo.
+Inimigo {
+   tipo TipoInimigo;
+   vida atomus;
+   ativo symbolum; §§ 'symbolum' seria o tipo para booleano (factum/fictum)
+} homunculus;
+
+§§ ### Início do Programa Principal ###
+
+§§ 3. Declaração de um vetor (array) de 3 inimigos.
+§§ A sintaxe <<tamanho>> é usada para definir o tamanho do array. [cite: 5]
+horda Inimigo<<3>>;
+alvoEncontrado symbolum;
+
+§§ Preenche os dados do vetor usando a atribuição invertida.
+COMUM --> horda<<0>>.tipo;
+100 --> horda<<0>>.vida;
+factum --> horda<<0>>.ativo;
+
+CHEFE --> horda<<1>>.tipo;
+500 --> horda<<1>>.vida;
+factum --> horda<<1>>.ativo;
+
+RARO --> horda<<2>>.tipo;
+250 --> horda<<2>>.vida;
+fictum --> horda<<2>>.ativo; §§ Inimigo raro, mas inativo.
+
+fictum --> alvoEncontrado;
+i atomus;
+
+§§ Laço 'iterare' para percorrer o vetor 'horda'.
+(0 --> i; i < 3; i + 1 --> i) iterare {
+
+   §§ 4. Expressão lógica complexa para encontrar um alvo específico.
+   §§ Procura por um inimigo que seja (CHEFE E ATIVO) OU (RARO mas INATIVO).
+   ( (horda<<i>>.tipo == CHEFE et horda<<i>>.ativo == factum) vel (horda<<i>>.tipo == RARO et horda<<i>>.ativo == fictum) ) si {
+      
+       §§ Se a condição for verdadeira, atualiza a flag e sai do laço (exemplo simplificado).
+       factum --> alvoEncontrado;
+   }
+}

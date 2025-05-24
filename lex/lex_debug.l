@@ -40,7 +40,6 @@ semicolon           \;
 lparen              \(
 pipe                \|
 rparen              \)
-arrow               \-\-\>
 lbracket            \[
 rbracket            \]
 lshift              \<\<
@@ -63,7 +62,7 @@ subtract            \-
 multiply            \*
 divide              \/
 modulus             \%
-assign              \=
+assign              \-\-\>
 
 /* Relacionais */
 greater_equal       \>=
@@ -167,7 +166,6 @@ identifier          {letter}({letter}|{digit})*
 {lparen}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {pipe}                  { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {rparen}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
-{arrow}                 { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {lbracket}              { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {rbracket}              { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {lshift}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }

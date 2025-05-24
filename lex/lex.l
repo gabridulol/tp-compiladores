@@ -29,7 +29,6 @@ semicolon           \;
 lparen              \(
 pipe                \|
 rparen              \)
-arrow               \-\-\>
 lbracket            \[
 rbracket            \]
 lshift              \<\<
@@ -52,7 +51,7 @@ subtract            \-
 multiply            \*
 divide              \/
 modulus             \%
-assign              \=
+assign              \-\-\>
 
 /* Relacionais */
 greater_equal       \>=
@@ -156,7 +155,6 @@ identifier          {letter}({letter}|{digit})*
 {lparen}                { printf("LPAREN: %s\n", yytext); }
 {pipe}                  { printf("PIPE: %s\n", yytext); }
 {rparen}                { printf("RPAREN: %s\n", yytext); }
-{arrow}                 { printf("ARROW: %s\n", yytext); }
 {lbracket}              { printf("LBRACKET: %s\n", yytext); }
 {rbracket}              { printf("RBRACKET: %s\n", yytext); }
 {lshift}                { printf("LSHIFT: %s\n", yytext); }

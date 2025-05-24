@@ -5,6 +5,7 @@ FLEX = flex
 # Diretórios
 LEX_DIR = lex
 BIN_DIR = bin
+FILES_DIR = files
 
 # Fontes
 LEX_SRC = $(LEX_DIR)/lex.l
