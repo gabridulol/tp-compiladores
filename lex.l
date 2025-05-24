@@ -38,7 +38,7 @@ rshift              \>\>
 /* ===== OPERADORES ===== */
 /* Ponteiros e Referências */
 reference           \=\=\>
-dereference         \¢
+dereference         \£
 pointer             \°
 access              \.
 
