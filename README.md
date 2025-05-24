@@ -63,4 +63,12 @@ make clean
 - **Lex - Flex**
 - **Yacc - Bison**
 - **Compilador de C**:
-- Desenvolvido e testado no Linux
+- **Desenvolvido e testado no Linux**
+
+---
+
+## 🔗 Referências úteis
+
+- [Página principal do projeto ANSI C](https://www.quut.com/c/)
+- [ANSI C Grammar (Lex)](https://www.quut.com/c/ANSI-C-grammar-l-2011.html)
+- [ANSI C Grammar (Yacc)](https://www.quut.com/c/ANSI-C-grammar-y-2011.html)
