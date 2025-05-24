@@ -37,6 +37,7 @@ comment_block       §([^§]*\n?)*§
 lbrace              \{
 rbrace              \}
 semicolon           \;
+colon               \-\>
 lparen              \(
 pipe                \|
 rparen              \)
@@ -84,6 +85,8 @@ true                factum
 false               fictum
 null                nulo
 void                vacuum
+long_int            magnus[ ]atomus
+short_int           minimus[ ]atomus
 int                 atomus
 float               fractio
 double              fragmentum
@@ -133,6 +136,8 @@ identifier          {letter}({letter}|{digit})*
 {false}                 { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
 {null}                  { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
 {void}                  { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
+{long_int}              { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
+{short_int}             { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
 {int}                   { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
 {float}                 { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
 {double}                { printf(COLOR_KEYWORD "%s" RESET_COLOR, yytext); }
@@ -163,6 +168,7 @@ identifier          {letter}({letter}|{digit})*
 {lbrace}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {rbrace}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {semicolon}             { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
+{colon}                 { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {lparen}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {pipe}                  { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }
 {rparen}                { printf(COLOR_DELIMITER "%s" RESET_COLOR, yytext); }

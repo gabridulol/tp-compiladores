@@ -26,6 +26,7 @@ comment_block       §([^§]*\n?)*§
 lbrace              \{
 rbrace              \}
 semicolon           \;
+colon               \-\>
 lparen              \(
 pipe                \|
 rparen              \)
@@ -40,6 +41,7 @@ reference           \=\=\>
 dereference         \£
 pointer             \°
 access              \.
+
 
 /* Aritméticos */
 exponentiation      \*\*
@@ -73,6 +75,8 @@ true                factum
 false               fictum
 null                nulo
 void                vacuum
+long_int            magnus[ ]atomus
+short_int           minimus[ ]atomus
 int                 atomus
 float               fractio
 double              fragmentum
@@ -122,6 +126,8 @@ identifier          {letter}({letter}|{digit})*
 {false}                 { printf("FALSE: %s\n", yytext); }
 {null}                  { printf("NULL: %s\n", yytext); }
 {void}                  { printf("VOID: %s\n", yytext); }
+{long_int}              { printf("LONG_INT: %s\n", yytext); }
+{short_int}             { printf("SHORT_INT: %s\n", yytext); }
 {int}                   { printf("INT: %s\n", yytext); }
 {float}                 { printf("FLOAT: %s\n", yytext); }
 {double}                { printf("DOUBLE: %s\n", yytext); }
@@ -152,6 +158,7 @@ identifier          {letter}({letter}|{digit})*
 {lbrace}                { printf("LBRACE: %s\n", yytext); }
 {rbrace}                { printf("RBRACE: %s\n", yytext); }
 {semicolon}             { printf("SEMICOLON: %s\n", yytext); }
+{colon}                 { printf("COLON: %s\n", yytext); }
 {lparen}                { printf("LPAREN: %s\n", yytext); }
 {pipe}                  { printf("PIPE: %s\n", yytext); }
 {rparen}                { printf("RPAREN: %s\n", yytext); }
