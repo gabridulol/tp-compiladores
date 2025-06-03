@@ -123,8 +123,7 @@ identifier          {letter}({letter}|{digit})*
 
 %%
 
-int main(void)
+int yywrap()
 {
-    yylex();
-    return 0;
+    return 1;
 }
