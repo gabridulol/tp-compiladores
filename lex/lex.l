@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h> 
-#include "y.tab.h"  
+#include "../yacc/translate.tab.h"
 %}
 
 %option noyywrap
@@ -111,8 +111,3 @@ identifier          {letter}({letter}|{digit})*
 .                       { printf("ERRO LÉXICO: Token não reconhecido: %s\n", yytext); }
 
 %%
-
-int yywrap()
-{
-    return 1;
-}
