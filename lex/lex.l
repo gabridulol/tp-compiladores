@@ -108,7 +108,6 @@ identifier          {letter}({letter}|{digit})*
 "|"                     { return PIPE; }
 "->"                    { return OP_ARROW_CASE; } 
 
-
 /* ===== LITERAIS (com atribuição de valor para yylval) ===== */
 {positive_real}         { yylval.val_float = atof(yytext); return LIT_FLOAT; }
 {negative_real}         { yylval.val_float = atof(yytext); return LIT_FLOAT; }
