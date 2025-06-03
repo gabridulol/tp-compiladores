@@ -123,3 +123,9 @@ identifier          {letter}({letter}|{digit})*
 .                       { printf("ERRO LÉXICO: Token não reconhecido: %s\n", yytext); }
 
 %%
+
+int main(void)
+{
+    yylex();
+    return 0;
+}
