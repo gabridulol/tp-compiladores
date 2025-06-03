@@ -6,11 +6,9 @@
 
 %option noyywrap
 
-/* ===== ESPAÇOS E DELIMITADORES ===== */
 delim               [ \t\n]
 ws                  {delim}+
 
-/* ===== LITERAIS ===== */
 letter              [a-zA-Z_]
 digit               [0-9]
 positive_digit      \+?[0-9]+
@@ -20,11 +18,9 @@ negative_real       -[0-9]+\.[0-9]+
 character_literal   \'([^\\\n]|(\\.))\'
 string_literal      \"([^\\\n]|(\\.))*\"
 
-/* ===== COMENTÁRIOS ===== */
 comment_line        §§.*
 comment_block       §([^§]*\n?)*§
 
-/* ===== IDENTIFICADORES ===== */
 identifier          {letter}({letter}|{digit})*
 
 %%
@@ -34,7 +30,6 @@ identifier          {letter}({letter}|{digit})*
 {comment_line}        
 {comment_block}         
 
-/* ===== PALAVRAS-CHAVE ===== */
 "si"                    { return KW_SI; }
 "non"                   { return KW_NON; }
 "iterare"               { return KW_ITERARE; }
@@ -54,7 +49,6 @@ identifier          {letter}({letter}|{digit})*
 "lectura"               { return KW_LECTURA; }
 "magnitudo"             { return KW_MAGNITUDO; }
 
-/* Tipos Primitivos */
 "vacuum"                { return TYPE_VACUUM; }
 "atomus"                { return TYPE_ATOMUS; }
 "fragmentum"            { return TYPE_FRAGMENTUM; }
@@ -65,11 +59,9 @@ identifier          {letter}({letter}|{digit})*
 "symbolum"              { return TYPE_SYMBOLUM; }
 "scriptum"              { return TYPE_SCRIPTUM; }
 
-/* Literais Booleanos */
 "Factum"                { return LIT_FACTUM; }
 "Fictum"                { return LIT_FICTUM; }
 
-/* ===== OPERADORES E DELIMITADORES ===== */
 "-->"                   { return OP_ARROW_ASSIGN; } 
 "°"                     { return OP_DEREF_POINTER; } 
 "£"                     { return OP_ADDR_OF; }
@@ -99,7 +91,6 @@ identifier          {letter}({letter}|{digit})*
 "aut"                   { return KW_AUT; }
 "^"                     { return OP_LOGICAL_XOR; }
 
-/* Delimitadores */
 "{"                     { return LBRACE; }
 "}"                     { return RBRACE; }
 ";"                     { return SEMICOLON; }
@@ -108,7 +99,6 @@ identifier          {letter}({letter}|{digit})*
 "|"                     { return PIPE; }
 "->"                    { return OP_ARROW_CASE; } 
 
-/* ===== LITERAIS (com atribuição de valor para yylval) ===== */
 {positive_real}         { yylval.val_float = atof(yytext); return LIT_FLOAT; }
 {negative_real}         { yylval.val_float = atof(yytext); return LIT_FLOAT; }
 {positive_digit}        { yylval.val_int = atoi(yytext); return LIT_INT; }
@@ -116,7 +106,6 @@ identifier          {letter}({letter}|{digit})*
 {character_literal}     { yylval.str = strdup(yytext); return LIT_CHAR; } 
 {string_literal}        { yylval.str = strdup(yytext); return LIT_STRING; } 
 
-/* ===== IDENTIFICADORES ===== */
 {identifier}            { yylval.str = strdup(yytext); return IDENTIFIER; } 
 
 .                       { printf("ERRO LÉXICO: Token não reconhecido: %s\n", yytext); }
