@@ -26,13 +26,17 @@ extern int yylineno;
 SymbolTable st_global;
 %}
 
+%debug
+/* int yydebug = 1; // Ativa o modo de depuração */
+
 /* ===== Definição da União de Valores yylval ===== */
 // Define os tipos de dados que os tokens e não-terminais podem carregar.
 // Estes campos devem corresponder ao uso de yylval no seu arquivo .l
+
 %union {
-    int val_int;
-    double val_float; 
-    char *str;
+    int val_int;       // Para literais inteiros
+    double val_float;  // Para literais float
+    char *str;         // Para strings e identificadores
 }
 
 /* ===== Declaração dos Tokens (Terminais) ===== */
@@ -285,7 +289,7 @@ comando: comando_condicional
        | comando_atribuicao SEMICOLON
        | chamada_funcao SEMICOLON
        | expressao SEMICOLON  // Expressão isolada
-       { printf("\033[1;32mExpressão isolada reconhecida.\033[0m\n"); }
+         { printf("\033[1;32mExpressão isolada reconhecida.\033[0m\n"); }
        | comando_ruptio
        | comando_continuum
        | comando_leitura
@@ -403,23 +407,59 @@ expressao_posfixa: primario
                  | expressao_posfixa OP_LSHIFT_ARRAY expressao OP_RSHIFT_ARRAY
                  ;
 
-primario: IDENTIFIER                { /* Ação: Referenciar $1 na tabela de símbolos */ $$ = $1; }
-        | LIT_INT                   { /* Ação: Converter inteiro em string ou nó de AST */ $$ = NULL; }
-        | LIT_FLOAT                 { $$ = NULL; }
-        | LIT_STRING                { $$ = $1; }
-        | LIT_FACTUM                { $$ = NULL; }
-        | LIT_FICTUM                { $$ = NULL; }
-        | LPAREN expressao RPAREN   { $$ = $2; }
+primario: IDENTIFIER
+            {
+                printf("Debug: IDENTIFIER encontrado: %s\n", $1);
+                $$ = $1; /* Ação: Referenciar $1 na tabela de símbolos */
+            }
+        | LIT_INT
+            {
+                printf("Debug: LIT_INT encontrado: %d\n", $1);
+                $$ = NULL; /* Ação: Armazenar o valor do literal inteiro */
+            }
+        | LIT_FLOAT
+            {
+                printf("Debug: LIT_FLOAT encontrado: %f\n", $1);
+                $$ = NULL; /* Ação: Armazenar o valor do literal float */
+            }
+        | LIT_STRING
+            {
+                printf("Debug: LIT_STRING encontrado: %s\n", $1);
+                $$ = $1; /* Ação: Armazenar o valor do literal string */
+            }
+        | LIT_FACTUM
+            {
+                printf("Debug: LIT_FACTUM encontrado (true)\n");
+                $$ = strdup("true"); /* Ação: Representar valor booleano verdadeiro */
+            }
+        | LIT_FICTUM
+            {
+                printf("Debug: LIT_FICTUM encontrado (false)\n");
+                $$ = strdup("false"); /* Ação: Representar valor booleano falso */
+            }
+        | LPAREN expressao RPAREN
+            {
+                printf("Debug: Expressão entre parênteses encontrada\n");
+                $$ = $2; /* Ação: Propagar o valor da expressão entre parênteses */
+            }
         | chamada_funcao
+            {
+                printf("Debug: chamada_funcao encontrada\n");
+            }
         | expressao_magnitudo
+            {
+                printf("Debug: expressao_magnitudo encontrada\n");
+            }
         ;
 
 expressao_magnitudo: KW_MAGNITUDO LPAREN tipo RPAREN
                    | KW_MAGNITUDO LPAREN expressao RPAREN
                    ;
 
-chamada_funcao: LPAREN expressao RPAREN IDENTIFIER
-              { printf("\033[1;32mChamada de Função: %s\033[0m\n", $4); free($4); }
+chamada_funcao: LPAREN RPAREN IDENTIFIER
+              { printf("\033[1;32mChamada de Função sem argumentos: %s\033[0m\n", $3); free($3); }
+              | LPAREN expressao RPAREN IDENTIFIER
+              { printf("\033[1;32mChamada de Função com argumentos: %s\033[0m\n", $4); free($4); }
               ;
 
 lista_argumentos_opt: 
@@ -433,6 +473,7 @@ lista_argumentos: expressao
 %%
 
 int main(int argc, char *argv[]) {
+    int yydebug = 1;
     st_init(&st_global);
     
     if (argc > 1) {

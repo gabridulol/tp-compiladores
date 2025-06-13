@@ -39,7 +39,7 @@
 # define YY_YY_YACC_YACC_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -133,11 +133,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 32 "yacc/yacc.y"
+#line 36 "yacc/yacc.y"
 
-    int val_int;
-    double val_float; 
-    char *str;
+    int val_int;       // Para literais inteiros
+    double val_float;  // Para literais float
+    char *str;         // Para strings e identificadores
 
 #line 143 "yacc/yacc.tab.h"
 
