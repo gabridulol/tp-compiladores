@@ -7,11 +7,14 @@ BISON = bison
 LEX_DIR = lex
 YACC_DIR = yacc
 BIN_DIR = bin
+SRC_DIR = src
 
 # Fontes
 LEX_SRC = $(LEX_DIR)/lex.l
 LEX_DEBUG_SRC = $(LEX_DIR)/lex_debug.l
 YACC_SRC = $(YACC_DIR)/yacc.y
+SYMBOL_TABLE_SRC_C = $(SRC_DIR)/symbol_table.c
+SYMBOL_TABLE_SRC_H = $(SRC_DIR)/symbol_table.h
 
 # Gerados
 LEX_GEN = $(LEX_DIR)/lex.yy.c
@@ -36,9 +39,9 @@ $(YACC_HDR): $(YACC_SRC)
 	$(BISON) -d -o $(YACC_GEN) $(YACC_SRC)
 
 # Compilação do analisador principal
-$(LEX_EXEC): $(LEX_SRC) $(YACC_HDR) | $(BIN_DIR)
+$(LEX_EXEC): $(LEX_SRC) $(YACC_HDR) $(SYMBOL_TABLE_SRC_C) | $(BIN_DIR)
 	$(FLEX) -o $(LEX_GEN) $(LEX_SRC)
-	$(CC) $(LEX_GEN) $(YACC_GEN) -o $(LEX_EXEC) -I $(YACC_DIR) -lfl
+	$(CC) $(LEX_GEN) $(YACC_GEN) $(SYMBOL_TABLE_SRC_C) -o $(LEX_EXEC) -I $(YACC_DIR) -I $(SRC_DIR) -lfl
 
 # Compilação da versão de debug
 $(LEX_DEBUG_EXEC): $(LEX_DEBUG_SRC) | $(BIN_DIR)
@@ -46,9 +49,9 @@ $(LEX_DEBUG_EXEC): $(LEX_DEBUG_SRC) | $(BIN_DIR)
 	$(CC) $(LEX_DEBUG_GEN) -o $(LEX_DEBUG_EXEC)
 
 # Compilação do compilador completo (yacc + lex)
-$(COMPILER_EXEC): $(YACC_HDR) $(LEX_SRC) | $(BIN_DIR)
+$(COMPILER_EXEC): $(YACC_HDR) $(LEX_SRC) $(SYMBOL_TABLE_SRC_C) | $(BIN_DIR)
 	$(FLEX) -o $(LEX_GEN) $(LEX_SRC)
-	$(CC) $(YACC_GEN) $(LEX_GEN) -o $(COMPILER_EXEC) -I $(YACC_DIR) -lfl
+	$(CC) $(YACC_GEN) $(LEX_GEN) $(SYMBOL_TABLE_SRC_C) -o $(COMPILER_EXEC) -I $(YACC_DIR) -I $(SRC_DIR) -lfl
 
 # Execução
 run:

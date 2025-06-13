@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
-#include "symbol_table.h" 
+#include "../src/symbol_table.h" 
 
 // Se você modularizar, inclua os headers aqui:
 // #include "symbol_table.h"
@@ -42,6 +42,7 @@ SymbolTable st_global;
 %token <val_float> LIT_FLOAT // LIT_FLOAT do lex.txt
 
 %type <str> primario expressao
+%type <str> tipo nome_tipo_base
 
 
 // Palavras-chave (não carregam valor intrínseco além do seu tipo de token)
@@ -420,7 +421,8 @@ int main(int argc, char *argv[]) {
     }
 
     // if (st_global) {
-    //     printf("\n--- Conteúdo da Tabela de Símbolos ---\n");
+    //     printf("\n--- Conte$2 of ‘declaracao_variavel’ has no declared type
+    //  údo da Tabela de Símbolos ---\n");
     //     print_symbol_table(st_global, stdout);
     //     destroy_symbol_table(st_global);
     // }
