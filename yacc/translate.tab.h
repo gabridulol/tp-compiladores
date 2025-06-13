@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_YACC_TRANSLATE_TAB_H_INCLUDED
-# define YY_YY_YACC_TRANSLATE_TAB_H_INCLUDED
+#ifndef YY_YY_TRANSLATE_TAB_H_INCLUDED
+# define YY_YY_TRANSLATE_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -133,13 +133,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 32 "yacc/translate.y"
+#line 32 "translate.y"
 
     int val_int;
     double val_float; 
     char *str;
 
-#line 143 "yacc/translate.tab.h"
+#line 143 "translate.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -154,4 +154,4 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 
-#endif /* !YY_YY_YACC_TRANSLATE_TAB_H_INCLUDED  */
+#endif /* !YY_YY_TRANSLATE_TAB_H_INCLUDED  */
