@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
+#include "../src/symbol_table.h" 
 
 // Se você modularizar, inclua os headers aqui:
 // #include "symbol_table.h"
@@ -22,8 +23,7 @@ void yyerror(const char *s);
 // Variável global para o número da linha (geralmente gerenciada pelo Lex/Flex)
 extern int yylineno;
 
-// Se você tiver uma tabela de símbolos global (para simplificar no início)
-// SymbolTable *st_global;
+SymbolTable st_global;
 %}
 
 /* ===== Definição da União de Valores yylval ===== */
@@ -42,6 +42,7 @@ extern int yylineno;
 %token <val_float> LIT_FLOAT // LIT_FLOAT do lex.txt
 
 %type <str> primario expressao
+%type <str> tipo nome_tipo_base
 
 
 // Palavras-chave (não carregam valor intrínseco além do seu tipo de token)
@@ -157,8 +158,15 @@ declaracao_tipo: declaracao_homunculus
                | declaracao_enumeracao
                ;
 /* me ajude a formatar com verde nas mensagens corretas */
-declaracao_homunculus: IDENTIFIER LBRACE corpo_homunculus RBRACE KW_HOMUNCULUS SEMICOLON
-                    { printf("\033[1;32mDeclaração Homunculus: %s\033[0m\n", $1); /* Ação: Registrar tipo homunculus $1 com corpo $3 */ free($1); }
+declaracao_homunculus: IDENTIFIER LBRACE corpo_homunculus RBRACE KW_HOMUNCULUS SEMICOLON {
+            if (st_lookup(&st_global, $1) != NULL) {
+                yyerror("Tipo já declarado!");
+            } else {
+                st_insert(&st_global, $1, SYM_TYPE, "homunculus", yylineno, NULL);
+                printf("\033[1;32mDeclaração Homunculus: %s\033[0m\n", $1);
+            }
+            free($1);
+}
                     ;
 corpo_homunculus: 
                 | corpo_homunculus declaracao_variavel
@@ -174,19 +182,58 @@ lista_enum_ident: IDENTIFIER { free($1); }
 declaracao_designacao: tipo IDENTIFIER KW_DESIGNARE SEMICOLON
                     { printf("\033[1;32mDesignare (typedef): %s\033[0m\n", $2); /* Ação: Registrar typedef: $2 é um alias para $1 */ free($2); }
                     ;
-
 declaracao_variavel: IDENTIFIER tipo SEMICOLON
-                    { printf("\033[1;32mDeclaração de Variável: %s\033[0m\n", $1); /* Ação: Inserir $1 na tabela de símbolos com tipo $2 */ free($1); }
+                    {
+                        if (st_lookup(&st_global, $1) != NULL) {
+                            yyerror("Variável já declarada!");
+                        } else {
+                            st_insert(&st_global, $1, SYM_VAR, $2, yylineno, NULL);
+                            printf("\033[1;32mDeclaração de Variável: %s\033[0m\n", $1);
+                        }
+                        free($1);
+                    }
                    | KW_MOL IDENTIFIER tipo SEMICOLON
-                    { printf("\033[1;32mDeclaração de Constante (mol): %s\033[0m\n", $2); /* Ação: Inserir $2 como constante com tipo $3 */ free($2); }
+                    {
+                        if (st_lookup(&st_global, $2) != NULL) {
+                            yyerror("Constante já declarada!");
+                        } else {
+                            st_insert(&st_global, $2, SYM_VAR, $3, yylineno, NULL); // Ou SYM_CONST se criar esse tipo
+                            printf("\033[1;32mDeclaração de Constante (mol): %s\033[0m\n", $2);
+                        }
+                        free($2);
+                    }
                    | IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("\033[1;32mDeclaração de Variável com Inicialização: %s\033[0m\n", $1); free($1); }
+                    {
+                        if (st_lookup(&st_global, $1) != NULL) {
+                            yyerror("Variável já declarada!");
+                        } else {
+                            st_insert(&st_global, $1, SYM_VAR, $2, yylineno, $4);
+                            printf("\033[1;32mDeclaração de Variável com Inicialização: %s\033[0m\n", $1);
+                        }
+                        free($1);
+                    }
                    | KW_MOL IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("\033[1;32mDeclaração de Constante (mol) com Inicialização: %s\033[0m\n", $2); free($2); }
+                    {
+                        if (st_lookup(&st_global, $2) != NULL) {
+                            yyerror("Constante já declarada!");
+                        } else {
+                            st_insert(&st_global, $2, SYM_VAR, $3, yylineno, $5); // Ou SYM_CONST se criar esse tipo
+                            printf("\033[1;32mDeclaração de Constante (mol) com Inicialização: %s\033[0m\n", $2);
+                        }
+                        free($2);
+                    }
                    ;
 
 declaracao_funcao: KW_FORMULA LPAREN lista_parametros_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN tipo LBRACE programa RBRACE
-                { printf("\033[1;32mDeclaração de Função (formula): %s\033[0m\n", $5); free($5); }
+                {
+                    if (st_lookup(&st_global, $5) != NULL) {
+                        yyerror("Função já declarada!");
+                    } else {
+                        st_insert(&st_global, $5, SYM_FUNC, $7, yylineno, NULL);
+                        printf("\033[1;32mDeclaração de Função (formula): %s\033[0m\n", $5);
+                    }
+                    free($5);
+                }
                 ;
 lista_parametros_opt: 
                     | lista_parametros
@@ -217,7 +264,15 @@ lista_parametros: parametro
                 | lista_parametros PIPE parametro
                 ;
 parametro: IDENTIFIER tipo
-            { printf("\033[1;32mParâmetro: %s\033[0m\n", $1); /* Ação: Processar parâmetro $1 com tipo $2 */ free($1); }
+            {
+                if (st_lookup(&st_global, $1) != NULL) {
+                    yyerror("Parâmetro já declarado!");
+                } else {
+                    st_insert(&st_global, $1, SYM_VAR, $2, yylineno, NULL); // Ou SYM_PARAM se criar esse tipo
+                    printf("\033[1;32mParâmetro: %s\033[0m\n", $1);
+                }
+                free($1);
+            }
             ;
 
 // ### Comandos ###
@@ -378,6 +433,8 @@ lista_argumentos: expressao
 %%
 
 int main(int argc, char *argv[]) {
+    st_init(&st_global);
+    
     if (argc > 1) {
         FILE *inputFile = fopen(argv[1], "r");
         if (!inputFile) {
@@ -399,9 +456,19 @@ int main(int argc, char *argv[]) {
         printf("\033[1;35m--- Análise Concluída: Programa sintaticamente incorreto ---\033[0m\n");
     }
 
+    // if (st_global) {
+    //     printf("\n--- Conte$2 of ‘declaracao_variavel’ has no declared type
+    //  údo da Tabela de Símbolos ---\n");
+    //     print_symbol_table(st_global, stdout);
+    //     destroy_symbol_table(st_global);
+    // }
+    
     if (argc > 1 && yyin != stdin) {
         fclose(yyin);
     }
+
+    st_print(&st_global);
+    st_free(&st_global);
     return result;
 }
 

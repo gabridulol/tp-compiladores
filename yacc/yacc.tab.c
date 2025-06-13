@@ -72,6 +72,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
+#include "../src/symbol_table.h" 
 
 // Se você modularizar, inclua os headers aqui:
 // #include "symbol_table.h"
@@ -92,8 +93,7 @@ void yyerror(const char *s);
 // Variável global para o número da linha (geralmente gerenciada pelo Lex/Flex)
 extern int yylineno;
 
-// Se você tiver uma tabela de símbolos global (para simplificar no início)
-// SymbolTable *st_global;
+SymbolTable st_global;
 
 #line 99 "yacc/yacc.tab.c"
 
@@ -638,19 +638,19 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   137,   137,   138,   141,   142,   145,   146,   150,   151,
-     152,   153,   156,   157,   160,   163,   164,   167,   170,   171,
-     174,   178,   180,   182,   184,   188,   191,   192,   196,   197,
-     198,   200,   201,   204,   205,   206,   207,   208,   209,   210,
-     211,   212,   213,   216,   217,   219,   224,   225,   226,   227,
-     228,   229,   230,   231,   232,   234,   235,   236,   237,   238,
-     239,   242,   246,   250,   252,   253,   256,   259,   261,   262,
-     265,   267,   268,   270,   272,   273,   275,   276,   279,   282,
-     283,   285,   288,   293,   296,   297,   298,   301,   302,   303,
-     306,   307,   308,   311,   312,   313,   314,   315,   316,   317,
-     320,   321,   322,   325,   326,   327,   328,   329,   332,   333,
-     344,   345,   346,   347,   348,   351,   352,   353,   354,   355,
-     356,   357,   358,   359,   362,   363,   366
+       0,   138,   138,   139,   142,   143,   146,   147,   151,   152,
+     153,   154,   157,   158,   161,   171,   172,   175,   178,   179,
+     182,   185,   195,   205,   215,   227,   238,   239,   243,   244,
+     245,   247,   248,   251,   252,   253,   254,   255,   256,   257,
+     258,   259,   260,   263,   264,   266,   279,   280,   281,   282,
+     283,   284,   285,   286,   287,   289,   290,   291,   292,   293,
+     294,   297,   301,   305,   307,   308,   311,   314,   316,   317,
+     320,   322,   323,   325,   327,   328,   330,   331,   334,   337,
+     338,   340,   343,   348,   351,   352,   353,   356,   357,   358,
+     361,   362,   363,   366,   367,   368,   369,   370,   371,   372,
+     375,   376,   377,   380,   381,   382,   383,   384,   387,   388,
+     399,   400,   401,   402,   403,   406,   407,   408,   409,   410,
+     411,   412,   413,   414,   417,   418,   421
 };
 #endif
 
@@ -1394,175 +1394,231 @@ yyreduce:
   switch (yyn)
     {
   case 6: /* declaracao_ou_comando: declaracao  */
-#line 145 "yacc/yacc.y"
+#line 146 "yacc/yacc.y"
                                   { printf("\033[1;32mDeclaração reconhecida.\033[0m\n"); }
 #line 1400 "yacc/yacc.tab.c"
     break;
 
   case 7: /* declaracao_ou_comando: comando  */
-#line 146 "yacc/yacc.y"
+#line 147 "yacc/yacc.y"
                                   { printf("\033[1;32mComando reconhecido.\033[0m\n"); }
 #line 1406 "yacc/yacc.tab.c"
     break;
 
   case 14: /* declaracao_homunculus: IDENTIFIER LBRACE corpo_homunculus RBRACE KW_HOMUNCULUS SEMICOLON  */
 #line 161 "yacc/yacc.y"
-                    { printf("\033[1;32mDeclaração Homunculus: %s\033[0m\n", (yyvsp[-5].str)); /* Ação: Registrar tipo homunculus $1 com corpo $3 */ free((yyvsp[-5].str)); }
-#line 1412 "yacc/yacc.tab.c"
+                                                                                         {
+            if (st_lookup(&st_global, (yyvsp[-5].str)) != NULL) {
+                yyerror("Tipo já declarado!");
+            } else {
+                st_insert(&st_global, (yyvsp[-5].str), SYM_TYPE, "homunculus", yylineno, NULL);
+                printf("\033[1;32mDeclaração Homunculus: %s\033[0m\n", (yyvsp[-5].str));
+            }
+            free((yyvsp[-5].str));
+}
+#line 1420 "yacc/yacc.tab.c"
     break;
 
   case 17: /* declaracao_enumeracao: IDENTIFIER LBRACE lista_enum_ident RBRACE KW_ENUMERARE SEMICOLON  */
-#line 168 "yacc/yacc.y"
+#line 176 "yacc/yacc.y"
                     { printf("\033[1;32mDeclaração Enumerare para %s\033[0m\n", (yyvsp[-5].str)); /* Ação: Registrar enum $1 com identificadores $3 */ free((yyvsp[-5].str)); }
-#line 1418 "yacc/yacc.tab.c"
+#line 1426 "yacc/yacc.tab.c"
     break;
 
   case 18: /* lista_enum_ident: IDENTIFIER  */
-#line 170 "yacc/yacc.y"
+#line 178 "yacc/yacc.y"
                              { free((yyvsp[0].str)); }
-#line 1424 "yacc/yacc.tab.c"
+#line 1432 "yacc/yacc.tab.c"
     break;
 
   case 19: /* lista_enum_ident: lista_enum_ident PIPE IDENTIFIER  */
-#line 171 "yacc/yacc.y"
+#line 179 "yacc/yacc.y"
                                                    { free((yyvsp[0].str)); }
-#line 1430 "yacc/yacc.tab.c"
+#line 1438 "yacc/yacc.tab.c"
     break;
 
   case 20: /* declaracao_designacao: tipo IDENTIFIER KW_DESIGNARE SEMICOLON  */
-#line 175 "yacc/yacc.y"
+#line 183 "yacc/yacc.y"
                     { printf("\033[1;32mDesignare (typedef): %s\033[0m\n", (yyvsp[-2].str)); /* Ação: Registrar typedef: $2 é um alias para $1 */ free((yyvsp[-2].str)); }
-#line 1436 "yacc/yacc.tab.c"
+#line 1444 "yacc/yacc.tab.c"
     break;
 
   case 21: /* declaracao_variavel: IDENTIFIER tipo SEMICOLON  */
-#line 179 "yacc/yacc.y"
-                    { printf("\033[1;32mDeclaração de Variável: %s\033[0m\n", (yyvsp[-2].str)); /* Ação: Inserir $1 na tabela de símbolos com tipo $2 */ free((yyvsp[-2].str)); }
-#line 1442 "yacc/yacc.tab.c"
+#line 186 "yacc/yacc.y"
+                    {
+                        if (st_lookup(&st_global, (yyvsp[-2].str)) != NULL) {
+                            yyerror("Variável já declarada!");
+                        } else {
+                            st_insert(&st_global, (yyvsp[-2].str), SYM_VAR, (yyvsp[-1].str), yylineno, NULL);
+                            printf("\033[1;32mDeclaração de Variável: %s\033[0m\n", (yyvsp[-2].str));
+                        }
+                        free((yyvsp[-2].str));
+                    }
+#line 1458 "yacc/yacc.tab.c"
     break;
 
   case 22: /* declaracao_variavel: KW_MOL IDENTIFIER tipo SEMICOLON  */
-#line 181 "yacc/yacc.y"
-                    { printf("\033[1;32mDeclaração de Constante (mol): %s\033[0m\n", (yyvsp[-2].str)); /* Ação: Inserir $2 como constante com tipo $3 */ free((yyvsp[-2].str)); }
-#line 1448 "yacc/yacc.tab.c"
-    break;
-
-  case 23: /* declaracao_variavel: IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON  */
-#line 183 "yacc/yacc.y"
-                    { printf("\033[1;32mDeclaração de Variável com Inicialização: %s\033[0m\n", (yyvsp[-4].str)); free((yyvsp[-4].str)); }
-#line 1454 "yacc/yacc.tab.c"
-    break;
-
-  case 24: /* declaracao_variavel: KW_MOL IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON  */
-#line 185 "yacc/yacc.y"
-                    { printf("\033[1;32mDeclaração de Constante (mol) com Inicialização: %s\033[0m\n", (yyvsp[-4].str)); free((yyvsp[-4].str)); }
-#line 1460 "yacc/yacc.tab.c"
-    break;
-
-  case 25: /* declaracao_funcao: KW_FORMULA LPAREN lista_parametros_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN tipo LBRACE programa RBRACE  */
-#line 189 "yacc/yacc.y"
-                { printf("\033[1;32mDeclaração de Função (formula): %s\033[0m\n", (yyvsp[-5].str)); free((yyvsp[-5].str)); }
-#line 1466 "yacc/yacc.tab.c"
-    break;
-
-  case 42: /* nome_tipo_base: IDENTIFIER  */
-#line 213 "yacc/yacc.y"
-                                { printf("\033[1;32mTipo definido pelo usuário (homunculus/designare): %s\033[0m\n", (yyvsp[0].str)); /* Ação: $1 é um nome de tipo */ free((yyvsp[0].str)); }
+#line 196 "yacc/yacc.y"
+                    {
+                        if (st_lookup(&st_global, (yyvsp[-2].str)) != NULL) {
+                            yyerror("Constante já declarada!");
+                        } else {
+                            st_insert(&st_global, (yyvsp[-2].str), SYM_VAR, (yyvsp[-1].str), yylineno, NULL); // Ou SYM_CONST se criar esse tipo
+                            printf("\033[1;32mDeclaração de Constante (mol): %s\033[0m\n", (yyvsp[-2].str));
+                        }
+                        free((yyvsp[-2].str));
+                    }
 #line 1472 "yacc/yacc.tab.c"
     break;
 
-  case 45: /* parametro: IDENTIFIER tipo  */
-#line 220 "yacc/yacc.y"
-            { printf("\033[1;32mParâmetro: %s\033[0m\n", (yyvsp[-1].str)); /* Ação: Processar parâmetro $1 com tipo $2 */ free((yyvsp[-1].str)); }
-#line 1478 "yacc/yacc.tab.c"
+  case 23: /* declaracao_variavel: IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON  */
+#line 206 "yacc/yacc.y"
+                    {
+                        if (st_lookup(&st_global, (yyvsp[-4].str)) != NULL) {
+                            yyerror("Variável já declarada!");
+                        } else {
+                            st_insert(&st_global, (yyvsp[-4].str), SYM_VAR, (yyvsp[-3].str), yylineno, (yyvsp[-1].str));
+                            printf("\033[1;32mDeclaração de Variável com Inicialização: %s\033[0m\n", (yyvsp[-4].str));
+                        }
+                        free((yyvsp[-4].str));
+                    }
+#line 1486 "yacc/yacc.tab.c"
     break;
 
-  case 54: /* comando: expressao SEMICOLON  */
-#line 233 "yacc/yacc.y"
-       { printf("\033[1;32mExpressão isolada reconhecida.\033[0m\n"); }
-#line 1484 "yacc/yacc.tab.c"
+  case 24: /* declaracao_variavel: KW_MOL IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON  */
+#line 216 "yacc/yacc.y"
+                    {
+                        if (st_lookup(&st_global, (yyvsp[-4].str)) != NULL) {
+                            yyerror("Constante já declarada!");
+                        } else {
+                            st_insert(&st_global, (yyvsp[-4].str), SYM_VAR, (yyvsp[-3].str), yylineno, (yyvsp[-1].str)); // Ou SYM_CONST se criar esse tipo
+                            printf("\033[1;32mDeclaração de Constante (mol) com Inicialização: %s\033[0m\n", (yyvsp[-4].str));
+                        }
+                        free((yyvsp[-4].str));
+                    }
+#line 1500 "yacc/yacc.tab.c"
     break;
 
-  case 61: /* comando_atribuicao: expressao OP_ARROW_ASSIGN expressao_posfixa  */
-#line 243 "yacc/yacc.y"
-                  { printf("\033[1;32mComando de Atribuição (-->)\033[0m\n"); /* Ação: Atribuir $1 a $3. Verificar tipos. */ }
-#line 1490 "yacc/yacc.tab.c"
-    break;
-
-  case 62: /* chamada_funcao_atribuicao: LPAREN expressao RPAREN IDENTIFIER OP_ARROW_ASSIGN IDENTIFIER  */
-#line 247 "yacc/yacc.y"
-                         { printf("\033[1;32mChamada de Função com Atribuição: %s --> %s\033[0m\n", (yyvsp[-2].str), (yyvsp[0].str)); free((yyvsp[-2].str)); free((yyvsp[0].str)); }
-#line 1496 "yacc/yacc.tab.c"
-    break;
-
-  case 82: /* comando_revelacao: OP_LSHIFT_ARRAY expressao OP_RSHIFT_ARRAY KW_REVELARE SEMICOLON  */
-#line 289 "yacc/yacc.y"
-                 { printf("\033[1;32mComando de Revelação\033[0m\n"); }
-#line 1502 "yacc/yacc.tab.c"
-    break;
-
-  case 111: /* expressao_posfixa: expressao_posfixa OP_ACCESS_MEMBER IDENTIFIER  */
-#line 345 "yacc/yacc.y"
-                                                                 { free((yyvsp[0].str)); }
-#line 1508 "yacc/yacc.tab.c"
-    break;
-
-  case 112: /* expressao_posfixa: expressao_posfixa OP_ACCESS_POINTER IDENTIFIER  */
-#line 346 "yacc/yacc.y"
-                                                                  { free((yyvsp[0].str)); }
+  case 25: /* declaracao_funcao: KW_FORMULA LPAREN lista_parametros_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN tipo LBRACE programa RBRACE  */
+#line 228 "yacc/yacc.y"
+                {
+                    if (st_lookup(&st_global, (yyvsp[-5].str)) != NULL) {
+                        yyerror("Função já declarada!");
+                    } else {
+                        st_insert(&st_global, (yyvsp[-5].str), SYM_FUNC, (yyvsp[-3].str), yylineno, NULL);
+                        printf("\033[1;32mDeclaração de Função (formula): %s\033[0m\n", (yyvsp[-5].str));
+                    }
+                    free((yyvsp[-5].str));
+                }
 #line 1514 "yacc/yacc.tab.c"
     break;
 
-  case 115: /* primario: IDENTIFIER  */
-#line 351 "yacc/yacc.y"
-                                    { /* Ação: Referenciar $1 na tabela de símbolos */ (yyval.str) = (yyvsp[0].str); }
+  case 42: /* nome_tipo_base: IDENTIFIER  */
+#line 260 "yacc/yacc.y"
+                                { printf("\033[1;32mTipo definido pelo usuário (homunculus/designare): %s\033[0m\n", (yyvsp[0].str)); /* Ação: $1 é um nome de tipo */ free((yyvsp[0].str)); }
 #line 1520 "yacc/yacc.tab.c"
     break;
 
+  case 45: /* parametro: IDENTIFIER tipo  */
+#line 267 "yacc/yacc.y"
+            {
+                if (st_lookup(&st_global, (yyvsp[-1].str)) != NULL) {
+                    yyerror("Parâmetro já declarado!");
+                } else {
+                    st_insert(&st_global, (yyvsp[-1].str), SYM_VAR, (yyvsp[0].str), yylineno, NULL); // Ou SYM_PARAM se criar esse tipo
+                    printf("\033[1;32mParâmetro: %s\033[0m\n", (yyvsp[-1].str));
+                }
+                free((yyvsp[-1].str));
+            }
+#line 1534 "yacc/yacc.tab.c"
+    break;
+
+  case 54: /* comando: expressao SEMICOLON  */
+#line 288 "yacc/yacc.y"
+       { printf("\033[1;32mExpressão isolada reconhecida.\033[0m\n"); }
+#line 1540 "yacc/yacc.tab.c"
+    break;
+
+  case 61: /* comando_atribuicao: expressao OP_ARROW_ASSIGN expressao_posfixa  */
+#line 298 "yacc/yacc.y"
+                  { printf("\033[1;32mComando de Atribuição (-->)\033[0m\n"); /* Ação: Atribuir $1 a $3. Verificar tipos. */ }
+#line 1546 "yacc/yacc.tab.c"
+    break;
+
+  case 62: /* chamada_funcao_atribuicao: LPAREN expressao RPAREN IDENTIFIER OP_ARROW_ASSIGN IDENTIFIER  */
+#line 302 "yacc/yacc.y"
+                         { printf("\033[1;32mChamada de Função com Atribuição: %s --> %s\033[0m\n", (yyvsp[-2].str), (yyvsp[0].str)); free((yyvsp[-2].str)); free((yyvsp[0].str)); }
+#line 1552 "yacc/yacc.tab.c"
+    break;
+
+  case 82: /* comando_revelacao: OP_LSHIFT_ARRAY expressao OP_RSHIFT_ARRAY KW_REVELARE SEMICOLON  */
+#line 344 "yacc/yacc.y"
+                 { printf("\033[1;32mComando de Revelação\033[0m\n"); }
+#line 1558 "yacc/yacc.tab.c"
+    break;
+
+  case 111: /* expressao_posfixa: expressao_posfixa OP_ACCESS_MEMBER IDENTIFIER  */
+#line 400 "yacc/yacc.y"
+                                                                 { free((yyvsp[0].str)); }
+#line 1564 "yacc/yacc.tab.c"
+    break;
+
+  case 112: /* expressao_posfixa: expressao_posfixa OP_ACCESS_POINTER IDENTIFIER  */
+#line 401 "yacc/yacc.y"
+                                                                  { free((yyvsp[0].str)); }
+#line 1570 "yacc/yacc.tab.c"
+    break;
+
+  case 115: /* primario: IDENTIFIER  */
+#line 406 "yacc/yacc.y"
+                                    { /* Ação: Referenciar $1 na tabela de símbolos */ (yyval.str) = (yyvsp[0].str); }
+#line 1576 "yacc/yacc.tab.c"
+    break;
+
   case 116: /* primario: LIT_INT  */
-#line 352 "yacc/yacc.y"
+#line 407 "yacc/yacc.y"
                                     { /* Ação: Converter inteiro em string ou nó de AST */ (yyval.str) = NULL; }
-#line 1526 "yacc/yacc.tab.c"
+#line 1582 "yacc/yacc.tab.c"
     break;
 
   case 117: /* primario: LIT_FLOAT  */
-#line 353 "yacc/yacc.y"
+#line 408 "yacc/yacc.y"
                                     { (yyval.str) = NULL; }
-#line 1532 "yacc/yacc.tab.c"
+#line 1588 "yacc/yacc.tab.c"
     break;
 
   case 118: /* primario: LIT_STRING  */
-#line 354 "yacc/yacc.y"
+#line 409 "yacc/yacc.y"
                                     { (yyval.str) = (yyvsp[0].str); }
-#line 1538 "yacc/yacc.tab.c"
+#line 1594 "yacc/yacc.tab.c"
     break;
 
   case 119: /* primario: LIT_FACTUM  */
-#line 355 "yacc/yacc.y"
+#line 410 "yacc/yacc.y"
                                     { (yyval.str) = NULL; }
-#line 1544 "yacc/yacc.tab.c"
+#line 1600 "yacc/yacc.tab.c"
     break;
 
   case 120: /* primario: LIT_FICTUM  */
-#line 356 "yacc/yacc.y"
+#line 411 "yacc/yacc.y"
                                     { (yyval.str) = NULL; }
-#line 1550 "yacc/yacc.tab.c"
+#line 1606 "yacc/yacc.tab.c"
     break;
 
   case 121: /* primario: LPAREN expressao RPAREN  */
-#line 357 "yacc/yacc.y"
+#line 412 "yacc/yacc.y"
                                     { (yyval.str) = (yyvsp[-1].str); }
-#line 1556 "yacc/yacc.tab.c"
+#line 1612 "yacc/yacc.tab.c"
     break;
 
   case 126: /* chamada_funcao: LPAREN expressao RPAREN IDENTIFIER  */
-#line 367 "yacc/yacc.y"
+#line 422 "yacc/yacc.y"
               { printf("\033[1;32mChamada de Função: %s\033[0m\n", (yyvsp[0].str)); free((yyvsp[0].str)); }
-#line 1562 "yacc/yacc.tab.c"
+#line 1618 "yacc/yacc.tab.c"
     break;
 
 
-#line 1566 "yacc/yacc.tab.c"
+#line 1622 "yacc/yacc.tab.c"
 
       default: break;
     }
@@ -1755,10 +1811,12 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 378 "yacc/yacc.y"
+#line 433 "yacc/yacc.y"
 
 
 int main(int argc, char *argv[]) {
+    st_init(&st_global);
+    
     if (argc > 1) {
         FILE *inputFile = fopen(argv[1], "r");
         if (!inputFile) {
@@ -1780,9 +1838,19 @@ int main(int argc, char *argv[]) {
         printf("\033[1;35m--- Análise Concluída: Programa sintaticamente incorreto ---\033[0m\n");
     }
 
+    // if (st_global) {
+    //     printf("\n--- Conte$2 of ‘declaracao_variavel’ has no declared type
+    //  údo da Tabela de Símbolos ---\n");
+    //     print_symbol_table(st_global, stdout);
+    //     destroy_symbol_table(st_global);
+    // }
+    
     if (argc > 1 && yyin != stdin) {
         fclose(yyin);
     }
+
+    st_print(&st_global);
+    st_free(&st_global);
     return result;
 }
 
