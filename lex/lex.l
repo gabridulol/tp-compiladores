@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h> 
-#include "../yacc/translate.tab.h"
+#include "../yacc/yacc.tab.h"
 %}
 
 %option noyywrap
@@ -89,7 +89,6 @@ identifier          {letter}({letter}|{digit})*
 "<"                     { return OP_LESS_THAN; }
 "<="                    { return OP_LESS_EQUAL; }
 "<<"                    { return OP_LSHIFT_ARRAY; } 
-"=="                    { return OP_EQUAL; }
 "==>"                   { return OP_ACCESS_POINTER; } 
 "!"                     { return OP_LOGICAL_NOT; }
 "&&"                    { return OP_LOGICAL_AND; }

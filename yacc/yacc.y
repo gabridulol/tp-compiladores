@@ -88,7 +88,7 @@ extern int yylineno;
 %token LPAREN                 // (
 %token RPAREN                 // )
 %token PIPE                   // |
-%token OP_ARROW_CASE          // -> (para casus)
+%token COLON          // -> (para casus)
 
 
 /* ===== Associatividade e Precedência de Operadores ===== */
@@ -260,13 +260,13 @@ comando_selecao: LPAREN expressao RPAREN KW_VERTERE LBRACE casos_lista caso_padr
 casos_lista: 
            | casos_lista caso
            ;
-caso: KW_CASUS expressao OP_ARROW_CASE comandos_bloco
+caso: KW_CASUS expressao COLON comandos_bloco
     ;
 comandos_bloco: comando // Um único comando
               | LBRACE programa RBRACE // Um bloco de comandos
               ;
 caso_padrao_opt: 
-               | KW_AXIOM OP_ARROW_CASE comandos_bloco
+               | KW_AXIOM COLON comandos_bloco
                ;
 
 comando_retorno: expressao_opt KW_REDIRE
