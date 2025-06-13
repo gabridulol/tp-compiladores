@@ -16,27 +16,67 @@ Trabalho Prático 1 - Compiladores
 
 ## ⚙️ Compilação e Execução
 
-### Compilação
+### 🔧 Compilar o Projeto
 
-Para compilar ambos os analisadores:
+Para compilar o projeto, execute o comando abaixo:
 
 ```bash
 make
 ```
+---
 
-### Execução
+### 📄 Executar o Analisador Léxico
 
+Para executar o analisador léxico, utilize:
 
+```bash
+make run_lex
 ```
 
-### Limpeza
+Para analisar um arquivo específico, use:
 
-Para remover arquivos `.c` gerados e executáveis da pasta `bin/`:
+```bash
+make run_lex ARQUIVO=seuarquivo.txt
+```
+---
+
+### 🛠️ Executar o Analisador Léxico com Debug (Colorido)
+
+Para executar o analisador léxico com informações de depuração:
+
+```bash
+make run_debug
+```
+
+Para analisar um arquivo específico com depuração, use:
+
+```bash
+make run_debug ARQUIVO=seuarquivo.txt
+```
+---
+
+### 🖥️ Executar o Compilador Completo (Lex + Yacc)
+
+Para executar o compilador completo, utilize:
+
+```bash
+make run_compiler
+```
+
+Para analisar um arquivo específico com o compilador completo, use:
+
+```bash
+make run_compiler ARQUIVO=seuarquivo.txt
+```
+---
+
+### 🧹 Limpeza de Arquivos Gerados
+
+Para remover todos os arquivos gerados (executáveis e arquivos intermediários), execute:
 
 ```bash
 make clean
 ```
-
 ---
 
 ## 💡 Requisitos
