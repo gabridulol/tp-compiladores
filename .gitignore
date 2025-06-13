@@ -1,3 +1,5 @@
 bin/
-debug.yy.c
+lex_debug.yy.c
 lex.yy.c
+yacc.tab.c
+yacc.tab.h
