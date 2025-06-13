@@ -1,409 +1,326 @@
+// new yacc.y
+
 %{
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <string.h>
 
-// Se você modularizar, inclua os headers aqui:
-// #include "symbol_table.h"
-// #include "type_system.h"
-// #include "ast.h"
-
-extern FILE *yyin;         // <- Adicione esta linha
-// extern int yylex(void); // (já deve existir ou ser implícita)
-// void yyerror(const char *s); // protótipo já deve estar declarado
-
-extern int yylineno;       // Linha gerenciada pelo Flex
-
-// Protótipo da função do lexer
-int yylex(void);
-// Protótipo da função de erro do parser
-void yyerror(const char *s);
-
-// Variável global para o número da linha (geralmente gerenciada pelo Lex/Flex)
+extern FILE *yyin;
+extern int yylex(void);
 extern int yylineno;
 
-// Se você tiver uma tabela de símbolos global (para simplificar no início)
-// SymbolTable *st_global;
+void yyerror(const char *s);
 %}
 
-/* ===== Definição da União de Valores yylval ===== */
-// Define os tipos de dados que os tokens e não-terminais podem carregar.
-// Estes campos devem corresponder ao uso de yylval no seu arquivo .l
 %union {
     int val_int;
-    double val_float; 
+    double val_float;
     char *str;
 }
 
-/* ===== Declaração dos Tokens (Terminais) ===== */
-// Tokens que carregam valores (associados à %union)
 %token <str> IDENTIFIER LIT_STRING LIT_CHAR
 %token <val_int> LIT_INT
-%token <val_float> LIT_FLOAT // LIT_FLOAT do lex.txt
+%token <val_float> LIT_FLOAT
 
-%type <str> primario expressao
+%type <str> primary expression
 
+%token KW_IF KW_ELSE KW_FOR KW_WHILE KW_SWITCH KW_CASE KW_DEFAULT
+%token KW_BREAK KW_CONTINUE KW_RETURN KW_CONST KW_STRUCT KW_ENUM
+%token KW_TYPEDEF KW_FUNC KW_PRINT KW_SCAN KW_SIZEOF
+%token KW_AND KW_OR KW_NOT KW_XOR
 
-// Palavras-chave (não carregam valor intrínseco além do seu tipo de token)
-%token KW_SI KW_NON KW_ITERARE KW_PERSISTO KW_VERTERE KW_CASUS KW_AXIOM
-%token KW_RUPTIO KW_CONTINUUM KW_REDIRE KW_MOL KW_HOMUNCULUS KW_ENUMERARE
-%token KW_DESIGNARE KW_FORMULA KW_REVELARE KW_LECTURA KW_MAGNITUDO
-%token KW_ET KW_VEL KW_NE KW_AUT
+%token TYPE_VOID TYPE_INT TYPE_DOUBLE TYPE_FLOAT TYPE_BOOL
+%token TYPE_LONG TYPE_SHORT TYPE_CHAR TYPE_STRING
 
-// Tipos Primitivos
-%token TYPE_VACUUM TYPE_ATOMUS TYPE_FRAGMENTUM TYPE_FRACTIO TYPE_QUANTUM
-%token TYPE_MAGNUS TYPE_MINIMUS TYPE_SYMBOLUM TYPE_SCRIPTUM
+%token LIT_TRUE LIT_FALSE
 
-// Literais Booleanos
-%token LIT_FACTUM LIT_FICTUM
+%token ASSIGN_PTR
+%token DEREF_PTR
+%token ADDR_OF
+%token LBRACK RBRACK
+%token DOT PTR_ACCESS
+%token EXPONENT DIV_INT
+%token ADD SUB MUL DIV MOD
+%token EQ NE LT GT LE GE
+%token LOG_AND LOG_OR LOG_NOT LOG_XOR
+%token LBRACE RBRACE SEMICOLON LPAREN RPAREN PIPE ARROW
 
-// Operadores e Delimitadores (maioria não carrega valor)
-%token OP_ARROW_ASSIGN        // -->
-%token OP_DEREF_POINTER       // °
-%token OP_ADDR_OF             // £
-%token OP_LSHIFT_ARRAY        // <<
-%token OP_RSHIFT_ARRAY        // >>
-%token OP_ACCESS_MEMBER       // .
-%token OP_ACCESS_POINTER      // ==>
-%token OP_EXP                 // **
-%token OP_INTEGER_DIVIDE      // //
-%token OP_ADD                 // +
-%token OP_SUBTRACT            // -
-%token OP_MULTIPLY            // *
-%token OP_DIVIDE              // /
-%token OP_MODULUS             // %
-%token OP_EQUAL               // ==
-%token OP_NOT_EQUAL           // !=
-%token OP_GREATER_THAN        // >
-%token OP_LESS_THAN           // <
-%token OP_GREATER_EQUAL       // >=
-%token OP_LESS_EQUAL          // <=
-%token OP_LOGICAL_AND         // &&
-%token OP_LOGICAL_OR          // ||
-%token OP_LOGICAL_NOT         // !
-%token OP_LOGICAL_XOR         // ^
-%token LBRACE                 // {
-%token RBRACE                 // }
-%token SEMICOLON              // ;
-%token LPAREN                 // (
-%token RPAREN                 // )
-%token PIPE                   // |
-%token COLON          // -> (para casus)
+%start program
 
-
-/* ===== Associatividade e Precedência de Operadores ===== */
-// Da MENOR para a MAIOR precedência
-
-%right OP_ARROW_ASSIGN       // Sua atribuição "-->"
-
-%left  KW_VEL OP_LOGICAL_OR  // "vel" ou "||"
-%left  KW_ET OP_LOGICAL_AND   // "et" ou "&&"
-%left  KW_AUT OP_LOGICAL_XOR  // "aut" ou "^"
-
-// Operadores relacionais são geralmente não associativos para evitar a == b == c
-%nonassoc OP_EQUAL OP_NOT_EQUAL
-%nonassoc OP_LESS_THAN OP_GREATER_THAN OP_LESS_EQUAL OP_GREATER_EQUAL
-
-%left  OP_ADD OP_SUBTRACT
-%left  OP_MULTIPLY OP_DIVIDE OP_MODULUS OP_INTEGER_DIVIDE
-
-%right OP_EXP                // Exponenciação "**"
-
-// Para os operadores unários de prefixo e o type cast, vamos definir um nível de precedência
-// usando um "token fictício". Chamaremos este nível de 'PREC_UNARY_PREFIX'.
-// A associatividade (left/right) para tokens de precedência unária não é tão crítica,
-// mas 'right' é comum para operadores de prefixo.
-%right PREC_UNARY_PREFIX
-
-// Os operadores pós-fixos ('.', '==>', '£', '<< >>') têm sua precedência
-// naturalmente definida pela estrutura da gramática (sendo aplicados a 'primario').
-// Se surgirem conflitos de shift/reduce, pode ser necessário declará-los aqui
-// com uma precedência ainda maior que PREC_UNARY_PREFIX.
-// Ex: %left OP_ACCESS_MEMBER OP_ACCESS_POINTER OP_ADDR_OF OP_LSHIFT_ARRAY
-
-// Operadores unários (prefixo) têm alta precedência
-%precedence OP_LOGICAL_NOT KW_NE OP_DEREF_POINTER UNARY_MINUS // UNARY_MINUS é um token fictício para precedência do '-' unário
-// Operadores pós-fixos (como '£', '.', '==>', '<< >>') têm precedência ainda maior
-%precedence OP_ADDR_OF OP_ACCESS_MEMBER OP_ACCESS_POINTER OP_LSHIFT_ARRAY OP_RSHIFT_ARRAY
-
-
-/* ===== Símbolo Inicial da Gramática ===== */
-%start programa
+%right ASSIGN_PTR
+%left KW_OR LOG_OR
+%left KW_AND LOG_AND
+%left KW_XOR LOG_XOR
+%nonassoc EQ NE LT GT LE GE
+%left ADD SUB
+%left MUL DIV MOD DIV_INT
+%right EXPONENT
+%right PREC_UNARY
+%precedence LOG_NOT KW_NOT DEREF_PTR UNARY_MINUS
 
 %%
-/* ===== Seção de Regras da Gramática ===== */
-
-// ### Estrutura Geral ###
-programa: 
-        | programa_nao_vazio
-        ;
-
-programa_nao_vazio: declaracao_ou_comando
-                  | programa_nao_vazio declaracao_ou_comando
-                  ;
-
-declaracao_ou_comando: declaracao { printf("Declaração reconhecida.\n"); }
-                     | comando    { printf("Comando reconhecido.\n"); }
-                     ;
-
-// ### Declarações ###
-declaracao: declaracao_variavel
-          | declaracao_funcao
-          | declaracao_tipo
-          | declaracao_designacao
-          ;
-
-declaracao_tipo: declaracao_homunculus
-               | declaracao_enumeracao
-               ;
-
-declaracao_homunculus: IDENTIFIER LBRACE corpo_homunculus RBRACE KW_HOMUNCULUS SEMICOLON
-                    { printf("Declaração Homunculus: %s\n", $1); /* Ação: Registrar tipo homunculus $1 com corpo $3 */ free($1); }
-                    ;
-corpo_homunculus: 
-                | corpo_homunculus declaracao_variavel
-                ;
-
-declaracao_enumeracao: IDENTIFIER LBRACE lista_enum_ident RBRACE KW_ENUMERARE SEMICOLON
-                    { printf("Declaração Enumerare para %s\n", $1); /* Ação: Registrar enum $1 com identificadores $3 */ free($1); }
-                    ;
-lista_enum_ident: IDENTIFIER { free($1); }
-                | lista_enum_ident PIPE IDENTIFIER { free($3); }
-                ;
-
-declaracao_designacao: tipo IDENTIFIER KW_DESIGNARE SEMICOLON
-                    { printf("Designare (typedef): %s\n", $2); /* Ação: Registrar typedef: $2 é um alias para $1 */ free($2); }
-                    ;
-
-declaracao_variavel: IDENTIFIER tipo SEMICOLON
-                    { printf("Declaração de Variável: %s\n", $1); /* Ação: Inserir $1 na tabela de símbolos com tipo $2 */ free($1); }
-                   | KW_MOL IDENTIFIER tipo SEMICOLON
-                    { printf("Declaração de Constante (mol): %s\n", $2); /* Ação: Inserir $2 como constante com tipo $3 */ free($2); }
-                   | IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("Declaração de Variável com Inicialização: %s\n", $1); /* Ação: Inserir $1 com tipo $2, inicializado com $4 */ free($1); }
-                   | KW_MOL IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("Declaração de Constante (mol) com Inicialização: %s\n", $2); /* Ação: Inserir $2 como constante com tipo $3, inicializado com $5 */ free($2); }
-                   ;
-
-declaracao_funcao: KW_FORMULA LPAREN lista_parametros_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN tipo LBRACE programa RBRACE
-                { printf("Declaração de Função (formula): %s\n", $5); /* Ação: Registrar função $5 com parâmetros $3, tipo de retorno $7 e corpo $9 */ free($5); }
-                ;
-lista_parametros_opt: 
-                    | lista_parametros
-                    ;
-
-// ### Tipos ###
-tipo: nome_tipo_base
-    | tipo OP_DEREF_POINTER
-    | tipo OP_LSHIFT_ARRAY expressao_opt OP_RSHIFT_ARRAY
+program:
+      /* empty */
+    | program statement
     ;
-expressao_opt: 
-             | expressao
-             ;
 
-nome_tipo_base: TYPE_VACUUM
-              | TYPE_ATOMUS
-              | TYPE_FRAGMENTUM
-              | TYPE_FRACTIO
-              | TYPE_QUANTUM
-              | TYPE_MAGNUS
-              | TYPE_MINIMUS
-              | TYPE_SYMBOLUM
-              | TYPE_SCRIPTUM
-              | IDENTIFIER      { printf("Tipo definido pelo usuário (homunculus/designare): %s\n", $1); /* Ação: $1 é um nome de tipo */ free($1); }
-              ;
-
-lista_parametros: parametro
-                | lista_parametros PIPE parametro
-                ;
-parametro: IDENTIFIER tipo
-            { printf("Parâmetro: %s\n", $1); /* Ação: Processar parâmetro $1 com tipo $2 */ free($1); }
-            ;
-
-// ### Comandos ###
-comando: comando_condicional
-       | comando_repeticao
-       | comando_iteracao
-       | comando_selecao
-       | comando_retorno SEMICOLON
-       | comando_atribuicao SEMICOLON
-       | chamada_funcao SEMICOLON
-       | comando_ruptio
-       | comando_continuum
-       | comando_leitura
-       | comando_revelacao
-       | LBRACE programa RBRACE    // Bloco de escopo
-       | SEMICOLON                 // Comando vazio
-       ;
-
-comando_atribuicao: expressao OP_ARROW_ASSIGN expressao_posfixa // expressao_posfixa deve ser um L-value
-                  { printf("Comando de Atribuição (-->)\n"); /* Ação: Atribuir $1 a $3. Verificar tipos. */ }
-                  ;
-
-comando_condicional: LPAREN expressao RPAREN KW_SI comando non_opt
-                  ;
-non_opt: 
-       | KW_NON comando
-       ;
-
-comando_repeticao: LPAREN expressao RPAREN KW_PERSISTO comando
-                ;
-
-comando_iteracao: LPAREN comando_atribuicao_opt SEMICOLON expressao_opt SEMICOLON expressao_opt RPAREN KW_ITERARE comando
-                ;
-comando_atribuicao_opt: 
-                      | comando_atribuicao // Note: atribuição aqui não tem ';'
-                      ;
-
-comando_selecao: LPAREN expressao RPAREN KW_VERTERE LBRACE casos_lista caso_padrao_opt RBRACE
-              ;
-casos_lista: 
-           | casos_lista caso
-           ;
-caso: KW_CASUS expressao COLON comandos_bloco
+statement:
+      declaration { printf("[OK] Declaration\n"); }
+    | command     { printf("[OK] Command\n"); }
     ;
-comandos_bloco: comando // Um único comando
-              | LBRACE programa RBRACE // Um bloco de comandos
-              ;
-caso_padrao_opt: 
-               | KW_AXIOM COLON comandos_bloco
-               ;
 
-comando_retorno: expressao_opt KW_REDIRE
-                ;
+declaration:
+      var_decl
+    | func_decl
+    | type_decl
+    | typedef_decl
+    ;
 
-comando_ruptio: KW_RUPTIO SEMICOLON ;
-comando_continuum: KW_CONTINUUM SEMICOLON ;
+var_decl:
+      IDENTIFIER type SEMICOLON
+    | KW_CONST IDENTIFIER type SEMICOLON
+    | IDENTIFIER type ASSIGN_PTR expression SEMICOLON
+    | KW_CONST IDENTIFIER type ASSIGN_PTR expression SEMICOLON
+    ;
 
-comando_leitura: LPAREN expressao_posfixa RPAREN KW_LECTURA SEMICOLON // 'lectura' espera um L-value (ex: variável)
-                ;
-comando_revelacao: LPAREN expressao RPAREN KW_REVELARE SEMICOLON
-                ;
+type_decl:
+      IDENTIFIER LBRACE struct_body RBRACE KW_STRUCT SEMICOLON
+    | IDENTIFIER LBRACE enum_list RBRACE KW_ENUM SEMICOLON
+    ;
 
-// ### Expressões (Hierarquia de Operadores) ###
-expressao: expressao_logica_vel ;
+struct_body:
+      /* empty */
+    | struct_body var_decl
+    ;
 
-expressao_logica_vel: expressao_logica_et
-                    | expressao_logica_vel KW_VEL expressao_logica_et
-                    | expressao_logica_vel OP_LOGICAL_OR expressao_logica_et
-                    ;
+enum_list:
+      IDENTIFIER
+    | enum_list PIPE IDENTIFIER
+    ;
 
-expressao_logica_et: expressao_xor
-                   | expressao_logica_et KW_ET expressao_xor
-                   | expressao_logica_et OP_LOGICAL_AND expressao_xor
-                   ;
+typedef_decl:
+      type IDENTIFIER KW_TYPEDEF SEMICOLON
+    ;
 
-expressao_xor: expressao_relacional
-             | expressao_xor KW_AUT expressao_relacional
-             | expressao_xor OP_LOGICAL_XOR expressao_relacional
-             ;
+func_decl:
+      KW_FUNC LPAREN param_list_opt RPAREN IDENTIFIER ASSIGN_PTR type LBRACE program RBRACE
+    ;
 
-expressao_relacional: expressao_aritmetica
-                    | expressao_relacional OP_EQUAL expressao_aritmetica
-                    | expressao_relacional OP_NOT_EQUAL expressao_aritmetica
-                    | expressao_relacional OP_LESS_THAN expressao_aritmetica
-                    | expressao_relacional OP_GREATER_THAN expressao_aritmetica
-                    | expressao_relacional OP_LESS_EQUAL expressao_aritmetica
-                    | expressao_relacional OP_GREATER_EQUAL expressao_aritmetica
-                    ;
+param_list_opt:
+      /* empty */
+    | param_list
+    ;
 
-expressao_aritmetica: termo
-                    | expressao_aritmetica OP_ADD termo
-                    | expressao_aritmetica OP_SUBTRACT termo
-                    ;
+param_list:
+      param
+    | param_list PIPE param
+    ;
 
-termo: fator_exponencial
-     | termo OP_MULTIPLY fator_exponencial
-     | termo OP_DIVIDE fator_exponencial
-     | termo OP_MODULUS fator_exponencial
-     | termo OP_INTEGER_DIVIDE fator_exponencial
-     ;
+param:
+      IDENTIFIER type
+    ;
 
-fator_exponencial: expressao_posfixa
-                 | expressao_posfixa OP_EXP fator_exponencial
-                 ;
+type:
+      base_type
+    | type DEREF_PTR
+    | type LBRACK expression_opt RBRACK
+    ;
 
-fator: LPAREN tipo RPAREN fator %prec PREC_UNARY_PREFIX // Type Cast
-     | expressao_posfixa
-     | OP_DEREF_POINTER fator %prec PREC_UNARY_PREFIX // Dereferência '°'
-     | KW_NE fator            %prec PREC_UNARY_PREFIX // Negação lógica 'ne'
-     | OP_LOGICAL_NOT fator   %prec PREC_UNARY_PREFIX // Negação lógica '!'
-     | OP_SUBTRACT fator      %prec PREC_UNARY_PREFIX // Negação aritmética '-'
-     ;
+base_type:
+      TYPE_VOID
+    | TYPE_INT
+    | TYPE_DOUBLE
+    | TYPE_FLOAT
+    | TYPE_BOOL
+    | TYPE_LONG
+    | TYPE_SHORT
+    | TYPE_CHAR
+    | TYPE_STRING
+    | IDENTIFIER
+    ;
 
-expressao_posfixa: primario
-                 | expressao_posfixa OP_ACCESS_MEMBER IDENTIFIER { free($3); }
-                 | expressao_posfixa OP_ACCESS_POINTER IDENTIFIER { free($3); }
-                 | expressao_posfixa OP_ADDR_OF
-                 | expressao_posfixa OP_LSHIFT_ARRAY expressao OP_RSHIFT_ARRAY
-                 ;
+expression_opt:
+      /* empty */
+    | expression
+    ;
 
-primario: IDENTIFIER                { /* Ação: Referenciar $1 na tabela de símbolos */ $$ = $1; }
-        | LIT_INT                   { /* Ação: Converter inteiro em string ou nó de AST */ $$ = NULL; }
-        | LIT_FLOAT                 { $$ = NULL; }
-        | LIT_STRING                { $$ = $1; }
-        | LIT_FACTUM                { $$ = NULL; }
-        | LIT_FICTUM                { $$ = NULL; }
-        | LPAREN expressao RPAREN   { $$ = $2; }
-        | chamada_funcao
-        | expressao_magnitudo
-        ;
+command:
+      if_command
+    | while_command
+    | for_command
+    | switch_command
+    | return_command SEMICOLON
+    | assign_command SEMICOLON
+    | func_call SEMICOLON
+    | break_command
+    | continue_command
+    | scan_command
+    | print_command
+    | block
+    | SEMICOLON
+    ;
 
-expressao_magnitudo: KW_MAGNITUDO LPAREN tipo RPAREN
-                   | KW_MAGNITUDO LPAREN expressao RPAREN
-                   ;
+assign_command:
+      expression ASSIGN_PTR expression
+    ;
 
-chamada_funcao: LPAREN lista_argumentos_opt RPAREN IDENTIFIER
-              { printf("Chamada de Função: %s\n", $4); /* Ação: Criar nó de chamada de função para $4 com argumentos $2 */ free($4); }
-              ;
-lista_argumentos_opt: 
-                    | lista_argumentos
-                    ;
+if_command:
+      LPAREN expression RPAREN KW_IF command else_part_opt
+    ;
 
-lista_argumentos: expressao
-                | lista_argumentos PIPE expressao
-                ;
+else_part_opt:
+      /* empty */
+    | KW_ELSE command
+    ;
+
+while_command:
+      LPAREN expression RPAREN KW_WHILE command
+    ;
+
+for_command:
+      LPAREN assign_command_opt SEMICOLON expression_opt SEMICOLON expression_opt RPAREN KW_FOR command
+    ;
+
+assign_command_opt:
+      /* empty */
+    | assign_command
+    ;
+
+switch_command:
+      LPAREN expression RPAREN KW_SWITCH LBRACE case_list default_case_opt RBRACE
+    ;
+
+case_list:
+      /* empty */
+    | case_list case_entry
+    ;
+
+case_entry:
+      KW_CASE expression ARROW block
+    ;
+
+default_case_opt:
+      /* empty */
+    | KW_DEFAULT ARROW block
+    ;
+
+return_command:
+      expression_opt KW_RETURN
+    ;
+
+break_command:
+      KW_BREAK SEMICOLON
+    ;
+
+continue_command:
+      KW_CONTINUE SEMICOLON
+    ;
+
+scan_command:
+      LPAREN expression RPAREN KW_SCAN SEMICOLON
+    ;
+
+print_command:
+      LPAREN expression RPAREN KW_PRINT SEMICOLON
+    ;
+
+block:
+      LBRACE program RBRACE
+    ;
+
+expression:
+      expression KW_OR expression
+    | expression LOG_OR expression
+    | expression KW_AND expression
+    | expression LOG_AND expression
+    | expression KW_XOR expression
+    | expression LOG_XOR expression
+    | expression EQ expression
+    | expression NE expression
+    | expression LT expression
+    | expression GT expression
+    | expression LE expression
+    | expression GE expression
+    | expression ADD expression
+    | expression SUB expression
+    | expression MUL expression
+    | expression DIV expression
+    | expression MOD expression
+    | expression DIV_INT expression
+    | expression EXPONENT expression
+    | unary_expr
+    ;
+
+unary_expr:
+      primary
+    | SUB unary_expr %prec UNARY_MINUS
+    | LOG_NOT unary_expr %prec PREC_UNARY
+    | KW_NOT unary_expr %prec PREC_UNARY
+    | DEREF_PTR unary_expr %prec PREC_UNARY
+    | LPAREN type RPAREN unary_expr %prec PREC_UNARY
+    ;
+
+primary:
+      IDENTIFIER
+    | LIT_INT
+    | LIT_FLOAT
+    | LIT_STRING
+    | LIT_CHAR
+    | LIT_TRUE
+    | LIT_FALSE
+    | LPAREN expression RPAREN
+    | func_call
+    | sizeof_expr
+    ;
+
+sizeof_expr:
+      KW_SIZEOF LPAREN type RPAREN
+    | KW_SIZEOF LPAREN expression RPAREN
+    ;
+
+func_call:
+      LPAREN arg_list_opt RPAREN IDENTIFIER
+    ;
+
+arg_list_opt:
+      /* empty */
+    | arg_list
+    ;
+
+arg_list:
+      expression
+    | arg_list PIPE expression
+    ;
 
 %%
 
 int main(int argc, char *argv[]) {
-    // st_global = create_symbol_table(100); // Exemplo de inicialização da tabela
-    
     if (argc > 1) {
         FILE *inputFile = fopen(argv[1], "r");
         if (!inputFile) {
             perror(argv[1]);
             return 1;
         }
-        yyin = inputFile; // Define a entrada do lexer para o arquivo
+        yyin = inputFile;
     } else {
-        printf("Lendo da entrada padrão (Ctrl+D para finalizar):\n");
-        yyin = stdin; // Entrada padrão se nenhum arquivo for fornecido
+        printf("Reading from stdin (Ctrl+D to finish):\n");
+        yyin = stdin;
     }
 
-    printf("--- Iniciando Análise ---\n");
-    int result = yyparse(); // Inicia a análise sintática
-    
-    if (result == 0) {
-        printf("--- Análise Concluída: Programa sintaticamente correto ---\n");
-    } else {
-        printf("--- Análise Concluída: Programa sintaticamente incorreto ---\n");
-    }
+    printf("--- Parsing Started ---\n");
+    int result = yyparse();
 
-    // if (st_global) {
-    //     printf("\n--- Conteúdo da Tabela de Símbolos ---\n");
-    //     print_symbol_table(st_global, stdout);
-    //     destroy_symbol_table(st_global);
-    // }
-    
-    if (argc > 1 && yyin != stdin) {
+    if (result == 0)
+        printf("--- Parsing Successful ---\n");
+    else
+        printf("--- Syntax Error ---\n");
+
+    if (argc > 1 && yyin != stdin)
         fclose(yyin);
-    }
+
     return result;
 }
 
-// Função de tratamento de erro do Yacc/Bison
 void yyerror(const char *s) {
-    // yylineno é uma variável global mantida pelo Lex/Flex
-    fprintf(stderr, "ERRO SINTÁTICO na linha %d: %s\n", yylineno, s);
+    fprintf(stderr, "[Syntax Error] Line %d: %s\n", yylineno, s);
 }
