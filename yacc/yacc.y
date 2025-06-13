@@ -150,6 +150,7 @@ command:
     | return_command SEMICOLON
     | assign_command SEMICOLON
     | func_call SEMICOLON
+    | func_call OP_ARROW_ASSIGN expression SEMICOLON
     | break_command
     | continue_command
     | scan_command

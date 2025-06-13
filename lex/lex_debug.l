@@ -2,9 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-int line_number = 1;
-int last_line_reported = 0;
-
 #define RESET_COLOR     "\033[0m"
 #define COLOR_LITERAL   "\033[1;94m"
 #define COLOR_KEYWORD   "\033[1;93m"
@@ -14,9 +11,18 @@ int last_line_reported = 0;
 #define COLOR_ERROR     "\033[1;91m\033[4m"
 #define COLOR_COMMENT   "\033[1;97m"
 
+int last_line_reported = 0;
+int indent_level = 0;
+
+int line_number = 1;
+int column_number = 1;
+
 void print_token(const char* color, const char* text) {
     if (line_number != last_line_reported) {
         printf("\n[%d] ", line_number);
+        for (int i = 0; i < indent_level; i++) {
+            printf("    ");
+        }
         last_line_reported = line_number;
     }
     printf("%s%s%s ", color, text, RESET_COLOR);
@@ -25,40 +31,34 @@ void print_token(const char* color, const char* text) {
 
 %option noyywrap
 
-delim               [ \t\n]
-ws                  {delim}+
+DELIM               [ \t\n]
+WS                  {DELIM}+
 
-letter              [a-zA-Z_]
-digit               [0-9]
-positive_digit      \+?[0-9]+
-negative_digit      -[0-9]+
-positive_real       \+?[0-9]+\.[0-9]+
-negative_real       -[0-9]+\.[0-9]+
-character_literal   \'([^\\\n]|(\\.))\'
-string_literal      \"([^\\\n]|(\\.))*\"
+COMMENT_LINE        §§.*
+COMMENT_BLOCK       §([^§]*\n?)*§
 
-comment_line        §§.*
-comment_block       §([^§]*\n?)*§
+DIGIT       [0-9]
+LETTER      [a-zA-Z_]
 
-identifier          {letter}({letter}|{digit})*
+INT         (\+|\-)?{DIGIT}+
+REAL        (\+|\-)?{DIGIT}+\.{DIGIT}+
+ID          {LETTER}({LETTER}|{DIGIT})*
+CHAR        '\\?.'
+STRING      "([^\"\\n]|(\\.))*"
 
 %%
 
-{ws} {
-    for (int i = 0; yytext[i] != '\0'; i++) {
-        if (yytext[i] == '\n') line_number++;
-    }
-}
+{WS}                    { for (int i = 0; yytext[i] != '\0'; i++) { if (yytext[i] == '\n') line_number++, column_number = 1; else column_number++; } }
 
-{comment_line}      { print_token(COLOR_COMMENT, yytext); }
-{comment_block}     { print_token(COLOR_COMMENT, yytext); }
+{COMMENT_LINE}          { print_token(COLOR_COMMENT, yytext); }
+{COMMENT_BLOCK}         { print_token(COLOR_COMMENT, yytext); }
 
 "axiom"                 { print_token(COLOR_KEYWORD, yytext); }
 "aut"                   { print_token(COLOR_KEYWORD, yytext); }
 "casus"                 { print_token(COLOR_KEYWORD, yytext); }
 "continuum"             { print_token(COLOR_KEYWORD, yytext); }
 "designare"             { print_token(COLOR_KEYWORD, yytext); }
-"Enumerare"             { print_token(COLOR_KEYWORD, yytext); }
+"enumerare"             { print_token(COLOR_KEYWORD, yytext); }
 "et"                    { print_token(COLOR_KEYWORD, yytext); }
 "formula"               { print_token(COLOR_KEYWORD, yytext); }
 "homunculus"            { print_token(COLOR_KEYWORD, yytext); }
@@ -88,12 +88,10 @@ identifier          {letter}({letter}|{digit})*
 
 "Factum"                { print_token(COLOR_LITERAL, yytext); }
 "Fictum"                { print_token(COLOR_LITERAL, yytext); }
-{positive_real}         { print_token(COLOR_LITERAL, yytext); }
-{negative_real}         { print_token(COLOR_LITERAL, yytext); }
-{positive_digit}        { print_token(COLOR_LITERAL, yytext); }
-{negative_digit}        { print_token(COLOR_LITERAL, yytext); }
-{character_literal}     { print_token(COLOR_LITERAL, yytext); } 
-{string_literal}        { print_token(COLOR_LITERAL, yytext); } 
+{INT}                   { print_token(COLOR_LITERAL, yytext); }
+{REAL}                  { print_token(COLOR_LITERAL, yytext); }
+{CHAR}                  { print_token(COLOR_LITERAL, yytext); }
+{STRING}                { print_token(COLOR_LITERAL, yytext); }
 
 "-->"                   { print_token(COLOR_OPERATOR, yytext); } 
 "**"                    { print_token(COLOR_OPERATOR, yytext); } 
@@ -120,23 +118,22 @@ identifier          {letter}({letter}|{digit})*
 "£"                     { print_token(COLOR_OPERATOR, yytext); }
 "°"                     { print_token(COLOR_OPERATOR, yytext); } 
 
+"{"                     { indent_level++; print_token(COLOR_DELIMITER, yytext); }
+"}"                     { indent_level--; print_token(COLOR_DELIMITER, yytext); }
 "("                     { print_token(COLOR_DELIMITER, yytext); }
 ")"                     { print_token(COLOR_DELIMITER, yytext); }
 ";"                     { print_token(COLOR_DELIMITER, yytext); }
-"{"                     { print_token(COLOR_DELIMITER, yytext); }
-"}"                     { print_token(COLOR_DELIMITER, yytext); }
 "|"                     { print_token(COLOR_DELIMITER, yytext); }
 "->"                    { print_token(COLOR_DELIMITER, yytext); }
 
-{identifier}            { print_token(COLOR_ID, yytext); }
+{ID}                    { print_token(COLOR_ID, yytext); }
 
 .                       { print_token(COLOR_ERROR, yytext); }
-
 
 %%
 
 int main(void) {
     yylex();
-    printf("\n");
+    printf("\n\n");
     return 0;
 }
