@@ -4,6 +4,8 @@
 #include "../yacc/yacc.tab.h"
 %}
 
+
+
 %option noyywrap
 
 delim               [ \t\n]
@@ -27,8 +29,8 @@ identifier          {letter}({letter}|{digit})*
 
 {ws}                    
 
-{comment_line}        
-{comment_block}         
+{comment_line}        { /* Ignorar comentários de linha */ }
+{comment_block}       { /* Ignorar comentários de bloco */ }         
 
 "axiom"                 { return KW_AXIOM; }
 "aut"                   { return KW_AUT; }
@@ -107,6 +109,8 @@ identifier          {letter}({letter}|{digit})*
 
 {identifier}            { yylval.str = strdup(yytext); return IDENTIFIER; } 
 
-.                       { printf("ERRO LÉXICO: Token não reconhecido: %s\n", yytext); }
-
+.                        {
+                            printf("\033[1;31mERRO LÉXICO: Token não reconhecido: '%s'\nNumero da Linha: %d\033[0m\n", yytext, yylineno);
+                            // return TOKEN_ERROR; // Retorna um token de erro para o Yacc
+                        }
 %%

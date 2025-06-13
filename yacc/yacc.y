@@ -142,8 +142,8 @@ programa_nao_vazio: declaracao_ou_comando
                   | programa_nao_vazio declaracao_ou_comando
                   ;
 
-declaracao_ou_comando: declaracao { printf("Declaração reconhecida.\n"); }
-                     | comando    { printf("Comando reconhecido.\n"); }
+declaracao_ou_comando: declaracao { printf("\033[1;32mDeclaração reconhecida.\033[0m\n"); }
+                     | comando    { printf("\033[1;32mComando reconhecido.\033[0m\n"); }
                      ;
 
 // ### Declarações ###
@@ -156,37 +156,37 @@ declaracao: declaracao_variavel
 declaracao_tipo: declaracao_homunculus
                | declaracao_enumeracao
                ;
-
+/* me ajude a formatar com verde nas mensagens corretas */
 declaracao_homunculus: IDENTIFIER LBRACE corpo_homunculus RBRACE KW_HOMUNCULUS SEMICOLON
-                    { printf("Declaração Homunculus: %s\n", $1); /* Ação: Registrar tipo homunculus $1 com corpo $3 */ free($1); }
+                    { printf("\033[1;32mDeclaração Homunculus: %s\033[0m\n", $1); /* Ação: Registrar tipo homunculus $1 com corpo $3 */ free($1); }
                     ;
 corpo_homunculus: 
                 | corpo_homunculus declaracao_variavel
                 ;
 
 declaracao_enumeracao: IDENTIFIER LBRACE lista_enum_ident RBRACE KW_ENUMERARE SEMICOLON
-                    { printf("Declaração Enumerare para %s\n", $1); /* Ação: Registrar enum $1 com identificadores $3 */ free($1); }
+                    { printf("\033[1;32mDeclaração Enumerare para %s\033[0m\n", $1); /* Ação: Registrar enum $1 com identificadores $3 */ free($1); }
                     ;
 lista_enum_ident: IDENTIFIER { free($1); }
                 | lista_enum_ident PIPE IDENTIFIER { free($3); }
                 ;
 
 declaracao_designacao: tipo IDENTIFIER KW_DESIGNARE SEMICOLON
-                    { printf("Designare (typedef): %s\n", $2); /* Ação: Registrar typedef: $2 é um alias para $1 */ free($2); }
+                    { printf("\033[1;32mDesignare (typedef): %s\033[0m\n", $2); /* Ação: Registrar typedef: $2 é um alias para $1 */ free($2); }
                     ;
 
 declaracao_variavel: IDENTIFIER tipo SEMICOLON
-                    { printf("Declaração de Variável: %s\n", $1); /* Ação: Inserir $1 na tabela de símbolos com tipo $2 */ free($1); }
+                    { printf("\033[1;32mDeclaração de Variável: %s\033[0m\n", $1); /* Ação: Inserir $1 na tabela de símbolos com tipo $2 */ free($1); }
                    | KW_MOL IDENTIFIER tipo SEMICOLON
-                    { printf("Declaração de Constante (mol): %s\n", $2); /* Ação: Inserir $2 como constante com tipo $3 */ free($2); }
+                    { printf("\033[1;32mDeclaração de Constante (mol): %s\033[0m\n", $2); /* Ação: Inserir $2 como constante com tipo $3 */ free($2); }
                    | IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("Declaração de Variável com Inicialização: %s\n", $1); /* Ação: Inserir $1 com tipo $2, inicializado com $4 */ free($1); }
+                    { printf("\033[1;32mDeclaração de Variável com Inicialização: %s\033[0m\n", $1); free($1); }
                    | KW_MOL IDENTIFIER tipo OP_ARROW_ASSIGN expressao SEMICOLON
-                    { printf("Declaração de Constante (mol) com Inicialização: %s\n", $2); /* Ação: Inserir $2 como constante com tipo $3, inicializado com $5 */ free($2); }
+                    { printf("\033[1;32mDeclaração de Constante (mol) com Inicialização: %s\033[0m\n", $2); free($2); }
                    ;
 
 declaracao_funcao: KW_FORMULA LPAREN lista_parametros_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN tipo LBRACE programa RBRACE
-                { printf("Declaração de Função (formula): %s\n", $5); /* Ação: Registrar função $5 com parâmetros $3, tipo de retorno $7 e corpo $9 */ free($5); }
+                { printf("\033[1;32mDeclaração de Função (formula): %s\033[0m\n", $5); free($5); }
                 ;
 lista_parametros_opt: 
                     | lista_parametros
@@ -210,24 +210,27 @@ nome_tipo_base: TYPE_VACUUM
               | TYPE_MINIMUS
               | TYPE_SYMBOLUM
               | TYPE_SCRIPTUM
-              | IDENTIFIER      { printf("Tipo definido pelo usuário (homunculus/designare): %s\n", $1); /* Ação: $1 é um nome de tipo */ free($1); }
+              | IDENTIFIER      { printf("\033[1;32mTipo definido pelo usuário (homunculus/designare): %s\033[0m\n", $1); /* Ação: $1 é um nome de tipo */ free($1); }
               ;
 
 lista_parametros: parametro
                 | lista_parametros PIPE parametro
                 ;
 parametro: IDENTIFIER tipo
-            { printf("Parâmetro: %s\n", $1); /* Ação: Processar parâmetro $1 com tipo $2 */ free($1); }
+            { printf("\033[1;32mParâmetro: %s\033[0m\n", $1); /* Ação: Processar parâmetro $1 com tipo $2 */ free($1); }
             ;
 
 // ### Comandos ###
 comando: comando_condicional
        | comando_repeticao
+       | chamada_funcao_atribuicao SEMICOLON
        | comando_iteracao
        | comando_selecao
        | comando_retorno SEMICOLON
        | comando_atribuicao SEMICOLON
        | chamada_funcao SEMICOLON
+       | expressao SEMICOLON  // Expressão isolada
+       { printf("\033[1;32mExpressão isolada reconhecida.\033[0m\n"); }
        | comando_ruptio
        | comando_continuum
        | comando_leitura
@@ -237,8 +240,12 @@ comando: comando_condicional
        ;
 
 comando_atribuicao: expressao OP_ARROW_ASSIGN expressao_posfixa // expressao_posfixa deve ser um L-value
-                  { printf("Comando de Atribuição (-->)\n"); /* Ação: Atribuir $1 a $3. Verificar tipos. */ }
+                  { printf("\033[1;32mComando de Atribuição (-->)\033[0m\n"); /* Ação: Atribuir $1 a $3. Verificar tipos. */ }
                   ;
+
+chamada_funcao_atribuicao: LPAREN expressao RPAREN IDENTIFIER OP_ARROW_ASSIGN IDENTIFIER
+                         { printf("\033[1;32mChamada de Função com Atribuição: %s --> %s\033[0m\n", $4, $6); free($4); free($6); }
+                         ;
 
 comando_condicional: LPAREN expressao RPAREN KW_SI comando non_opt
                   ;
@@ -277,11 +284,14 @@ comando_continuum: KW_CONTINUUM SEMICOLON ;
 
 comando_leitura: LPAREN expressao_posfixa RPAREN KW_LECTURA SEMICOLON // 'lectura' espera um L-value (ex: variável)
                 ;
-comando_revelacao: LPAREN expressao RPAREN KW_REVELARE SEMICOLON
-                ;
+                
+comando_revelacao: OP_LSHIFT_ARRAY expressao OP_RSHIFT_ARRAY KW_REVELARE SEMICOLON
+                 { printf("\033[1;32mComando de Revelação\033[0m\n"); }
+                 ;
 
 // ### Expressões (Hierarquia de Operadores) ###
-expressao: expressao_logica_vel ;
+expressao: expressao_logica_vel
+          ;
 
 expressao_logica_vel: expressao_logica_et
                     | expressao_logica_vel KW_VEL expressao_logica_et
@@ -353,9 +363,10 @@ expressao_magnitudo: KW_MAGNITUDO LPAREN tipo RPAREN
                    | KW_MAGNITUDO LPAREN expressao RPAREN
                    ;
 
-chamada_funcao: LPAREN lista_argumentos_opt RPAREN IDENTIFIER
-              { printf("Chamada de Função: %s\n", $4); /* Ação: Criar nó de chamada de função para $4 com argumentos $2 */ free($4); }
+chamada_funcao: LPAREN expressao RPAREN IDENTIFIER
+              { printf("\033[1;32mChamada de Função: %s\033[0m\n", $4); free($4); }
               ;
+
 lista_argumentos_opt: 
                     | lista_argumentos
                     ;
@@ -367,8 +378,6 @@ lista_argumentos: expressao
 %%
 
 int main(int argc, char *argv[]) {
-    // st_global = create_symbol_table(100); // Exemplo de inicialização da tabela
-    
     if (argc > 1) {
         FILE *inputFile = fopen(argv[1], "r");
         if (!inputFile) {
@@ -377,25 +386,19 @@ int main(int argc, char *argv[]) {
         }
         yyin = inputFile; // Define a entrada do lexer para o arquivo
     } else {
-        printf("Lendo da entrada padrão (Ctrl+D para finalizar):\n");
+        printf("\033[1;32mLendo da entrada padrão (Ctrl+D para finalizar):\033[0m\n");
         yyin = stdin; // Entrada padrão se nenhum arquivo for fornecido
     }
 
-    printf("--- Iniciando Análise ---\n");
+    printf("\033[1;32m--- Iniciando Análise ---\033[0m\n");
     int result = yyparse(); // Inicia a análise sintática
     
     if (result == 0) {
-        printf("--- Análise Concluída: Programa sintaticamente correto ---\n");
+        printf("\033[1;32m--- Análise Concluída: Programa sintaticamente correto ---\033[0m\n");
     } else {
-        printf("--- Análise Concluída: Programa sintaticamente incorreto ---\n");
+        printf("\033[1;35m--- Análise Concluída: Programa sintaticamente incorreto ---\033[0m\n");
     }
 
-    // if (st_global) {
-    //     printf("\n--- Conteúdo da Tabela de Símbolos ---\n");
-    //     print_symbol_table(st_global, stdout);
-    //     destroy_symbol_table(st_global);
-    // }
-    
     if (argc > 1 && yyin != stdin) {
         fclose(yyin);
     }
@@ -404,6 +407,11 @@ int main(int argc, char *argv[]) {
 
 // Função de tratamento de erro do Yacc/Bison
 void yyerror(const char *s) {
-    // yylineno é uma variável global mantida pelo Lex/Flex
-    fprintf(stderr, "ERRO SINTÁTICO na linha %d: %s\n", yylineno, s);
+    fprintf(stderr, "\033[1;35mERRO SINTÁTICO na linha %d: %s\033[0m\n", yylineno, s);
+
+    // Exemplo: Exibir o token atual (se disponível)
+    extern char *yytext; // yytext é gerenciado pelo Flex
+    if (yytext && *yytext != '\0') {
+        fprintf(stderr, "\033[1;35mToken inesperado: '%s'\033[0m\n", yytext);
+    }
 }

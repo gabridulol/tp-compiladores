@@ -9,7 +9,6 @@ formula (n atomus) fibonacci --> atomus {
    (n <= 1) si {
       n redire;
    }
-
    §§ Passo recursivo: fibonacci(n - 1) + fibonacci(n - 2)
    (n - 1) fibonacci --> anterior1;
    (n - 2) fibonacci --> anterior2;
