@@ -1,5 +1,3 @@
-// new yacc.y
-
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,39 +22,39 @@ void yyerror(const char *s);
 
 %type <str> primary expression
 
-%token KW_IF KW_ELSE KW_FOR KW_WHILE KW_SWITCH KW_CASE KW_DEFAULT
-%token KW_BREAK KW_CONTINUE KW_RETURN KW_CONST KW_STRUCT KW_ENUM
-%token KW_TYPEDEF KW_FUNC KW_PRINT KW_SCAN KW_SIZEOF
-%token KW_AND KW_OR KW_NOT KW_XOR
+%token KW_SI KW_NON KW_ITERARE KW_PERSISTO KW_VERTERE KW_CASUS KW_AXIOM
+%token KW_RUPTIO KW_CONTINUUM KW_REDIRE KW_MOL KW_HOMUNCULUS KW_ENUMERARE
+%token KW_DESIGNARE KW_FORMULA KW_REVELARE KW_LECTURA KW_MAGNITUDO
+%token KW_ET KW_VEL KW_NE KW_AUT
 
-%token TYPE_VOID TYPE_INT TYPE_DOUBLE TYPE_FLOAT TYPE_BOOL
-%token TYPE_LONG TYPE_SHORT TYPE_CHAR TYPE_STRING
+%token TYPE_VACUUM TYPE_ATOMUS TYPE_FRAGMENTUM TYPE_FRACTIO TYPE_QUANTUM
+%token TYPE_MAGNUS TYPE_MINIMUS TYPE_SYMBOLUM TYPE_SCRIPTUM
 
-%token LIT_TRUE LIT_FALSE
+%token LIT_FACTUM LIT_FICTUM
 
-%token ASSIGN_PTR
-%token DEREF_PTR
-%token ADDR_OF
-%token LBRACK RBRACK
-%token DOT PTR_ACCESS
-%token EXPONENT DIV_INT
-%token ADD SUB MUL DIV MOD
-%token EQ NE LT GT LE GE
-%token LOG_AND LOG_OR LOG_NOT LOG_XOR
-%token LBRACE RBRACE SEMICOLON LPAREN RPAREN PIPE ARROW
+%token OP_ARROW_ASSIGN
+%token OP_DEREF_POINTER
+%token OP_ADDR_OF
+%token OP_LSHIFT_ARRAY OP_RSHIFT_ARRAY
+%token OP_ACCESS_MEMBER OP_ACCESS_POINTER
+%token OP_EXP OP_INTEGER_DIVIDE
+%token OP_ADD OP_SUBTRACT OP_MULTIPLY OP_DIVIDE OP_MODULUS
+%token OP_EQUAL OP_NOT_EQUAL OP_LESS_THAN OP_GREATER_THAN OP_LESS_EQUAL OP_GREATER_EQUAL
+%token OP_LOGICAL_AND OP_LOGICAL_OR OP_LOGICAL_NOT OP_LOGICAL_XOR
+%token LBRACE RBRACE SEMICOLON LPAREN RPAREN PIPE COLON
 
 %start program
 
-%right ASSIGN_PTR
-%left KW_OR LOG_OR
-%left KW_AND LOG_AND
-%left KW_XOR LOG_XOR
-%nonassoc EQ NE LT GT LE GE
-%left ADD SUB
-%left MUL DIV MOD DIV_INT
-%right EXPONENT
+%right OP_ARROW_ASSIGN
+%left KW_VEL OP_LOGICAL_OR
+%left KW_ET OP_LOGICAL_AND
+%left KW_AUT OP_LOGICAL_XOR
+%nonassoc OP_EQUAL OP_NOT_EQUAL OP_LESS_THAN OP_GREATER_THAN OP_LESS_EQUAL OP_GREATER_EQUAL
+%left OP_ADD OP_SUBTRACT
+%left OP_MULTIPLY OP_DIVIDE OP_MODULUS OP_INTEGER_DIVIDE
+%right OP_EXP
 %right PREC_UNARY
-%precedence LOG_NOT KW_NOT DEREF_PTR UNARY_MINUS
+%precedence OP_LOGICAL_NOT KW_NE OP_DEREF_POINTER UNARY_MINUS
 
 %%
 program:
@@ -78,14 +76,14 @@ declaration:
 
 var_decl:
       IDENTIFIER type SEMICOLON
-    | KW_CONST IDENTIFIER type SEMICOLON
-    | IDENTIFIER type ASSIGN_PTR expression SEMICOLON
-    | KW_CONST IDENTIFIER type ASSIGN_PTR expression SEMICOLON
+    | KW_MOL IDENTIFIER type SEMICOLON
+    | IDENTIFIER type OP_ARROW_ASSIGN expression SEMICOLON
+    | KW_MOL IDENTIFIER type OP_ARROW_ASSIGN expression SEMICOLON
     ;
 
 type_decl:
-      IDENTIFIER LBRACE struct_body RBRACE KW_STRUCT SEMICOLON
-    | IDENTIFIER LBRACE enum_list RBRACE KW_ENUM SEMICOLON
+      IDENTIFIER LBRACE struct_body RBRACE KW_HOMUNCULUS SEMICOLON
+    | IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
     ;
 
 struct_body:
@@ -99,11 +97,11 @@ enum_list:
     ;
 
 typedef_decl:
-      type IDENTIFIER KW_TYPEDEF SEMICOLON
+      type IDENTIFIER KW_DESIGNARE SEMICOLON
     ;
 
 func_decl:
-      KW_FUNC LPAREN param_list_opt RPAREN IDENTIFIER ASSIGN_PTR type LBRACE program RBRACE
+      KW_FORMULA LPAREN param_list_opt RPAREN IDENTIFIER OP_ARROW_ASSIGN type LBRACE program RBRACE
     ;
 
 param_list_opt:
@@ -122,20 +120,20 @@ param:
 
 type:
       base_type
-    | type DEREF_PTR
-    | type LBRACK expression_opt RBRACK
+    | type OP_DEREF_POINTER
+    | type OP_LSHIFT_ARRAY expression_opt OP_RSHIFT_ARRAY
     ;
 
 base_type:
-      TYPE_VOID
-    | TYPE_INT
-    | TYPE_DOUBLE
-    | TYPE_FLOAT
-    | TYPE_BOOL
-    | TYPE_LONG
-    | TYPE_SHORT
-    | TYPE_CHAR
-    | TYPE_STRING
+      TYPE_VACUUM
+    | TYPE_ATOMUS
+    | TYPE_FRAGMENTUM
+    | TYPE_FRACTIO
+    | TYPE_QUANTUM
+    | TYPE_MAGNUS
+    | TYPE_MINIMUS
+    | TYPE_SYMBOLUM
+    | TYPE_SCRIPTUM
     | IDENTIFIER
     ;
 
@@ -161,24 +159,24 @@ command:
     ;
 
 assign_command:
-      expression ASSIGN_PTR expression
+      expression OP_ARROW_ASSIGN expression
     ;
 
 if_command:
-      LPAREN expression RPAREN KW_IF command else_part_opt
+      LPAREN expression RPAREN KW_SI command else_part_opt
     ;
 
 else_part_opt:
       /* empty */
-    | KW_ELSE command
+    | KW_NON command
     ;
 
 while_command:
-      LPAREN expression RPAREN KW_WHILE command
+      LPAREN expression RPAREN KW_PERSISTO command
     ;
 
 for_command:
-      LPAREN assign_command_opt SEMICOLON expression_opt SEMICOLON expression_opt RPAREN KW_FOR command
+      LPAREN assign_command_opt SEMICOLON expression_opt SEMICOLON expression_opt RPAREN KW_ITERARE command
     ;
 
 assign_command_opt:
@@ -187,7 +185,7 @@ assign_command_opt:
     ;
 
 switch_command:
-      LPAREN expression RPAREN KW_SWITCH LBRACE case_list default_case_opt RBRACE
+      LPAREN expression RPAREN KW_VERTERE LBRACE case_list default_case_opt RBRACE
     ;
 
 case_list:
@@ -196,32 +194,32 @@ case_list:
     ;
 
 case_entry:
-      KW_CASE expression ARROW block
+      KW_CASUS expression COLON block
     ;
 
 default_case_opt:
       /* empty */
-    | KW_DEFAULT ARROW block
+    | KW_AXIOM COLON block
     ;
 
 return_command:
-      expression_opt KW_RETURN
+      expression_opt KW_REDIRE
     ;
 
 break_command:
-      KW_BREAK SEMICOLON
+      KW_RUPTIO SEMICOLON
     ;
 
 continue_command:
-      KW_CONTINUE SEMICOLON
+      KW_CONTINUUM SEMICOLON
     ;
 
 scan_command:
-      LPAREN expression RPAREN KW_SCAN SEMICOLON
+      LPAREN expression RPAREN KW_LECTURA SEMICOLON
     ;
 
 print_command:
-      LPAREN expression RPAREN KW_PRINT SEMICOLON
+      LPAREN expression RPAREN KW_REVELARE SEMICOLON
     ;
 
 block:
@@ -229,34 +227,34 @@ block:
     ;
 
 expression:
-      expression KW_OR expression
-    | expression LOG_OR expression
-    | expression KW_AND expression
-    | expression LOG_AND expression
-    | expression KW_XOR expression
-    | expression LOG_XOR expression
-    | expression EQ expression
-    | expression NE expression
-    | expression LT expression
-    | expression GT expression
-    | expression LE expression
-    | expression GE expression
-    | expression ADD expression
-    | expression SUB expression
-    | expression MUL expression
-    | expression DIV expression
-    | expression MOD expression
-    | expression DIV_INT expression
-    | expression EXPONENT expression
+      expression KW_VEL expression
+    | expression OP_LOGICAL_OR expression
+    | expression KW_ET expression
+    | expression OP_LOGICAL_AND expression
+    | expression KW_AUT expression
+    | expression OP_LOGICAL_XOR expression
+    | expression OP_EQUAL expression
+    | expression OP_NOT_EQUAL expression
+    | expression OP_LESS_THAN expression
+    | expression OP_GREATER_THAN expression
+    | expression OP_LESS_EQUAL expression
+    | expression OP_GREATER_EQUAL expression
+    | expression OP_ADD expression
+    | expression OP_SUBTRACT expression
+    | expression OP_MULTIPLY expression
+    | expression OP_DIVIDE expression
+    | expression OP_MODULUS expression
+    | expression OP_INTEGER_DIVIDE expression
+    | expression OP_EXP expression
     | unary_expr
     ;
 
 unary_expr:
       primary
-    | SUB unary_expr %prec UNARY_MINUS
-    | LOG_NOT unary_expr %prec PREC_UNARY
-    | KW_NOT unary_expr %prec PREC_UNARY
-    | DEREF_PTR unary_expr %prec PREC_UNARY
+    | OP_SUBTRACT unary_expr %prec UNARY_MINUS
+    | OP_LOGICAL_NOT unary_expr %prec PREC_UNARY
+    | KW_NE unary_expr %prec PREC_UNARY
+    | OP_DEREF_POINTER unary_expr %prec PREC_UNARY
     | LPAREN type RPAREN unary_expr %prec PREC_UNARY
     ;
 
@@ -266,16 +264,16 @@ primary:
     | LIT_FLOAT
     | LIT_STRING
     | LIT_CHAR
-    | LIT_TRUE
-    | LIT_FALSE
+    | LIT_FACTUM
+    | LIT_FICTUM
     | LPAREN expression RPAREN
     | func_call
     | sizeof_expr
     ;
 
 sizeof_expr:
-      KW_SIZEOF LPAREN type RPAREN
-    | KW_SIZEOF LPAREN expression RPAREN
+      KW_MAGNITUDO LPAREN type RPAREN
+    | KW_MAGNITUDO LPAREN expression RPAREN
     ;
 
 func_call:
