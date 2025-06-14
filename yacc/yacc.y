@@ -154,7 +154,7 @@ alchemia_statement
     ;
 
 statement_list
-    : statement
+    : /* vazio */
     | statement_list statement
     ;
 
@@ -165,7 +165,10 @@ statement
     | declaration_statement
     | function_call_statement
     | return_statement
+    | conditional_statement
     ;
+
+//
 
 import_statement
     : IDENTIFIER KW_EVOCARE SEMICOLON 
@@ -280,6 +283,38 @@ argument_list
 return_statement
     : expression KW_REDIRE SEMICOLON
     ;
+
+//
+
+conditional_statement
+    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE elseif_chain_opt else_opt
+    ;
+
+elseif_chain_opt
+    : /* vazio */
+    | elseif_chain
+    ;
+
+elseif_chain
+    : elseif_statement
+    | elseif_chain elseif_statement
+    ;
+
+elseif_statement
+    : LPAREN expression RPAREN KW_NON_SI LBRACE statement_list RBRACE
+    ;
+
+else_opt
+    : /* vazio */
+    | else_statement
+    ;
+
+else_statement
+    : KW_NON LBRACE statement_list RBRACE
+    ;
+
+//
+
 
 
 %%
