@@ -131,14 +131,14 @@ void yyerror(const char *s);
 %%
 
 translation_unit
-    : global alchemia
+    : global_statement_list alchemia_statement
     ;
 
 //
 
-global
-    : global_statement
-    | global global_statement
+global_statement_list
+    : /* vazio */
+    | global_statement_list global_statement
     ;
 
 global_statement
@@ -149,7 +149,7 @@ global_statement
 
 //
 
-alchemia
+alchemia_statement
     : IDENTIFIER LPAREN RPAREN KW_MAIN LBRACE statement_list RBRACE
     ;
 

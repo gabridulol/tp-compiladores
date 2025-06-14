@@ -1,10 +1,4 @@
-io evocare;
-
-formula () saudacao --> scriptum {
-    "Olá, mundo!" redire;
-}
-
-main () Alchemia {
+programa_teste () Alchemia {
     (42) --> x atomus;
     (x + 1) --> x;
     () saudacao;
