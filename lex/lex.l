@@ -13,7 +13,7 @@
 %option noyywrap
 %option yylineno
 
-DELIM           [ \t\n]
+DELIM           [ \t\n\r]
 WS              {DELIM}+
 COMMENT_LINE    §§.*
 COMMENT_BLOCK   §([^§]*\n?)*§
