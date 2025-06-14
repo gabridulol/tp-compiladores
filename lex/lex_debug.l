@@ -35,7 +35,7 @@ DELIM               [ \t\n]
 WS                  {DELIM}+
 
 COMMENT_LINE        §§.*
-COMMENT_BLOCK       §([^§]*\n?)*§
+COMMENT_BLOCK       §([^§\n]*\n?)*§
 
 DIGIT       [0-9]
 LETTER      [a-zA-Z_]
@@ -47,8 +47,12 @@ CHAR        '\\?.'
 STRING      "([^\"\\n]|(\\.))*"
 
 %%
-
-{WS}                    { for (int i = 0; yytext[i] != '\0'; i++) { if (yytext[i] == '\n') line_number++, column_number = 1; else column_number++; } }
+{WS} {
+    for (int i = 0; yytext[i] != '\0'; i++) {
+        if (yytext[i] == '\n') line_number++, column_number = 1;
+        else column_number++;
+    }
+}
 
 {COMMENT_LINE}          { print_token(COLOR_COMMENT, yytext); }
 {COMMENT_BLOCK}         { print_token(COLOR_COMMENT, yytext); }
@@ -88,48 +92,49 @@ STRING      "([^\"\\n]|(\\.))*"
 
 "Factum"                { print_token(COLOR_LITERAL, yytext); }
 "Fictum"                { print_token(COLOR_LITERAL, yytext); }
-{INT}                   { print_token(COLOR_LITERAL, yytext); }
 {REAL}                  { print_token(COLOR_LITERAL, yytext); }
+{INT}                   { print_token(COLOR_LITERAL, yytext); }
 {CHAR}                  { print_token(COLOR_LITERAL, yytext); }
 {STRING}                { print_token(COLOR_LITERAL, yytext); }
 
-"-->"                   { print_token(COLOR_OPERATOR, yytext); } 
-"**"                    { print_token(COLOR_OPERATOR, yytext); } 
+"==>"                   { print_token(COLOR_OPERATOR, yytext); }
+"-->"                   { print_token(COLOR_OPERATOR, yytext); }
+">="                    { print_token(COLOR_OPERATOR, yytext); }
+"<="                    { print_token(COLOR_OPERATOR, yytext); }
+"=="                    { print_token(COLOR_OPERATOR, yytext); }
+"!="                    { print_token(COLOR_OPERATOR, yytext); }
+"//"                    { print_token(COLOR_OPERATOR, yytext); }
+"**"                    { print_token(COLOR_OPERATOR, yytext); }
+"&&"                    { print_token(COLOR_OPERATOR, yytext); }
+"||"                    { print_token(COLOR_OPERATOR, yytext); }
 "*"                     { print_token(COLOR_OPERATOR, yytext); }
 "+"                     { print_token(COLOR_OPERATOR, yytext); }
 "-"                     { print_token(COLOR_OPERATOR, yytext); }
-"."                     { print_token(COLOR_OPERATOR, yytext); } 
 "/"                     { print_token(COLOR_OPERATOR, yytext); }
-"//"                    { print_token(COLOR_OPERATOR, yytext); }
 "%"                     { print_token(COLOR_OPERATOR, yytext); }
-"=="                    { print_token(COLOR_OPERATOR, yytext); }
-"!="                    { print_token(COLOR_OPERATOR, yytext); }
-">"                     { print_token(COLOR_OPERATOR, yytext); }
-">="                    { print_token(COLOR_OPERATOR, yytext); }
-">>"                    { print_token(COLOR_OPERATOR, yytext); } 
-"<"                     { print_token(COLOR_OPERATOR, yytext); }
-"<="                    { print_token(COLOR_OPERATOR, yytext); }
-"<<"                    { print_token(COLOR_OPERATOR, yytext); } 
-"==>"                   { print_token(COLOR_OPERATOR, yytext); } 
+"."                     { print_token(COLOR_OPERATOR, yytext); }
 "!"                     { print_token(COLOR_OPERATOR, yytext); }
-"&&"                    { print_token(COLOR_OPERATOR, yytext); }
-"||"                    { print_token(COLOR_OPERATOR, yytext); }
+">"                     { print_token(COLOR_OPERATOR, yytext); }
+"<"                     { print_token(COLOR_OPERATOR, yytext); }
 "^"                     { print_token(COLOR_OPERATOR, yytext); }
 "£"                     { print_token(COLOR_OPERATOR, yytext); }
-"°"                     { print_token(COLOR_OPERATOR, yytext); } 
+"°"                     { print_token(COLOR_OPERATOR, yytext); }
 
-"{"                     { indent_level++; print_token(COLOR_DELIMITER, yytext); }
-"}"                     { indent_level--; print_token(COLOR_DELIMITER, yytext); }
+"<<"                    { print_token(COLOR_DELIMITER, yytext); }
+">>"                    { print_token(COLOR_DELIMITER, yytext); }
+"->"                    { print_token(COLOR_DELIMITER, yytext); }
 "("                     { print_token(COLOR_DELIMITER, yytext); }
 ")"                     { print_token(COLOR_DELIMITER, yytext); }
-";"                     { print_token(COLOR_DELIMITER, yytext); }
+"["                     { print_token(COLOR_DELIMITER, yytext); }
+"]"                     { print_token(COLOR_DELIMITER, yytext); }
+"{"                     { indent_level++; print_token(COLOR_DELIMITER, yytext); }
+"}"                     { indent_level--; print_token(COLOR_DELIMITER, yytext); }
 "|"                     { print_token(COLOR_DELIMITER, yytext); }
-"->"                    { print_token(COLOR_DELIMITER, yytext); }
+";"                     { print_token(COLOR_DELIMITER, yytext); }
 
 {ID}                    { print_token(COLOR_ID, yytext); }
 
 .                       { print_token(COLOR_ERROR, yytext); }
-
 %%
 
 int main(void) {

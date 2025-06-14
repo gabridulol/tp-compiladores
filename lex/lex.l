@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../yacc/yacc.tab.h"
+
+#define COLOR_ERROR     "\033[1;91m\033[4m"
+#define RESET_COLOR     "\033[0m"
+
 %}
 
 %option noyywrap
@@ -40,6 +44,7 @@ STRING          "([^\"\\n]|(\\.))*"
 "magnitudo"         { return KW_MAGNITUDO; }
 "mol"               { return KW_MOL; }
 "ne"                { return KW_NE; }
+"non si"            { return KW_NON_SI; }
 "non"               { return KW_NON; }
 "persisto"          { return KW_PERSISTO; }
 "redire"            { return KW_REDIRE; }
@@ -66,46 +71,47 @@ STRING          "([^\"\\n]|(\\.))*"
 {CHAR}              { yylval.str = strdup(yytext); return LIT_CHAR; }
 {STRING}            { yylval.str = strdup(yytext); return LIT_STRING; }
 
-"-->"               { return OP_ARROW_ASSIGN; }
+"==>"               { return OP_ACCESS_POINTER; }
+"-->"               { return OP_ASSIGN; }
+">="                { return OP_GREATER_EQUAL; }
+"<="                { return OP_LESS_EQUAL; }
+"=="                { return OP_EQUAL; }
+"!="                { return OP_NOT_EQUAL; }
+"//"                { return OP_INTEGER_DIVIDE; }
 "**"                { return OP_EXP; }
+"&&"                { return OP_LOGICAL_AND; }
+"||"                { return OP_LOGICAL_OR; }
 "*"                 { return OP_MULTIPLY; }
 "+"                 { return OP_ADD; }
 "-"                 { return OP_SUBTRACT; }
-"."                 { return OP_ACCESS_MEMBER; }
 "/"                 { return OP_DIVIDE; }
-"//"                { return OP_INTEGER_DIVIDE; }
 "%"                 { return OP_MODULUS; }
-"=="                { return OP_EQUAL; }
-"!="                { return OP_NOT_EQUAL; }
-">"                 { return OP_GREATER_THAN; }
-">="                { return OP_GREATER_EQUAL; }
-">>"                { return OP_RSHIFT_ARRAY; }
-"<"                 { return OP_LESS_THAN; }
-"<="                { return OP_LESS_EQUAL; }
-"<<"                { return OP_LSHIFT_ARRAY; }
-"==>"               { return OP_ACCESS_POINTER; }
+"."                 { return OP_ACCESS_MEMBER; }
 "!"                 { return OP_LOGICAL_NOT; }
-"&&"                { return OP_LOGICAL_AND; }
-"||"                { return OP_LOGICAL_OR; }
+">"                 { return OP_GREATER_THAN; }
+"<"                 { return OP_LESS_THAN; }
 "^"                 { return OP_LOGICAL_XOR; }
 "£"                 { return OP_ADDR_OF; }
 "°"                 { return OP_DEREF_POINTER; }
 
+"<<"                { return LOARRAY; }
+">>"                { return LOARRAY; }
+"->"                { return COLON; }
 "("                 { return LPAREN; }
 ")"                 { return RPAREN; }
-";"                 { return SEMICOLON; }
+"["                 { return LBRACKET; }
+"]"                 { return RBRACKET; }
 "{"                 { return LBRACE; }
 "}"                 { return RBRACE; }
 "|"                 { return PIPE; }
-"->"                { return COLON; }
+";"                 { return SEMICOLON; }
 
 {ID}                { yylval.str = strdup(yytext); return IDENTIFIER; }
 
-.                   { printf("ERRO LÉXICO: Token não reconhecido: %s\n", yytext); }
+.                   { printf("%s[ERRO LÉXICO] Token '%s' não reconhecido na linha %d%s\n", COLOR_ERROR, yytext, yylineno, RESET_COLOR); }
 
 %%
 
-int main(void) {
-    yylex();
-    return 0;
+int yywrap(void) {
+    return 1;
 }
