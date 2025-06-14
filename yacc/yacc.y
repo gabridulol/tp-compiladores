@@ -143,14 +143,14 @@ void yyerror(const char *s);
 %%
 
 translation_unit
-    : global alchemia
+    : global_statement_list alchemia_statement
     ;
 
 //
 
-global
-    : global_statement
-    | global global_statement
+global_statement_list
+    : /* vazio */
+    | global_statement_list global_statement
     ;
 
 global_statement
@@ -161,12 +161,12 @@ global_statement
 
 //
 
-alchemia
+alchemia_statement
     : IDENTIFIER LPAREN RPAREN KW_MAIN LBRACE statement_list RBRACE
     ;
 
 statement_list
-    : statement
+    : /* vazio */
     | statement_list statement
     ;
 
@@ -174,10 +174,14 @@ statement_list
 
 statement
     : expression_statement
+    | iteration_statement
     | declaration_statement
     | function_call_statement
     | return_statement
+    | conditional_statement
     ;
+
+//
 
 import_statement
     : IDENTIFIER KW_EVOCARE SEMICOLON 
@@ -327,9 +331,59 @@ return_statement
     : expression KW_REDIRE SEMICOLON
     ;
 
+//
+
+conditional_statement
+    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE elseif_chain_opt else_opt
+    ;
+
+elseif_chain_opt
+    : /* vazio */
+    | elseif_chain
+    ;
+
+elseif_chain
+    : elseif_statement
+    | elseif_chain elseif_statement
+    ;
+
+elseif_statement
+    : LPAREN expression RPAREN KW_NON_SI LBRACE statement_list RBRACE
+    ;
+
+else_opt
+    : /* vazio */
+    | else_statement
+    ;
+
+else_statement
+    : KW_NON LBRACE statement_list RBRACE
+    ;
+
+// while() e for(; ;), 
+
+iteration_statement
+	: LPAREN expression RPAREN KW_PERSISTO LBRACE statement_list RBRACE
+	| LPAREN expression_statement expression_statement RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	| LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	| LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  LBRACE statement_list RBRACE
+	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	;
+
 
 %%
 
 void yyerror(const char *s) {
-    printf("%s[ERRO SINTÁTICO] %s na linha %d%s\n", YACC_COLOR_ERROR, s, yylineno, YACC_RESET_COLOR);
+    extern char *yytext; // Token atual (fornecido pelo Flex)
+    extern int yychar;   // Código do token atual (fornecido pelo Bison)
+
+    if (yychar == 0) {
+        // Fim do arquivo
+        printf("%s[ERRO SINTÁTICO] %s na linha %d: fim inesperado do arquivo%s\n", 
+               YACC_COLOR_ERROR, s, yylineno, YACC_RESET_COLOR);
+    } else {
+        // Exibe o token que causou o erro
+        printf("%s[ERRO SINTÁTICO] %s na linha %d: token inesperado '%s'%s\n", 
+               YACC_COLOR_ERROR, s, yylineno, yytext, YACC_RESET_COLOR);
+    }
 }
