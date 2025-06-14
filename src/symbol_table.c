@@ -51,13 +51,41 @@ Symbol* st_lookup(SymbolTable *table, const char *name) {
 
 void st_print(SymbolTable *table) {
     printf("\nTabela de Símbolos:\n");
-    printf("%-20s %-10s %-10s %-5s\n", "Nome", "Tipo", "Classe", "Linha");
+    printf("%-20s %-12s %-10s %-5s %-20s\n", "Nome", "Tipo Dado", "Classe", "Linha", "Valor");
     for (int i = 0; i < HASH_SIZE; i++) {
         Symbol *curr = table->table[i];
         while (curr) {
-            const char *kind_str = (curr->kind == SYM_VAR) ? "VAR" :
-                                   (curr->kind == SYM_FUNC) ? "FUNC" : "TYPE";
-            printf("%-20s %-10s %-10s %-5d\n", curr->name, curr->type, kind_str, curr->line_declared);
+            const char *kind_str =
+                (curr->kind == SYM_VAR)  ? "VAR"  :
+                (curr->kind == SYM_FUNC) ? "FUNC" :
+                (curr->kind == SYM_TYPE) ? "TYPE" : "OUTRO";
+
+            char valor_str[64] = "-";
+            if (curr->value != NULL) {
+                if (
+                    strcmp(curr->type, "atomus") == 0 ||
+                    strcmp(curr->type, "magnus") == 0 ||
+                    strcmp(curr->type, "minimus") == 0
+                ) {
+                    snprintf(valor_str, sizeof(valor_str), "%d", curr->value ? *(int*)curr->value : 0);
+                } else if (
+                    strcmp(curr->type, "fractio") == 0 ||
+                    strcmp(curr->type, "fragmentum") == 0
+                ) {
+                    snprintf(valor_str, sizeof(valor_str), "%f", curr->value ? *(float*)curr->value : 0.0f);
+                } else if (strcmp(curr->type, "quantum") == 0) {
+                    snprintf(valor_str, sizeof(valor_str), "%s", (*(int*)curr->value) ? "factum" : "fictum");
+                } else if (strcmp(curr->type, "symbolum") == 0) {
+                    snprintf(valor_str, sizeof(valor_str), "'%c'", curr->value ? *(char*)curr->value : ' ');
+                } else if (strcmp(curr->type, "scriptum") == 0) {
+                    snprintf(valor_str, sizeof(valor_str), "\"%s\"", curr->value ? (char*)curr->value : "");
+                } else {
+                    snprintf(valor_str, sizeof(valor_str), "%p", curr->value);
+                }
+            }
+
+            printf("%-20s %-12s %-10s %-5d %-20s\n",
+                   curr->name, curr->type, kind_str, curr->line_declared, valor_str);
             curr = curr->next;
         }
     }
