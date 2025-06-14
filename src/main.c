@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "symbol_table.h"
 
 extern int yyparse(void);
 extern FILE *yyin;
+SymbolTable symbol_table;
 
 int main(int argc, char **argv) {
+    st_init(&symbol_table);
     if (argc > 1) {
         yyin = fopen(argv[1], "r");
         if (!yyin) {
@@ -18,6 +21,9 @@ int main(int argc, char **argv) {
     }
 
     int result = yyparse();
+
+    st_print(&symbol_table);
+    st_free(&symbol_table);
 
     if (result == 0) {
         // Mensagem de sucesso já é emitida no parser (translation_unit)
