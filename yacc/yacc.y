@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../src/symbol_table.h"
 
 #define YACC_COLOR_ERROR     "\033[1;95m\033[4m"
 #define YACC_COLOR_CORRECT   "\033[1;92m"
 #define YACC_RESET_COLOR     "\033[0m"
 
+extern SymbolTable symbol_table;
 extern int yylineno;
 
 int yylex(void);
@@ -19,6 +21,7 @@ void yyerror(const char *s);
     int val_int;
     double val_float;
     char *str;
+    void *ptr;
 }
 
 %token KW_MAIN
@@ -102,6 +105,7 @@ void yyerror(const char *s);
 
 %token <str> IDENTIFIER
 
+
 %left OP_ADD
 %left OP_SUBTRACT
 %left OP_MULTIPLY
@@ -127,6 +131,14 @@ void yyerror(const char *s);
 %left OP_ASSIGN
 
 %start translation_unit
+
+%type <str> type_specifier
+%type <ptr> expression
+%type <ptr> constant
+%type <ptr> string
+%type <ptr> primary_expression
+%type <ptr> argument_list
+%type <ptr> unary_expression
 
 %%
 
@@ -178,23 +190,23 @@ expression_statement
     ;
 
 primary_expression
-    : IDENTIFIER
-    | constant
-    | string
-    | LPAREN expression RPAREN
+    : IDENTIFIER      { $$ = (void*)$1; }
+    | constant        { $$ = $1; }
+    | string          { $$ = $1; }
+    | LPAREN expression RPAREN { $$ = $2; }
     ;
 
 unary_expression
-    : primary_expression
-    | OP_LOGICAL_NOT unary_expression
-    | OP_DEREF_POINTER unary_expression
-    | OP_ADDR_OF unary_expression
-    | OP_SUBTRACT unary_expression
+    : primary_expression                { $$ = $1; }
+    | OP_LOGICAL_NOT unary_expression   { $$ = $2; }
+    | OP_DEREF_POINTER unary_expression { $$ = $2; }
+    | OP_ADDR_OF unary_expression       { $$ = $2; }
+    | OP_SUBTRACT unary_expression      { $$ = $2; }
     ;
 
 expression
-    : unary_expression
-    | expression OP_ASSIGN IDENTIFIER
+    : unary_expression { $$ = $1; }
+    | expression OP_ASSIGN IDENTIFIER { $$ = $1; }
     | expression OP_ACCESS_POINTER IDENTIFIER
     | expression OP_ACCESS_MEMBER IDENTIFIER
 
@@ -219,40 +231,66 @@ expression
     ;
 
 constant
-    : LIT_INT
-    | LIT_FLOAT
-    | LIT_FACTUM
-    | LIT_FICTUM
-    | LIT_CHAR
+    : LIT_INT    { int *v = malloc(sizeof(int)); *v = $1; $$ = v; }
+    | LIT_FLOAT  { double *v = malloc(sizeof(double)); *v = $1; $$ = v; }
+    | LIT_FACTUM { int *v = malloc(sizeof(int)); *v = 1; $$ = v; }
+    | LIT_FICTUM { int *v = malloc(sizeof(int)); *v = 0; $$ = v; }
+    | LIT_CHAR   { $$ = $1; }
     ;
 
 string
-    : LIT_STRING
+    : LIT_STRING { $$ = $1; }
     ;
 
 //
 
 declaration_statement
-    : IDENTIFIER type_specifier SEMICOLON
-    | expression OP_ASSIGN IDENTIFIER type_specifier SEMICOLON
+    : IDENTIFIER type_specifier SEMICOLON{
+          if (st_lookup(&symbol_table, $1) != NULL) {
+              yyerror("Variável já declarada!");
+          } else {
+              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, NULL);
+              printf("\033[1;32m[Debug] Declaração de Variável: %s | Tipo: %s | Linha: %d\033[0m\n", $1, $2, yylineno);
+          }
+          free($1);
+      }
+    | expression OP_ASSIGN IDENTIFIER type_specifier SEMICOLON{
+          if (st_lookup(&symbol_table, $3) != NULL) {
+              Symbol *sym = st_lookup(&symbol_table, $3);
+              if (sym->value) free(sym->value);
+              sym->value = $1;
+          } else {
+              st_insert(&symbol_table, $3, SYM_VAR, $4, yylineno, $1);
+              printf("\033[1;32m[Debug] Declaração de Variável com Inicialização: %s | Tipo: %s | Linha: %d\033[0m\n", $3, $4, yylineno);
+          }
+          free($3);
+      }
     ;
 
 type_specifier
-    : TYPE_ATOMUS
-    | TYPE_FRACTIO
-    | TYPE_FRAGMENTUM
-    | TYPE_MAGNUS
-    | TYPE_MINIMUS
-    | TYPE_QUANTUM
-    | TYPE_SCRIPTUM
-    | TYPE_SYMBOLUM
-    | TYPE_VACUUM
+    : TYPE_ATOMUS      { $$ = strdup("atomus"); }
+    | TYPE_FRACTIO     { $$ = strdup("fractio"); }
+    | TYPE_FRAGMENTUM  { $$ = strdup("fragmentum"); }
+    | TYPE_MAGNUS      { $$ = strdup("magnus"); }
+    | TYPE_MINIMUS     { $$ = strdup("minimus"); }
+    | TYPE_QUANTUM     { $$ = strdup("quantum"); }
+    | TYPE_SCRIPTUM    { $$ = strdup("scriptum"); }
+    | TYPE_SYMBOLUM    { $$ = strdup("symbolum"); }
+    | TYPE_VACUUM      { $$ = strdup("vacuum"); }
     ;
 
 //
 
 function_declaration_statement
-    : KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier LBRACE statement_list RBRACE
+    : KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier LBRACE statement_list RBRACE {
+          if (st_lookup(&symbol_table, $5) != NULL) {
+              yyerror("Função já declarada!");
+          } else {
+              st_insert(&symbol_table, $5, SYM_FUNC, $7, yylineno, NULL);
+              printf("\033[1;32m[Debug] Declaração de Função: %s | Tipo Retorno: %s | Linha: %d\033[0m\n", $5, $7, yylineno);
+          }
+          free($5);
+      }
 
 parameter_list
     : /* vazio */
@@ -261,7 +299,15 @@ parameter_list
     ;
 
 parameter
-    : IDENTIFIER type_specifier
+    : IDENTIFIER type_specifier {
+          if (st_lookup(&symbol_table, $1) != NULL) {
+              yyerror("Parâmetro já declarado!");
+          } else {
+              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, $1);
+              printf("\033[1;32m[Debug] Parâmetro: %s | Tipo: %s | Linha: %d\033[0m\n", $1, $2, yylineno);
+          }
+          free($1);
+      }
     ;
 
 //
@@ -270,9 +316,9 @@ function_call_statement
     : LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
 
 argument_list
-    : /* vazio */
-    | expression
-    | argument_list PIPE expression
+    : /* vazio */ { $$ = NULL; }
+    | expression  { $$ = $1; }
+    | argument_list PIPE expression { /* ... */ }
     ;
 
 //
