@@ -99,8 +99,8 @@ STRING          \"([^\\\"\n]|\\.)*\"
 "£"                 { return OP_ADDR_OF; }
 "°"                 { return OP_DEREF_POINTER; }
 
-"<<"                { return LOARRAY; }
-">>"                { return ROARRAY; }
+"<<"                { return LANGLE; }
+">>"                { return RANGLE; }
 "->"                { return COLON; }
 "("                 { return LPAREN; }
 ")"                 { return RPAREN; }

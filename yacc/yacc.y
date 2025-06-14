@@ -91,8 +91,8 @@ void yyerror(const char *s);
 %token OP_ADDR_OF
 %token OP_DEREF_POINTER
 
-%token LOARRAY
-%token ROARRAY
+%token LANGLE
+%token RANGLE
 %token COLON
 %token LPAREN
 %token RPAREN
@@ -175,6 +175,7 @@ statement_list
 statement
     : expression_statement
     | iteration_statement
+    | function_input_output
     | declaration_statement
     | function_call_statement
     | return_statement
@@ -353,6 +354,22 @@ iteration_statement
 	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
 	;
 
+// Funções pontas (lectura / revelare)
+
+function_input_output
+    : identifier_langle_list KW_LECTURA SEMICOLON
+    | identifier_rangle_list KW_REVELARE SEMICOLON
+    ;
+
+identifier_langle_list
+    : IDENTIFIER LANGLE
+    | identifier_langle_list IDENTIFIER LANGLE
+    ;
+
+identifier_rangle_list
+    : IDENTIFIER RANGLE
+    | identifier_rangle_list IDENTIFIER RANGLE
+    ;
 
 %%
 

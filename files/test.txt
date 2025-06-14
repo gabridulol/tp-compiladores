@@ -77,6 +77,10 @@ main () Alchemia {
     (x * 2) --> dobro atomus;
     (x ** 3) --> cubo atomus;
 
+    §§ Input e Output
+    a << b << c << lectura;
+    x >> y >> z >> revelare;
+
     §§ Acesso a membros e ponteiros
     objeto.membro --> valor atomus;
     ponteiro->membro --> valor atomus;
