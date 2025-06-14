@@ -1,27 +1,9 @@
-§§ Declara um número como 'atomus' para ser usado na recursão
-n atomus;
-resultado atomus;
-
-§§ Função recursiva para calcular o n-ésimo Fibonacci
-formula (n atomus) fibonacci --> atomus {
-   
-   §§ Caso base: se n <= 1, retorna n
-   (n <= 1) si {
-      n redire;
-   }
-
-   1abs atomus;
-   
-   §§ Passo recursivo: fibonacci(n - 1) + fibonacci(n - 2)
-   (n - 1) fibonacci --> anterior1;
-   (n - 2) fibonacci --> anterior2;
-   (anterior1 + anterior2) redire;
-}
-
-§§ Início do Programa Principal
-
-5 --> n;
-(n) fibonacci --> resultado;
-
-§§ Exibir resultado
-revelare << resultado >> revelare
+a + b;
+x --> y;
+(3 + 5) * z;
+factum == Fictum;
+a et c;
+("string") --> identificador;
+n * (m + 2) --> valor;
+°ponteiro --> var;
+£var --> ptr;

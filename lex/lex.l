@@ -2,14 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../yacc/yacc.tab.h"
 
-#define COLOR_ERROR     "\033[1;91m\033[4m"
-#define RESET_COLOR     "\033[0m"
+#define LEX_COLOR_ERROR     "\033[1;91m\033[4m"
+#define LEX_RESET_COLOR     "\033[0m"
 
 %}
 
 %option noyywrap
+%option yylineno
 
 DELIM           [ \t\n]
 WS              {DELIM}+
@@ -20,9 +22,9 @@ LETTER          [a-zA-Z_]
 
 INT             (\+|\-)?{DIGIT}+
 REAL            (\+|\-)?{DIGIT}+\.{DIGIT}+
-ID              {LETTER}({LETTER}|{DIGIT})*
-CHAR            '\\?.'
-STRING          "([^\"\\n]|(\\.))*"
+IDENTIFIER      {LETTER}({LETTER}|{DIGIT})*
+CHAR            \'([^\\'\n]|\\.)\'
+STRING          \"([^\\\"\n]|\\.)*\"
 
 %%
 
@@ -31,19 +33,19 @@ STRING          "([^\"\\n]|(\\.))*"
 {COMMENT_BLOCK}     { /* ignora bloco de comentário */ }
 
 "axiom"             { return KW_AXIOM; }
-"aut"               { return KW_AUT; }
+"aut"               { return OP_LOGICAL_XOR; }
 "casus"             { return KW_CASUS; }
 "continuum"         { return KW_CONTINUUM; }
 "designare"         { return KW_DESIGNARE; }
 "enumerare"         { return KW_ENUMERARE; }
-"et"                { return KW_ET; }
+"et"                { return OP_LOGICAL_AND; }
 "formula"           { return KW_FORMULA; }
 "homunculus"        { return KW_HOMUNCULUS; }
 "iterare"           { return KW_ITERARE; }
 "lectura"           { return KW_LECTURA; }
 "magnitudo"         { return KW_MAGNITUDO; }
 "mol"               { return KW_MOL; }
-"ne"                { return KW_NE; }
+"ne"                { return OP_LOGICAL_NOT; }
 "non si"            { return KW_NON_SI; }
 "non"               { return KW_NON; }
 "persisto"          { return KW_PERSISTO; }
@@ -51,7 +53,7 @@ STRING          "([^\"\\n]|(\\.))*"
 "revelare"          { return KW_REVELARE; }
 "ruptio"            { return KW_RUPTIO; }
 "si"                { return KW_SI; }
-"vel"               { return KW_VEL; }
+"vel"               { return OP_LOGICAL_OR; }
 "vertere"           { return KW_VERTERE; }
 
 "atomus"            { return TYPE_ATOMUS; }
@@ -95,7 +97,7 @@ STRING          "([^\"\\n]|(\\.))*"
 "°"                 { return OP_DEREF_POINTER; }
 
 "<<"                { return LOARRAY; }
-">>"                { return LOARRAY; }
+">>"                { return ROARRAY; }
 "->"                { return COLON; }
 "("                 { return LPAREN; }
 ")"                 { return RPAREN; }
@@ -106,12 +108,8 @@ STRING          "([^\"\\n]|(\\.))*"
 "|"                 { return PIPE; }
 ";"                 { return SEMICOLON; }
 
-{ID}                { yylval.str = strdup(yytext); return IDENTIFIER; }
+{IDENTIFIER}        { yylval.str = strdup(yytext); return IDENTIFIER; }
 
-.                   { printf("%s[ERRO LÉXICO] Token '%s' não reconhecido na linha %d%s\n", COLOR_ERROR, yytext, yylineno, RESET_COLOR); }
+.                   { printf("%s[ERRO LÉXICO] Token '%s' não reconhecido na linha %d%s\n", LEX_COLOR_ERROR, yytext, yylineno, LEX_RESET_COLOR); }
 
 %%
-
-int yywrap(void) {
-    return 1;
-}

@@ -13,6 +13,7 @@ SRC_DIR = src
 LEX_SRC = $(LEX_DIR)/lex.l
 LEX_DEBUG_SRC = $(LEX_DIR)/lex_debug.l
 YACC_SRC = $(YACC_DIR)/yacc.y
+MAIN_SRC = $(SRC_DIR)/main.c
 SYMBOL_TABLE_SRC_C = $(SRC_DIR)/symbol_table.c
 SYMBOL_TABLE_SRC_H = $(SRC_DIR)/symbol_table.h
 
@@ -49,9 +50,10 @@ $(LEX_DEBUG_EXEC): $(LEX_DEBUG_SRC) | $(BIN_DIR)
 	$(CC) $(LEX_DEBUG_GEN) -o $(LEX_DEBUG_EXEC)
 
 # Compilação do compilador completo (yacc + lex)
-$(COMPILER_EXEC): $(YACC_HDR) $(LEX_SRC) $(SYMBOL_TABLE_SRC_C) | $(BIN_DIR)
+$(COMPILER_EXEC): $(YACC_HDR) $(LEX_SRC) $(SYMBOL_TABLE_SRC_C) $(MAIN_SRC) | $(BIN_DIR)
 	$(FLEX) -o $(LEX_GEN) $(LEX_SRC)
-	$(CC) $(YACC_GEN) $(LEX_GEN) $(SYMBOL_TABLE_SRC_C) -o $(COMPILER_EXEC) -I $(YACC_DIR) -I $(SRC_DIR) -lfl
+	$(CC) $(YACC_GEN) $(LEX_GEN) $(SYMBOL_TABLE_SRC_C) $(MAIN_SRC) -o $(COMPILER_EXEC) -I $(YACC_DIR) -I $(SRC_DIR) -lfl
+
 
 # Execução
 run:

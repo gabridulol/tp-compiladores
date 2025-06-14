@@ -17,16 +17,7 @@ int indent_level = 0;
 int line_number = 1;
 int column_number = 1;
 
-void print_token(const char* color, const char* text) {
-    if (line_number != last_line_reported) {
-        printf("\n[%d] ", line_number);
-        for (int i = 0; i < indent_level; i++) {
-            printf("    ");
-        }
-        last_line_reported = line_number;
-    }
-    printf("%s%s%s ", color, text, RESET_COLOR);
-}
+void print_token(const char* color, const char* text);
 %}
 
 %option noyywrap
@@ -43,8 +34,8 @@ LETTER      [a-zA-Z_]
 INT         (\+|\-)?{DIGIT}+
 REAL        (\+|\-)?{DIGIT}+\.{DIGIT}+
 ID          {LETTER}({LETTER}|{DIGIT})*
-CHAR        '\\?.'
-STRING      "([^\"\\n]|(\\.))*"
+CHAR        \'([^\\'\n]|\\.)\'
+STRING      \"([^\\\"\n]|\\.)*\"
 
 %%
 {WS} {
@@ -136,6 +127,17 @@ STRING      "([^\"\\n]|(\\.))*"
 
 .                       { print_token(COLOR_ERROR, yytext); }
 %%
+
+void print_token(const char* color, const char* text) {
+    if (line_number != last_line_reported) {
+        printf("\n[%d] ", line_number);
+        for (int i = 0; i < indent_level; i++) {
+            printf("    ");
+        }
+        last_line_reported = line_number;
+    }
+    printf("%s%s%s ", color, text, RESET_COLOR);
+}
 
 int main(void) {
     yylex();
