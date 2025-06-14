@@ -162,6 +162,7 @@ statement_list
 
 statement
     : expression_statement
+    | iteration_statement
     | declaration_statement
     | function_call_statement
     | return_statement
@@ -313,12 +314,30 @@ else_statement
     : KW_NON LBRACE statement_list RBRACE
     ;
 
-//
+// while() e for(; ;), 
 
+iteration_statement
+	: LPAREN expression RPAREN KW_PERSISTO LBRACE statement_list RBRACE
+	| LPAREN expression_statement expression_statement RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	| LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	| LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  LBRACE statement_list RBRACE
+	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	;
 
 
 %%
 
 void yyerror(const char *s) {
-    printf("%s[ERRO SINTÁTICO] %s na linha %d%s\n", YACC_COLOR_ERROR, s, yylineno, YACC_RESET_COLOR);
+    extern char *yytext; // Token atual (fornecido pelo Flex)
+    extern int yychar;   // Código do token atual (fornecido pelo Bison)
+
+    if (yychar == 0) {
+        // Fim do arquivo
+        printf("%s[ERRO SINTÁTICO] %s na linha %d: fim inesperado do arquivo%s\n", 
+               YACC_COLOR_ERROR, s, yylineno, YACC_RESET_COLOR);
+    } else {
+        // Exibe o token que causou o erro
+        printf("%s[ERRO SINTÁTICO] %s na linha %d: token inesperado '%s'%s\n", 
+               YACC_COLOR_ERROR, s, yylineno, yytext, YACC_RESET_COLOR);
+    }
 }

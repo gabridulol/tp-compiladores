@@ -1,3 +1,75 @@
-programa () Alchemia {
-    ;
+§§ Importação de módulos
+io evocare;
+
+§§ Declaração de funções
+formula () saudacao --> scriptum {
+    "Olá, mundo!" redire;
+}
+
+formula (x atomus | y atomus) soma --> atomus {
+    (x + y) redire;
+}
+
+§§ Função principal
+main () Alchemia {
+    §§ Declaração de variáveis
+    (42) --> x atomus;
+    (x + 1) --> x;
+
+    §§ Chamada de função sem argumentos
+    () saudacao;
+
+    §§ Chamada de função com argumentos
+    (x | 10) soma;
+
+    §§ Estruturas condicionais
+    (x > 0) si {
+        "Positivo" redire;
+    } (x < 0) non si {
+        "Negativo" redire;
+    } 
+    
+    non {
+        "Zero" redire;
+    }
+
+    §§ Estruturas de repetição
+    (x > 0) persisto {
+        x - 1 --> x atomus;
+    }
+
+    (0 --> i atomus; i < 10; i + 1 --> i) iterare {
+        (i == 10) si {
+            10 redire;
+        }
+    }
+
+    §§ Operadores lógicos e relacionais
+    ((x > 0) et (x < 10)) si {
+        "Entre 0 e 10" redire;
+    }
+
+    ((x == 0) || (x == 10)) si {
+        "E zero ou dez" redire;
+    }
+
+    ((x > 0) aut (x < 0)) si {
+        "Apenas uma condição é verdadeira" redire;
+    }
+
+    §§ Operadores matemáticos
+    (x + 1) --> resultado atomus;
+    (x * 2) --> dobro atomus;
+    (x ** 3) --> cubo atomus;
+
+    §§ Acesso a membros e ponteiros
+    objeto.membro --> valor atomus;
+    ponteiro->membro --> valor atomus;
+
+    §§ Declaração e uso de arrays
+    valores[10] --> array atomus;
+    array[0] --> primeiro atomus;
+
+    §§ Retorno de valores
+    "Fim do programa" redire;
 }
