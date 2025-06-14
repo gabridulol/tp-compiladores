@@ -13,11 +13,15 @@ int yylex(void);
 void yyerror(const char *s);
 %}
 
+%debug
+
 %union {
     int val_int;
     double val_float;
     char *str;
 }
+
+%token KW_MAIN
 
 %token KW_AXIOM
 %token KW_AUT
@@ -26,6 +30,7 @@ void yyerror(const char *s);
 %token KW_DESIGNARE
 %token KW_ENUMERARE
 %token KW_ET
+%token KW_EVOCARE
 %token KW_FORMULA
 %token KW_HOMUNCULUS
 %token KW_ITERARE
@@ -126,7 +131,26 @@ void yyerror(const char *s);
 %%
 
 translation_unit
-    : statement_list
+    : global alchemia
+    ;
+
+//
+
+global
+    : global_statement
+    | global global_statement
+    ;
+
+global_statement
+    : import_statement
+    | declaration_statement
+    | function_declaration_statement
+    ;
+
+//
+
+alchemia
+    : IDENTIFIER LPAREN RPAREN KW_MAIN LBRACE statement_list RBRACE
     ;
 
 statement_list
@@ -134,13 +158,66 @@ statement_list
     | statement_list statement
     ;
 
+//
+
 statement
-    : expression SEMICOLON {
-        printf("%s[SINTATICAMENTE CORRETO]%s\n", YACC_COLOR_CORRECT, YACC_RESET_COLOR);
-    }
+    : expression_statement
+    | declaration_statement
+    | function_call_statement
+    | return_statement
     ;
 
-/* === Constantes === */
+import_statement
+    : IDENTIFIER KW_EVOCARE SEMICOLON 
+    ;
+
+//
+
+expression_statement
+    : expression SEMICOLON
+    ;
+
+primary_expression
+    : IDENTIFIER
+    | constant
+    | string
+    | LPAREN expression RPAREN
+    ;
+
+unary_expression
+    : primary_expression
+    | OP_LOGICAL_NOT unary_expression
+    | OP_DEREF_POINTER unary_expression
+    | OP_ADDR_OF unary_expression
+    | OP_SUBTRACT unary_expression
+    ;
+
+expression
+    : unary_expression
+    | expression OP_ASSIGN IDENTIFIER
+    | expression OP_ACCESS_POINTER IDENTIFIER
+    | expression OP_ACCESS_MEMBER IDENTIFIER
+
+    | expression OP_LOGICAL_XOR unary_expression
+    | expression OP_LOGICAL_OR unary_expression
+    | expression OP_LOGICAL_AND unary_expression
+
+    | expression OP_EQUAL unary_expression
+    | expression OP_NOT_EQUAL unary_expression
+    | expression OP_LESS_THAN unary_expression
+    | expression OP_GREATER_THAN unary_expression
+    | expression OP_LESS_EQUAL unary_expression
+    | expression OP_GREATER_EQUAL unary_expression
+
+    | expression OP_ADD unary_expression
+    | expression OP_SUBTRACT unary_expression
+    | expression OP_MULTIPLY unary_expression
+    | expression OP_DIVIDE unary_expression
+    | expression OP_MODULUS unary_expression
+    | expression OP_EXP unary_expression
+    | expression OP_INTEGER_DIVIDE unary_expression
+    ;
+
 constant
     : LIT_INT
     | LIT_FLOAT
@@ -153,53 +230,57 @@ string
     : LIT_STRING
     ;
 
-/* === Expressão primária: unidades atômicas === */
-primary_expression
-    : IDENTIFIER
-    | constant
-    | string
-    | LPAREN expression RPAREN
+//
+
+declaration_statement
+    : IDENTIFIER type_specifier SEMICOLON
+    | expression OP_ASSIGN IDENTIFIER type_specifier SEMICOLON
     ;
 
-/* === Expressão unária: operadores que precedem === */
-unary_expression
-    : primary_expression
-    | OP_LOGICAL_NOT unary_expression
-    | OP_DEREF_POINTER unary_expression
-    | OP_ADDR_OF unary_expression
-    | OP_SUBTRACT unary_expression   // unário
+type_specifier
+    : TYPE_ATOMUS
+    | TYPE_FRACTIO
+    | TYPE_FRAGMENTUM
+    | TYPE_MAGNUS
+    | TYPE_MINIMUS
+    | TYPE_QUANTUM
+    | TYPE_SCRIPTUM
+    | TYPE_SYMBOLUM
+    | TYPE_VACUUM
     ;
 
-/* === Expressão composta: operadores binários ===
-     * Sem precedência: tudo é analisado da esquerda p/ direita
-     * Parênteses forçam precedência */
-expression
-    : unary_expression
-    | expression OP_ADD unary_expression
-    | expression OP_SUBTRACT unary_expression
-    | expression OP_MULTIPLY unary_expression
-    | expression OP_DIVIDE unary_expression
-    | expression OP_MODULUS unary_expression
-    | expression OP_EXP unary_expression
-    | expression OP_INTEGER_DIVIDE unary_expression
+//
 
-    | expression OP_EQUAL unary_expression
-    | expression OP_NOT_EQUAL unary_expression
-    | expression OP_LESS_THAN unary_expression
-    | expression OP_GREATER_THAN unary_expression
-    | expression OP_LESS_EQUAL unary_expression
-    | expression OP_GREATER_EQUAL unary_expression
+function_declaration_statement
+    : KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier LBRACE statement_list RBRACE
 
-    | expression OP_LOGICAL_AND unary_expression
-    | expression OP_LOGICAL_OR unary_expression
-    | expression OP_LOGICAL_XOR unary_expression
-    | expression OP_LOGICAL_NOT unary_expression
-
-    | expression OP_ACCESS_MEMBER IDENTIFIER
-    | expression OP_ACCESS_POINTER IDENTIFIER
-
-    | expression OP_ASSIGN IDENTIFIER   // ex: valor --> x;
+parameter_list
+    : /* vazio */
+    | parameter
+    | parameter_list PIPE parameter
     ;
+
+parameter
+    : IDENTIFIER type_specifier
+    ;
+
+//
+
+function_call_statement
+    : LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
+
+argument_list
+    : /* vazio */
+    | expression
+    | argument_list PIPE expression
+    ;
+
+//
+
+return_statement
+    : expression KW_REDIRE SEMICOLON
+    ;
+
 
 %%
 

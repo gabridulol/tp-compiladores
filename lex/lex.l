@@ -32,6 +32,8 @@ STRING          \"([^\\\"\n]|\\.)*\"
 {COMMENT_LINE}      { /* ignora comentário de linha */ }
 {COMMENT_BLOCK}     { /* ignora bloco de comentário */ }
 
+"Alchemia"          { return KW_MAIN; }
+
 "axiom"             { return KW_AXIOM; }
 "aut"               { return OP_LOGICAL_XOR; }
 "casus"             { return KW_CASUS; }
@@ -39,6 +41,7 @@ STRING          \"([^\\\"\n]|\\.)*\"
 "designare"         { return KW_DESIGNARE; }
 "enumerare"         { return KW_ENUMERARE; }
 "et"                { return OP_LOGICAL_AND; }
+"evocare"           { return KW_EVOCARE; }
 "formula"           { return KW_FORMULA; }
 "homunculus"        { return KW_HOMUNCULUS; }
 "iterare"           { return KW_ITERARE; }

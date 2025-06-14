@@ -48,6 +48,8 @@ STRING      \"([^\\\"\n]|\\.)*\"
 {COMMENT_LINE}          { print_token(COLOR_COMMENT, yytext); }
 {COMMENT_BLOCK}         { print_token(COLOR_COMMENT, yytext); }
 
+"Alchemia"              { print_token(COLOR_KEYWORD, yytext); }
+
 "axiom"                 { print_token(COLOR_KEYWORD, yytext); }
 "aut"                   { print_token(COLOR_KEYWORD, yytext); }
 "casus"                 { print_token(COLOR_KEYWORD, yytext); }
@@ -55,6 +57,7 @@ STRING      \"([^\\\"\n]|\\.)*\"
 "designare"             { print_token(COLOR_KEYWORD, yytext); }
 "enumerare"             { print_token(COLOR_KEYWORD, yytext); }
 "et"                    { print_token(COLOR_KEYWORD, yytext); }
+"evocare"               { print_token(COLOR_KEYWORD, yytext); }
 "formula"               { print_token(COLOR_KEYWORD, yytext); }
 "homunculus"            { print_token(COLOR_KEYWORD, yytext); }
 "iterare"               { print_token(COLOR_KEYWORD, yytext); }

@@ -1,9 +1,11 @@
-a + b;
-x --> y;
-(3 + 5) * z;
-factum == Fictum;
-a et c;
-("string") --> identificador;
-n * (m + 2) --> valor;
-°ponteiro --> var;
-£var --> ptr;
+io evocare;
+
+formula () saudacao --> scriptum {
+    "Olá, mundo!" redire;
+}
+
+main () Alchemia {
+    (42) --> x atomus;
+    (x + 1) --> x;
+    () saudacao;
+}
