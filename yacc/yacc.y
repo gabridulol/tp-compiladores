@@ -334,30 +334,13 @@ return_statement
 //
 
 conditional_statement
-    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE elseif_chain_opt else_opt
+    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE
+    | LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE conditional_non_statement
     ;
 
-elseif_chain_opt
-    : /* vazio */
-    | elseif_chain
-    ;
-
-elseif_chain
-    : elseif_statement
-    | elseif_chain elseif_statement
-    ;
-
-elseif_statement
-    : LPAREN expression RPAREN KW_NON_SI LBRACE statement_list RBRACE
-    ;
-
-else_opt
-    : /* vazio */
-    | else_statement
-    ;
-
-else_statement
+conditional_non_statement
     : KW_NON LBRACE statement_list RBRACE
+    | KW_NON conditional_statement
     ;
 
 // while() e for(; ;), 

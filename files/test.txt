@@ -25,12 +25,27 @@ main () Alchemia {
     §§ Estruturas condicionais
     (x > 0) si {
         "Positivo" redire;
-    } (x < 0) non si {
+    } 
+
+    non {
+        (x < 0) si {
+            "Negativo" redire;
+        } 
+
+        (x < 0) si {
+            "Negativo" redire;
+        } 
+
+        non {
+        "Zero" redire;
+        }
+    }
+    
+    (x < 0) si {
         "Negativo" redire;
     } 
-    
-    non {
-        "Zero" redire;
+    non (x == 0) si {
+        "Nulo" redire;
     }
 
     §§ Estruturas de repetição
