@@ -1,4 +1,5 @@
 bin/
+obj/
 lex_debug.yy.c
 lex.yy.c
 yacc.tab.c

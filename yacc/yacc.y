@@ -4,18 +4,15 @@
 #include <string.h>
 #include "../src/symbol_table.h"
 
-#define YACC_COLOR_ERROR     "\033[1;95m\033[4m"
-#define YACC_COLOR_CORRECT   "\033[1;92m"
-#define YACC_RESET_COLOR     "\033[0m"
+#include "../src/source_printer.h"
+#include "../src/symbol_table.h"
 
 extern SymbolTable symbol_table;
 extern int yylineno;
-
 int yylex(void);
+
 void yyerror(const char *s);
 %}
-
-%debug
 
 %union {
     int val_int;
@@ -104,6 +101,8 @@ void yyerror(const char *s);
 %token SEMICOLON
 
 %token <str> IDENTIFIER
+
+%token LEX_ERROR
 
 
 %left OP_ADD
@@ -372,18 +371,3 @@ identifier_rangle_list
     ;
 
 %%
-
-void yyerror(const char *s) {
-    extern char *yytext; // Token atual (fornecido pelo Flex)
-    extern int yychar;   // Código do token atual (fornecido pelo Bison)
-
-    if (yychar == 0) {
-        // Fim do arquivo
-        printf("%s[ERRO SINTÁTICO] %s na linha %d: fim inesperado do arquivo%s\n", 
-               YACC_COLOR_ERROR, s, yylineno, YACC_RESET_COLOR);
-    } else {
-        // Exibe o token que causou o erro
-        printf("%s[ERRO SINTÁTICO] %s na linha %d: token inesperado '%s'%s\n", 
-               YACC_COLOR_ERROR, s, yylineno, yytext, YACC_RESET_COLOR);
-    }
-}
