@@ -4,10 +4,9 @@
 #include <string.h>
 
 #include "../yacc/yacc.tab.h"
+#include "../src/source_printer.h"
 
-#define LEX_COLOR_ERROR     "\033[1;91m\033[4m"
-#define LEX_RESET_COLOR     "\033[0m"
-
+extern int yylineno;
 %}
 
 %option noyywrap
@@ -29,90 +28,95 @@ STRING          \"([^\\\"\n]|\\.)*\"
 %%
 
 {WS}                { /* ignora espaços e quebras */ }
-{COMMENT_LINE}      { /* ignora comentário de linha */ }
-{COMMENT_BLOCK}     { /* ignora bloco de comentário */ }
 
-"Alchemia"          { return KW_MAIN; }
+{COMMENT_LINE}      { token_printer(COLOR_COMMENT, yytext); }
+{COMMENT_BLOCK}     { token_printer(COLOR_COMMENT, yytext); }
 
-"axiom"             { return KW_AXIOM; }
-"aut"               { return OP_LOGICAL_XOR; }
-"casus"             { return KW_CASUS; }
-"continuum"         { return KW_CONTINUUM; }
-"designare"         { return KW_DESIGNARE; }
-"enumerare"         { return KW_ENUMERARE; }
-"et"                { return OP_LOGICAL_AND; }
-"evocare"           { return KW_EVOCARE; }
-"formula"           { return KW_FORMULA; }
-"homunculus"        { return KW_HOMUNCULUS; }
-"iterare"           { return KW_ITERARE; }
-"lectura"           { return KW_LECTURA; }
-"magnitudo"         { return KW_MAGNITUDO; }
-"mol"               { return KW_MOL; }
-"ne"                { return OP_LOGICAL_NOT; }
-"non si"            { return KW_NON_SI; }
-"non"               { return KW_NON; }
-"persisto"          { return KW_PERSISTO; }
-"redire"            { return KW_REDIRE; }
-"revelare"          { return KW_REVELARE; }
-"ruptio"            { return KW_RUPTIO; }
-"si"                { return KW_SI; }
-"vel"               { return OP_LOGICAL_OR; }
-"vertere"           { return KW_VERTERE; }
+"Alchemia"          { token_printer(COLOR_KEYWORD, yytext); return KW_MAIN; }
 
-"atomus"            { return TYPE_ATOMUS; }
-"fractio"           { return TYPE_FRACTIO; }
-"fragmentum"        { return TYPE_FRAGMENTUM; }
-"magnus"            { return TYPE_MAGNUS; }
-"minimus"           { return TYPE_MINIMUS; }
-"quantum"           { return TYPE_QUANTUM; }
-"scriptum"          { return TYPE_SCRIPTUM; }
-"symbolum"          { return TYPE_SYMBOLUM; }
-"vacuum"            { return TYPE_VACUUM; }
+"axiom"             { token_printer(COLOR_KEYWORD, yytext); return KW_AXIOM; }
+"aut"               { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_XOR; }
+"casus"             { token_printer(COLOR_KEYWORD, yytext); return KW_CASUS; }
+"continuum"         { token_printer(COLOR_KEYWORD, yytext); return KW_CONTINUUM; }
+"designare"         { token_printer(COLOR_KEYWORD, yytext); return KW_DESIGNARE; }
+"enumerare"         { token_printer(COLOR_KEYWORD, yytext); return KW_ENUMERARE; }
+"et"                { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_AND; }
+"evocare"           { token_printer(COLOR_KEYWORD, yytext); return KW_EVOCARE; }
+"formula"           { token_printer(COLOR_KEYWORD, yytext); return KW_FORMULA; }
+"homunculus"        { token_printer(COLOR_KEYWORD, yytext); return KW_HOMUNCULUS; }
+"iterare"           { token_printer(COLOR_KEYWORD, yytext); return KW_ITERARE; }
+"lectura"           { token_printer(COLOR_KEYWORD, yytext); return KW_LECTURA; }
+"magnitudo"         { token_printer(COLOR_KEYWORD, yytext); return KW_MAGNITUDO; }
+"mol"               { token_printer(COLOR_KEYWORD, yytext); return KW_MOL; }
+"ne"                { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_NOT; }
+"non si"            { token_printer(COLOR_KEYWORD, yytext); return KW_NON_SI; }
+"non"               { token_printer(COLOR_KEYWORD, yytext); return KW_NON; }
+"persisto"          { token_printer(COLOR_KEYWORD, yytext); return KW_PERSISTO; }
+"redire"            { token_printer(COLOR_KEYWORD, yytext); return KW_REDIRE; }
+"revelare"          { token_printer(COLOR_KEYWORD, yytext); return KW_REVELARE; }
+"ruptio"            { token_printer(COLOR_KEYWORD, yytext); return KW_RUPTIO; }
+"si"                { token_printer(COLOR_KEYWORD, yytext); return KW_SI; }
+"vel"               { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_OR; }
+"vertere"           { token_printer(COLOR_KEYWORD, yytext); return KW_VERTERE; }
 
-"Factum"            { return LIT_FACTUM; }
-"Fictum"            { return LIT_FICTUM; }
-{REAL}              { yylval.val_float = atof(yytext); return LIT_FLOAT; }
-{INT}               { yylval.val_int = atoi(yytext); return LIT_INT; }
-{CHAR}              { yylval.str = strdup(yytext); return LIT_CHAR; }
-{STRING}            { yylval.str = strdup(yytext); return LIT_STRING; }
+"atomus"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_ATOMUS; }
+"fractio"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_FRACTIO; }
+"fragmentum"        { token_printer(COLOR_KEYWORD, yytext); return TYPE_FRAGMENTUM; }
+"magnus"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_MAGNUS; }
+"minimus"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_MINIMUS; }
+"quantum"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_QUANTUM; }
+"scriptum"          { token_printer(COLOR_KEYWORD, yytext); return TYPE_SCRIPTUM; }
+"symbolum"          { token_printer(COLOR_KEYWORD, yytext); return TYPE_SYMBOLUM; }
+"vacuum"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_VACUUM; }
 
-"==>"               { return OP_ACCESS_POINTER; }
-"-->"               { return OP_ASSIGN; }
-">="                { return OP_GREATER_EQUAL; }
-"<="                { return OP_LESS_EQUAL; }
-"=="                { return OP_EQUAL; }
-"!="                { return OP_NOT_EQUAL; }
-"//"                { return OP_INTEGER_DIVIDE; }
-"**"                { return OP_EXP; }
-"&&"                { return OP_LOGICAL_AND; }
-"||"                { return OP_LOGICAL_OR; }
-"*"                 { return OP_MULTIPLY; }
-"+"                 { return OP_ADD; }
-"-"                 { return OP_SUBTRACT; }
-"/"                 { return OP_DIVIDE; }
-"%"                 { return OP_MODULUS; }
-"."                 { return OP_ACCESS_MEMBER; }
-"!"                 { return OP_LOGICAL_NOT; }
-">"                 { return OP_GREATER_THAN; }
-"<"                 { return OP_LESS_THAN; }
-"^"                 { return OP_LOGICAL_XOR; }
-"£"                 { return OP_ADDR_OF; }
-"°"                 { return OP_DEREF_POINTER; }
+"Factum"            { token_printer(COLOR_LITERAL, yytext); return LIT_FACTUM; }
+"Fictum"            { token_printer(COLOR_LITERAL, yytext); return LIT_FICTUM; }
+{REAL}              { token_printer(COLOR_LITERAL, yytext); yylval.val_float = atof(yytext); return LIT_FLOAT; }
+{INT}               { token_printer(COLOR_LITERAL, yytext); yylval.val_int = atoi(yytext); return LIT_INT; }
+{CHAR}              { token_printer(COLOR_LITERAL, yytext); yylval.str = strdup(yytext); return LIT_CHAR; }
+{STRING}            { token_printer(COLOR_LITERAL, yytext); yylval.str = strdup(yytext); return LIT_STRING; }
 
-"<<"                { return LOARRAY; }
-">>"                { return ROARRAY; }
-"->"                { return COLON; }
-"("                 { return LPAREN; }
-")"                 { return RPAREN; }
-"["                 { return LBRACKET; }
-"]"                 { return RBRACKET; }
-"{"                 { return LBRACE; }
-"}"                 { return RBRACE; }
-"|"                 { return PIPE; }
-";"                 { return SEMICOLON; }
+"==>"               { token_printer(COLOR_OPERATOR, yytext); return OP_ACCESS_POINTER; }
+"-->"               { token_printer(COLOR_OPERATOR, yytext); return OP_ASSIGN; }
+">="                { token_printer(COLOR_OPERATOR, yytext); return OP_GREATER_EQUAL; }
+"<="                { token_printer(COLOR_OPERATOR, yytext); return OP_LESS_EQUAL; }
+"=="                { token_printer(COLOR_OPERATOR, yytext); return OP_EQUAL; }
+"!="                { token_printer(COLOR_OPERATOR, yytext); return OP_NOT_EQUAL; }
+"//"                { token_printer(COLOR_OPERATOR, yytext); return OP_INTEGER_DIVIDE; }
+"**"                { token_printer(COLOR_OPERATOR, yytext); return OP_EXP; }
+"&&"                { token_printer(COLOR_OPERATOR, yytext); return OP_LOGICAL_AND; }
+"||"                { token_printer(COLOR_OPERATOR, yytext); return OP_LOGICAL_OR; }
+"*"                 { token_printer(COLOR_OPERATOR, yytext); return OP_MULTIPLY; }
+"+"                 { token_printer(COLOR_OPERATOR, yytext); return OP_ADD; }
+"-"                 { token_printer(COLOR_OPERATOR, yytext); return OP_SUBTRACT; }
+"/"                 { token_printer(COLOR_OPERATOR, yytext); return OP_DIVIDE; }
+"%"                 { token_printer(COLOR_OPERATOR, yytext); return OP_MODULUS; }
+"."                 { token_printer(COLOR_OPERATOR, yytext); return OP_ACCESS_MEMBER; }
+"!"                 { token_printer(COLOR_OPERATOR, yytext); return OP_LOGICAL_NOT; }
+">"                 { token_printer(COLOR_OPERATOR, yytext); return OP_GREATER_THAN; }
+"<"                 { token_printer(COLOR_OPERATOR, yytext); return OP_LESS_THAN; }
+"^"                 { token_printer(COLOR_OPERATOR, yytext); return OP_LOGICAL_XOR; }
+"£"                 { token_printer(COLOR_OPERATOR, yytext); return OP_ADDR_OF; }
+"°"                 { token_printer(COLOR_OPERATOR, yytext); return OP_DEREF_POINTER; }
 
-{IDENTIFIER}        { yylval.str = strdup(yytext); return IDENTIFIER; }
+"<<"                { token_printer(COLOR_DELIMITER, yytext); return LOARRAY; }
+">>"                { token_printer(COLOR_DELIMITER, yytext); return ROARRAY; }
+"->"                { token_printer(COLOR_DELIMITER, yytext); return COLON; }
+"("                 { token_printer(COLOR_DELIMITER, yytext); return LPAREN; }
+")"                 { token_printer(COLOR_DELIMITER, yytext); return RPAREN; }
+"["                 { token_printer(COLOR_DELIMITER, yytext); return LBRACKET; }
+"]"                 { token_printer(COLOR_DELIMITER, yytext); return RBRACKET; }
+"{"                 { token_printer(COLOR_DELIMITER, yytext); indent_level++; return LBRACE; }
+"}"                 { indent_level--; token_printer(COLOR_DELIMITER, yytext); return RBRACE; }
+"|"                 { token_printer(COLOR_DELIMITER, yytext); return PIPE; }
+";"                 { token_printer(COLOR_DELIMITER, yytext); return SEMICOLON; }
 
-.                   { printf("%s[ERRO LÉXICO] Token '%s' não reconhecido na linha %d%s\n", LEX_COLOR_ERROR, yytext, yylineno, LEX_RESET_COLOR); }
+{IDENTIFIER}        { token_printer(COLOR_ID, yytext); yylval.str = strdup(yytext); return IDENTIFIER; }
+
+.                   {
+                        token_printer(LEX_COLOR_ERROR, yytext);
+                        lexical_error(yytext);
+                        return LEX_ERROR;
+                    }
 
 %%

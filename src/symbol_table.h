@@ -4,6 +4,10 @@
 #define MAX_NAME_LEN 64
 #define HASH_SIZE 997
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 typedef enum {
     SYM_VAR,
     SYM_FUNC,
@@ -31,4 +35,4 @@ Symbol* st_lookup(SymbolTable *table, const char *name);
 void st_print(SymbolTable *table);
 void st_free(SymbolTable *table);
 
-#endif
+#endif // SYMBOL_TABLE_H
