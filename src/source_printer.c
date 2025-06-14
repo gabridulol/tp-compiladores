@@ -25,7 +25,9 @@ void lexical_error(const char* text) {
 
 // void syntactic_error() {
 void yyerror(const char *s) {
-    printf("\n%s[ERRO SINTÁTICO] %s na linha %d%s", YACC_COLOR_ERROR, s, yylineno, RESET_COLOR);
+    extern char *yytext; // Token atual fornecido pelo Flex
+    printf("\n\n%s[ERRO SINTÁTICO] %s na linha %d: token inesperado '%s'%s", 
+           YACC_COLOR_ERROR, s, yylineno, yytext, RESET_COLOR);
 }
 // }
 

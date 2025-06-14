@@ -82,9 +82,8 @@ main () Alchemia {
     a << b << c << lectura;
     x >> y >> z >> revelare;
 
-    §§ Acesso a membros e ponteiros
-    objeto.membro --> valor atomus;
-    ponteiro->membro --> valor atomus;
+    (atomus)magnitudo;
+
 
     §§ Declaração e uso de arrays
     valores[10] --> array atomus;
@@ -92,4 +91,8 @@ main () Alchemia {
 
     §§ Retorno de valores
     "Fim do programa" redire;
+
+    §§ Acesso a membros e ponteiros
+    objeto.membro --> valor atomus;
+    ponteiro->membro --> valor atomus;
 }

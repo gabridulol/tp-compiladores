@@ -23,13 +23,13 @@ void yyerror(const char *s);
 
 %token KW_MAIN
 
-%token KW_AXIOM
-%token KW_AUT
 %token KW_CASUS
+%token KW_AXIOM
+/* %token KW_AUT */
+/* %token KW_ET */
 %token KW_CONTINUUM
 %token KW_DESIGNARE
 %token KW_ENUMERARE
-%token KW_ET
 %token KW_EVOCARE
 %token KW_FORMULA
 %token KW_HOMUNCULUS
@@ -174,7 +174,7 @@ statement_list
 statement
     : expression_statement
     | iteration_statement
-    | function_input_output
+    | function_readys
     | declaration_statement
     | function_call_statement
     | return_statement
@@ -353,7 +353,12 @@ iteration_statement
 	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
 	;
 
-// Funções pontas (lectura / revelare)
+// Funções pontas (lectura / revelare / magnitudo)
+
+function_readys
+    : function_input_output
+    | function_magnitudo
+    ;
 
 function_input_output
     : identifier_langle_list KW_LECTURA SEMICOLON
@@ -368,6 +373,14 @@ identifier_langle_list
 identifier_rangle_list
     : IDENTIFIER RANGLE
     | identifier_rangle_list IDENTIFIER RANGLE
+    ;
+
+function_magnitudo
+    : LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON
+    ;
+
+type_expression
+    : type_specifier
     ;
 
 %%
