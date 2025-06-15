@@ -140,6 +140,10 @@ void yyerror(const char *s);
 %type <str> member_access_direct
 %type <str> member_access_dereference
 %type <str> member_access_pointer
+%type <ptr> vector_access
+%type <ptr> pointer_statement
+%type <ptr> pointer_assignment
+%type <ptr> pointer_dereference
 
 %%
 
@@ -216,8 +220,8 @@ expression_statement
 
 primary_expression
     : IDENTIFIER                { $$ = (void*)$1; }
-    | vector_access             {  }
-    | pointer_statement         {  }
+    | vector_access             
+    | pointer_statement         
     | constant                  { $$ = $1; }
     | string                    { $$ = $1; }
     | LPAREN expression RPAREN  { $$ = $2; }
@@ -302,6 +306,7 @@ declaration_statement
           }
           free($3);
       }
+    | pointer_declaration
     ;
 
 opcional_constant
@@ -454,7 +459,7 @@ enum_assignment
             if (st_lookup(&symbol_table, $1) != NULL) {
                 yyerror("Enumeração já declarada!");
             } else {
-                st_insert(&symbol_table, $1, SYM_ENUM, $3, yylineno, NULL);
+                st_insert(&symbol_table, $1, SYM_ENUM, $4, yylineno, NULL);
             }
             free($1);
       }
@@ -483,24 +488,41 @@ vector_statement
     ;
 
 vector_access
-    : IDENTIFIER LANGLE expression RANGLE
+    : IDENTIFIER LANGLE expression RANGLE { $$ = NULL; }
     ;
 
-// Ponteiros
 pointer_statement
-    : pointer_assignment
-    | pointer_dereference
-    | member_access_direct
-    | member_access_dereference
-    | member_access_pointer
+    : pointer_assignment      { $$ = $1; }
+    | pointer_dereference    { $$ = $1; }
+    | member_access_direct   { $$ = $1; }
+    | member_access_dereference { $$ = $1; }
+    | member_access_pointer  { $$ = $1; }
     ;
+
+pointer_declaration
+    : IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+      {
+          char tipo_ponteiro[MAX_NAME_LEN];
+          snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $3);
+          st_insert(&symbol_table, $1, SYM_VAR, tipo_ponteiro, yylineno, NULL);
+          free($1);
+          free($3);
+      }
+    | expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+      {
+          char tipo_ponteiro[MAX_NAME_LEN];
+          snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $5);
+          st_insert(&symbol_table, $3, SYM_VAR, tipo_ponteiro, yylineno, $1);
+          free($3);
+          free($5);
+      }
 
 pointer_assignment
-    : IDENTIFIER OP_ADDR_OF 
+    : IDENTIFIER OP_ADDR_OF { $$ = (void*)$1;}
     ;
 
 pointer_dereference
-    : OP_DEREF_POINTER IDENTIFIER
+    : OP_DEREF_POINTER IDENTIFIER { $$ = (void*)$2;}
     ;
 
 access_list
