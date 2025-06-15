@@ -179,6 +179,7 @@ statement
     | function_call_statement
     | return_statement
     | conditional_statement
+    | type_define
     ;
 
 //
@@ -269,6 +270,11 @@ declaration_statement
           }
           free($3);
       }
+    ;
+
+list_declaration_statement
+    : declaration_statement list_declaration_statement
+    | declaration_statement
     ;
 
 type_specifier
@@ -382,5 +388,13 @@ function_magnitudo
 type_expression
     : type_specifier
     ;
+
+// Declarações de typedef e struct
+
+type_define
+    : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
+    | IDENTIFIER  LBRACE list_declaration_statement RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
+    ;
+
 
 %%

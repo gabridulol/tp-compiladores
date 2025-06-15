@@ -84,6 +84,15 @@ main () Alchemia {
 
     (atomus)magnitudo;
 
+    designare atomus int;
+    designare quantum bool;
+
+    NomeDaStruct {
+        valor1 atomus;
+        valor2 fractio;
+        1 --> val atomus;
+    } designare homunculus;
+
 
     §§ Declaração e uso de arrays
     valores[10] --> array atomus;
