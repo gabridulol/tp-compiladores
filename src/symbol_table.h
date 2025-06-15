@@ -11,7 +11,8 @@
 typedef enum {
     SYM_VAR,
     SYM_FUNC,
-    SYM_TYPE
+    SYM_TYPE,
+    SYM_ENUM
     // Adicione outros tipos conforme necessário
 } SymbolKind;
 
