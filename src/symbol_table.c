@@ -55,7 +55,8 @@ void st_print(SymbolTable *table) {
             const char *kind_str =
                 (curr->kind == SYM_VAR)  ? "VAR"  :
                 (curr->kind == SYM_FUNC) ? "FUNC" :
-                (curr->kind == SYM_TYPE) ? "TYPE" : "OUTRO";
+                (curr->kind == SYM_TYPE) ? "TYPE" : 
+                (curr->kind == SYM_ENUM) ? "ENUM" : "OUTRO";
 
             char valor_str[64] = "-";
             if (curr->value != NULL) {
@@ -75,7 +76,7 @@ void st_print(SymbolTable *table) {
                 } else if (strcmp(curr->type, "symbolum") == 0) {
                     snprintf(valor_str, sizeof(valor_str), "'%c'", curr->value ? *(char*)curr->value : ' ');
                 } else if (strcmp(curr->type, "scriptum") == 0) {
-                    snprintf(valor_str, sizeof(valor_str), "\"%s\"", curr->value ? (char*)curr->value : "");
+                    snprintf(valor_str, sizeof(valor_str), "%s", (char*)curr->value ? (char*)curr->value : "-");
                 } else {
                     snprintf(valor_str, sizeof(valor_str), "%p", curr->value);
                 }
