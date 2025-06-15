@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../src/symbol_table.h"
-
 #include "../src/source_printer.h"
-#include "../src/symbol_table.h"
 
 extern SymbolTable symbol_table;
 extern int yylineno;
@@ -178,7 +176,7 @@ statement_list
 statement
     : expression_statement
     | iteration_statement
-    | function_readys
+    | io_functions 
     | declaration_statement
     | function_call_statement
     | conditional_statement
@@ -393,7 +391,7 @@ iteration_statement
 
 // Funções pontas (lectura / revelare / magnitudo)
 
-function_readys
+io_functions 
     : function_input_output
     | function_magnitudo
     ;
@@ -457,7 +455,7 @@ vector
     ;
     
 vector_statement
-    : vector
+    : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
     | LBRACKET argument_list RBRACKET OP_ASSIGN vector
     | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER type_specifier LANGLE RANGLE SEMICOLON
     ;
