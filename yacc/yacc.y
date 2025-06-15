@@ -491,6 +491,8 @@ vector_access
     : IDENTIFIER LANGLE expression RANGLE { $$ = NULL; }
     ;
 
+
+// Ponteiros
 pointer_statement
     : pointer_assignment      { $$ = $1; }
     | pointer_dereference    { $$ = $1; }
