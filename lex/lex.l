@@ -30,7 +30,7 @@ STRING          \"([^\\\"\n]|\\.)*\"
 {WS}                { /* ignora */ }
 {COMMENT_LINE}      { token_printer(COLOR_COMMENT, yytext); }
 
-§                   { BEGIN(COMMENT_BLOCK_MODE); }
+§                   { BEGIN(COMMENT_BLOCK); }
 <COMMENT_BLOCK>{
     \n              { yylineno++; }
     §               { BEGIN(INITIAL); token_printer(COLOR_COMMENT, "§...§"); }
