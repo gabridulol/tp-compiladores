@@ -93,6 +93,10 @@ main () Alchemia {
         1 --> val atomus;
     } designare homunculus;
 
+    2 --> pedra atomus mol;
+    "Augustus" --> nome scriptum mol;
+
+
 
     §§ Declaração e uso de arrays
     valores[10] --> array atomus;

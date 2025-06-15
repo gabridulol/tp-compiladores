@@ -250,7 +250,7 @@ string
 //
 
 declaration_statement
-    : IDENTIFIER type_specifier SEMICOLON{
+    : IDENTIFIER type_specifier opcional_constant SEMICOLON{
           if (st_lookup(&symbol_table, $1) != NULL) {
               yyerror("Variável já declarada!");
           } else {
@@ -259,7 +259,7 @@ declaration_statement
           }
           free($1);
       }
-    | expression OP_ASSIGN IDENTIFIER type_specifier SEMICOLON{
+    | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON{
           if (st_lookup(&symbol_table, $3) != NULL) {
               Symbol *sym = st_lookup(&symbol_table, $3);
               if (sym->value) free(sym->value);
@@ -270,6 +270,11 @@ declaration_statement
           }
           free($3);
       }
+    ;
+
+opcional_constant
+    : KW_MOL
+    | /* vazio */
     ;
 
 list_declaration_statement
