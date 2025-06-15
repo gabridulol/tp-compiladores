@@ -187,9 +187,24 @@ statement
     | jump_statement
     | causal_statement
     | enum_assignment
+    | assignment_statement
     ;
 
 //
+
+assignment_statement
+    : expression OP_ASSIGN IDENTIFIER SEMICOLON
+      {
+          Symbol *sym = st_lookup(&symbol_table, $3);
+          if (sym == NULL) {
+              yyerror("Variável não declarada!");
+          } else {
+              if (sym->value) free(sym->value);
+              sym->value = $1;
+          }
+          free($3);
+      }
+;
 
 import_statement
     : IDENTIFIER KW_EVOCARE SEMICOLON 
@@ -267,10 +282,15 @@ assing_value
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON{
           if (st_lookup(&symbol_table, $1) != NULL) {
-              yyerror("Variável já declarada!");
+            Symbol *sym = st_lookup(&symbol_table, $1);
+            if(sym->kind != SYM_VAR) {
+                yyerror("Variável já declarada com outro tipo!");
+            } else {
+              sym->kind = SYM_VAR;
+              sym->line_declared = yylineno;
+            }
           } else {
               st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, NULL);
-              printf("\033[1;32m[Debug] Declaração de Variável: %s | Tipo: %s | Linha: %d\033[0m\n", $1, $2, yylineno);
           }
           free($1);
       }
@@ -281,7 +301,6 @@ declaration_statement
               sym->value = $1;
           } else {
               st_insert(&symbol_table, $3, SYM_VAR, $4, yylineno, $1);
-              printf("\033[1;32m[Debug] Declaração de Variável com Inicialização: %s | Tipo: %s | Linha: %d\033[0m\n", $3, $4, yylineno);
           }
           free($3);
       }
@@ -320,7 +339,6 @@ function_declaration_statement
               yyerror("Função já declarada!");
           } else {
               st_insert(&symbol_table, $5, SYM_FUNC, $7, yylineno, NULL);
-              printf("\033[1;32m[Debug] Declaração de Função: %s | Tipo Retorno: %s | Linha: %d\033[0m\n", $5, $7, yylineno);
           }
           free($5);
       }
@@ -336,8 +354,7 @@ parameter
           if (st_lookup(&symbol_table, $1) != NULL) {
               yyerror("Parâmetro já declarado!");
           } else {
-              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, $1);
-              printf("\033[1;32m[Debug] Parâmetro: %s | Tipo: %s | Linha: %d\033[0m\n", $1, $2, yylineno);
+              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, NULL);
           }
           free($1);
       }
@@ -436,7 +453,12 @@ type_define_enum
 enum_assignment
     : IDENTIFIER OP_ASSIGN IDENTIFIER IDENTIFIER KW_ENUMERARE SEMICOLON
       {
-          printf("\033[1;32m[Debug] Atribuição de Enum: %s --> %s | Tipo: %s | Linha: %d\033[0m\n", $1, $3, $4, yylineno);
+            if (st_lookup(&symbol_table, $1) != NULL) {
+                yyerror("Enumeração já declarada!");
+            } else {
+                st_insert(&symbol_table, $1, SYM_ENUM, $3, yylineno, NULL);
+            }
+            free($1);
       }
     ;
 
@@ -486,12 +508,10 @@ pointer_dereference
 access_list
     : IDENTIFIER
       {
-          printf("\033[1;32m[Debug] Acesso a Membro: %s | Linha: %d\033[0m\n", $1, yylineno);
           $$ = $1; // Retorna o identificador
       }
     | access_list OP_ACCESS_MEMBER IDENTIFIER
       {
-          printf("\033[1;32m[Debug] Acesso a Membro Encadeado: %s.%s | Linha: %d\033[0m\n", $1, $3, yylineno);
           $$ = $3; // Retorna o último identificador
       }
     ;
@@ -503,7 +523,6 @@ member_access_direct
 member_access_dereference
     : LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER access_list
       {
-          printf("\033[1;32m[Debug] Acesso a Membro com Desreferenciação: (°%s).%s | Linha: %d\033[0m\n", $3, $6, yylineno);
           $$ = $6; // Retorna o último identificador
       }
     ;
@@ -511,7 +530,6 @@ member_access_dereference
 member_access_pointer
     : IDENTIFIER OP_ACCESS_POINTER access_list
       {
-          printf("\033[1;32m[Debug] Acesso Simplificado via Ponteiro: %s->%s | Linha: %d\033[0m\n", $1, $3, yylineno);
           $$ = $3; // Retorna o último identificador
       }
     ;
