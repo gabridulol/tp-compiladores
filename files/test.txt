@@ -130,39 +130,37 @@ main () Alchemia {
         "Inimigo Raro" redire;
     }
 
-int main() {
-    enum Operacao op = MULTIPLICACAO;
-    int a = 5, b = 3, resultado;
-
-    switch (op) {
-        case SOMA:
-            resultado = a + b;
-            break;
-        case SUBTRACAO:
-            resultado = a - b;
-            break;
-        case MULTIPLICACAO:
-            resultado = a * b;
-            break;
-        case DIVISAO:
-            resultado = a / b;
-            break;
-        default:
-            printf("Operação inválida.\n");
-            return 1;
+    (posicao) vertere {
+        casus 1 -> "primeiro lugar" --> resultado; ruptio;
+        casus 2 -> "segundo lugar" --> resultado; ruptio;
+        casus 3 -> "terceiro lugar" --> resultado; ruptio;
+        axiom -> "fora do pódio" --> resultado;
     }
 
-    printf("Resultado: %d\n", resultado);
 
-    return 0;
-}
+    §§ Declaração de ponteiro int* a;
+    a °atomus;
+    2 --> a °atomus;
+
+    §§ Atribuição de endereço a = &b;
+    b£ --> a;
+
+    §§ Desreferenciação x = *a;
+    °a --> x;
+
+    §§ Acesso a membro direto a.nome; 
+    a.nome;
+    a.nome --> x;
+
+    §§  Acesso com desreferenciação (a*).nome;
+    (°a).nome;
+
+    §§ Acesso simplificado via ponteiro a -> nome;
+    a ==> nome;
 
 
 
     §§ Retorno de valores
     "Fim do programa" redire;
 
-    §§ Acesso a membros e ponteiros
-    objeto.membro --> valor atomus;
-    ponteiro->membro --> valor atomus;
 }

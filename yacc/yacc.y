@@ -138,6 +138,10 @@ void yyerror(const char *s);
 %type <ptr> primary_expression
 %type <ptr> argument_list
 %type <ptr> unary_expression
+%type <str> access_list
+%type <str> member_access_direct
+%type <str> member_access_dereference
+%type <str> member_access_pointer
 
 %%
 
@@ -177,10 +181,12 @@ statement
     | function_readys
     | declaration_statement
     | function_call_statement
-    | return_statement
     | conditional_statement
     | type_define_statement
     | vector_statement
+    | jump_statement
+    | causal_statement
+    | enum_assignment
     ;
 
 //
@@ -197,7 +203,8 @@ expression_statement
 
 primary_expression
     : IDENTIFIER                { $$ = (void*)$1; }
-    | vector_access             {}
+    | vector_access             {  }
+    | pointer_statement         {  }
     | constant                  { $$ = $1; }
     | string                    { $$ = $1; }
     | LPAREN expression RPAREN  { $$ = $2; }
@@ -254,6 +261,7 @@ string
 assing_value
     : IDENTIFIER
     | vector_access
+    | pointer_statement
     ;
 
 declaration_statement
@@ -290,16 +298,18 @@ list_declaration_statement
     ;
 
 type_specifier
-    : TYPE_ATOMUS      { $$ = strdup("atomus"); }
-    | TYPE_FRACTIO     { $$ = strdup("fractio"); }
-    | TYPE_FRAGMENTUM  { $$ = strdup("fragmentum"); }
-    | TYPE_MAGNUS      { $$ = strdup("magnus"); }
-    | TYPE_MINIMUS     { $$ = strdup("minimus"); }
-    | TYPE_QUANTUM     { $$ = strdup("quantum"); }
-    | TYPE_SCRIPTUM    { $$ = strdup("scriptum"); }
-    | TYPE_SYMBOLUM    { $$ = strdup("symbolum"); }
-    | TYPE_VACUUM      { $$ = strdup("vacuum"); }
-    | IDENTIFIER KW_ENUMERARE { $$ = strdup($1); }
+    : TYPE_ATOMUS               { $$ = strdup("atomus"); }
+    | TYPE_FRACTIO              { $$ = strdup("fractio"); }
+    | TYPE_FRAGMENTUM           { $$ = strdup("fragmentum"); }
+    | TYPE_MAGNUS               { $$ = strdup("magnus"); }
+    | TYPE_MINIMUS              { $$ = strdup("minimus"); }
+    | TYPE_QUANTUM              { $$ = strdup("quantum"); }
+    | TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
+    | TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
+    | TYPE_VACUUM               { $$ = strdup("vacuum"); }
+    | IDENTIFIER KW_ENUMERARE   { $$ = strdup($1); }
+    | OP_DEREF_POINTER type_specifier {}
+    
     ;
 
 //
@@ -344,17 +354,20 @@ argument_list
     | argument_list PIPE expression { /* ... */ }
     ;
 
-//
-
-return_statement
-    : expression KW_REDIRE SEMICOLON
+// Declarações de salto: continuum, ruptio e redire
+jump_statement
+    : KW_CONTINUUM SEMICOLON
+    | KW_RUPTIO SEMICOLON
+    | KW_REDIRE SEMICOLON
+    | expression KW_REDIRE SEMICOLON
     ;
 
-//
+// IF ELSE SWITCH
 
 conditional_statement
     : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE
     | LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE conditional_non_statement
+    | LPAREN expression RPAREN KW_VERTERE LBRACE causal_statement RBRACE
     ;
 
 conditional_non_statement
@@ -362,7 +375,13 @@ conditional_non_statement
     | KW_NON conditional_statement
     ;
 
-// while() e for(; ;), 
+// Causas | Axiomas 
+causal_statement
+    : KW_CASUS expression COLON statement_list 
+    | KW_AXIOM COLON statement_list 
+    ;
+
+//  Laços de repetição: while() e for(; ;), 
 
 iteration_statement
 	: LPAREN expression RPAREN KW_PERSISTO LBRACE statement_list RBRACE
@@ -414,6 +433,13 @@ type_define_enum
     : IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
     ;
 
+enum_assignment
+    : IDENTIFIER OP_ASSIGN IDENTIFIER IDENTIFIER KW_ENUMERARE SEMICOLON
+      {
+          printf("\033[1;32m[Debug] Atribuição de Enum: %s --> %s | Tipo: %s | Linha: %d\033[0m\n", $1, $3, $4, yylineno);
+      }
+    ;
+
 // Enumerações   COMUM    |   COMUM --> 1   |    COMUM --> 'b'
 enum_list
     : IDENTIFIER
@@ -438,6 +464,56 @@ vector_statement
 
 vector_access
     : IDENTIFIER LANGLE expression RANGLE
+    ;
+
+// Ponteiros
+pointer_statement
+    : pointer_assignment
+    | pointer_dereference
+    | member_access_direct
+    | member_access_dereference
+    | member_access_pointer
+    ;
+
+pointer_assignment
+    : IDENTIFIER OP_ADDR_OF 
+    ;
+
+pointer_dereference
+    : OP_DEREF_POINTER IDENTIFIER
+    ;
+
+access_list
+    : IDENTIFIER
+      {
+          printf("\033[1;32m[Debug] Acesso a Membro: %s | Linha: %d\033[0m\n", $1, yylineno);
+          $$ = $1; // Retorna o identificador
+      }
+    | access_list OP_ACCESS_MEMBER IDENTIFIER
+      {
+          printf("\033[1;32m[Debug] Acesso a Membro Encadeado: %s.%s | Linha: %d\033[0m\n", $1, $3, yylineno);
+          $$ = $3; // Retorna o último identificador
+      }
+    ;
+
+member_access_direct
+    : access_list
+    ;
+
+member_access_dereference
+    : LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER access_list
+      {
+          printf("\033[1;32m[Debug] Acesso a Membro com Desreferenciação: (°%s).%s | Linha: %d\033[0m\n", $3, $6, yylineno);
+          $$ = $6; // Retorna o último identificador
+      }
+    ;
+
+member_access_pointer
+    : IDENTIFIER OP_ACCESS_POINTER access_list
+      {
+          printf("\033[1;32m[Debug] Acesso Simplificado via Ponteiro: %s->%s | Linha: %d\033[0m\n", $1, $3, yylineno);
+          $$ = $3; // Retorna o último identificador
+      }
     ;
 
 %%
