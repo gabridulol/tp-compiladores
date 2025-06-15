@@ -12,10 +12,11 @@ extern int yylineno;
 %option noyywrap
 %option yylineno
 
+%x COMMENT_BLOCK
+
 DELIM           [ \t\n\r]
 WS              {DELIM}+
 COMMENT_LINE    §§.*
-COMMENT_BLOCK   §([^§]*\n?)*§
 DIGIT           [0-9]
 LETTER          [a-zA-Z_]
 
@@ -24,13 +25,18 @@ REAL            (\+|\-)?{DIGIT}+\.{DIGIT}+
 IDENTIFIER      {LETTER}({LETTER}|{DIGIT})*
 CHAR            \'([^\\'\n]|\\.)\'
 STRING          \"([^\\\"\n]|\\.)*\"
-
 %%
 
-{WS}                { /* ignora espaços e quebras */ }
-
+{WS}                { /* ignora */ }
 {COMMENT_LINE}      { token_printer(COLOR_COMMENT, yytext); }
-{COMMENT_BLOCK}     { token_printer(COLOR_COMMENT, yytext); }
+
+§                   { BEGIN(COMMENT_BLOCK_MODE); }
+<COMMENT_BLOCK>{
+    \n              { yylineno++; }
+    §               { BEGIN(INITIAL); token_printer(COLOR_COMMENT, "§...§"); }
+    .               { /* ignora */ }
+    <<EOF>>         { yyerror("unterminated comment block"); exit(1); }
+}
 
 "Alchemia"          { token_printer(COLOR_KEYWORD, yytext); return KW_MAIN; }
 
