@@ -138,24 +138,30 @@ main () Alchemia {
     }
 
 
-    §§ Declaração de ponteiro int* a;
+    § Declaração de ponteiro
+     int* a;§
     a °atomus;
     2 --> a °atomus;
 
-    §§ Atribuição de endereço a = &b;
+    § Atribuição de endereço
+    a = &b;§
     b£ --> a;
 
-    §§ Desreferenciação x = *a;
+    § Desreferenciação 
+    x = *a;§
     °a --> x;
 
-    §§ Acesso a membro direto a.nome; 
+    § Acesso a membro direto 
+    a.nome; §
     a.nome;
     a.nome --> x;
 
-    §§  Acesso com desreferenciação (a*).nome;
+    §  Acesso com desreferenciação 
+    (a*).nome;§
     (°a).nome;
 
-    §§ Acesso simplificado via ponteiro a -> nome;
+    § Acesso simplificado via ponteiro 
+    a -> nome;§
     a ==> nome;
 
 
