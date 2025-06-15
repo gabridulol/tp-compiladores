@@ -2,16 +2,20 @@
 Trabalho Prático 1 - Compiladores
 ---
 
-## 📁 Estrutura do Projeto
+### 📁 Estrutura do Projeto
 
 ```
 .
-├── lex/         # Arquivos Lex (Flex)
-├── yacc/        # Arquivos Yacc (Bison)
-├── src/         # Arquivos do código-fonte (Linguagem C)
-├── bin/         # Executáveis gerados
-└── makefile     # Script de compilação
+├── lex/         # Contém os arquivos de definição do analisador léxico (Flex)
+├── yacc/        # Contém os arquivos de definição do analisador sintático (Bison)
+├── src/         # Contém o código-fonte principal do projeto em linguagem C
+├── bin/         # Diretório para os executáveis gerados após a compilação
+├── obj/         # Diretório para os arquivos objeto gerados durante a compilação
+├── files/       # Arquivos de testes na linguagem +O
+├── makefile     # Arquivo de script para automação da compilação e execução
+└── README.md    # Documentação com instruções para uso do projeto
 ```
+
 ---
 ## ⚙️ Compilação e Execução
 
