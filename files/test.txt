@@ -96,20 +96,68 @@ main () Alchemia {
     2 --> pedra atomus mol;
     "Augustus" --> nome scriptum mol;
 
+   §§ Declaração e uso de arrays 
     vetor1 atomus<<N>>;
     [1 | 2 | 3 | 4] --> vetor1 atomus<<>>;
     [1 | 2 | 3 | 4] --> vetor1 atomus<<N>>;
     [1 | 2 | 3 | 4] --> vetor1;
     [1 | 2 | 3 | 4-->x] --> vetor1 atomus<<N>>;
-    array << 3 >> ;
+    array<<N>> --> x atomus;
     4 --> array<<3>>;
     array<<3>> --> x atomus;
-    array<<N>> --> x atomus;
+
+    TipoInimigo {
+        COMUM
+    } enumerare;
+
+    TipoInimigo {
+        COMUM 
+        | RARO 
+        | CHEFE
+    } enumerare;
+
+    TipoInimigo {
+        COMUM --> 1
+        | INCOMUN --> 'a'
+        | RARO --> 3
+        | CHEFE --> 4
+        | PLAYER §§ pega o 5 pois é logo dps do 4 (CHEFE)
+    } enumerare;
+
+    RARO --> p TipoInimigo enumerare;
+
+    (p == 3) si {
+        "Inimigo Raro" redire;
+    }
+
+int main() {
+    enum Operacao op = MULTIPLICACAO;
+    int a = 5, b = 3, resultado;
+
+    switch (op) {
+        case SOMA:
+            resultado = a + b;
+            break;
+        case SUBTRACAO:
+            resultado = a - b;
+            break;
+        case MULTIPLICACAO:
+            resultado = a * b;
+            break;
+        case DIVISAO:
+            resultado = a / b;
+            break;
+        default:
+            printf("Operação inválida.\n");
+            return 1;
+    }
+
+    printf("Resultado: %d\n", resultado);
+
+    return 0;
+}
 
 
-    §§ Declaração e uso de arrays
-    valores[10] --> array atomus;
-    array[0] --> primeiro atomus;
 
     §§ Retorno de valores
     "Fim do programa" redire;

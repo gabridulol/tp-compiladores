@@ -120,9 +120,9 @@ void yyerror(const char *s);
 %left OP_LESS_EQUAL
 %left OP_GREATER_EQUAL
 
-%left KW_ET
+/* %left KW_ET
 %left KW_VEL
-%left KW_AUT
+%left KW_AUT */
 
 %left OP_ACCESS_MEMBER
 %left OP_ACCESS_POINTER
@@ -181,7 +181,6 @@ statement
     | conditional_statement
     | type_define_statement
     | vector_statement
-    | vector_access
     ;
 
 //
@@ -197,11 +196,11 @@ expression_statement
     ;
 
 primary_expression
-    : IDENTIFIER      { $$ = (void*)$1; }
-    | vector_access   {} 
-    | constant        { $$ = $1; }
-    | string          { $$ = $1; }
-    | LPAREN expression RPAREN { $$ = $2; }
+    : IDENTIFIER                { $$ = (void*)$1; }
+    | vector_access             {}
+    | constant                  { $$ = $1; }
+    | string                    { $$ = $1; }
+    | LPAREN expression RPAREN  { $$ = $2; }
     ;
 
 unary_expression
@@ -300,6 +299,7 @@ type_specifier
     | TYPE_SCRIPTUM    { $$ = strdup("scriptum"); }
     | TYPE_SYMBOLUM    { $$ = strdup("symbolum"); }
     | TYPE_VACUUM      { $$ = strdup("vacuum"); }
+    | IDENTIFIER KW_ENUMERARE { $$ = strdup($1); }
     ;
 
 //
@@ -380,18 +380,18 @@ function_readys
     ;
 
 function_input_output
-    : identifier_langle_list KW_LECTURA SEMICOLON
-    | identifier_rangle_list KW_REVELARE SEMICOLON
+    : identifier_langle_list
+    | identifier_rangle_list
     ;
 
 identifier_langle_list
-    : IDENTIFIER LANGLE
-    | identifier_langle_list IDENTIFIER LANGLE
+    : IDENTIFIER LANGLE KW_LECTURA SEMICOLON
+    | IDENTIFIER LANGLE identifier_langle_list
     ;
 
 identifier_rangle_list
-    : IDENTIFIER RANGLE
-    | identifier_rangle_list IDENTIFIER RANGLE
+    : IDENTIFIER RANGLE KW_REVELARE SEMICOLON
+    | IDENTIFIER RANGLE identifier_rangle_list
     ;
 
 function_magnitudo
@@ -402,11 +402,26 @@ type_expression
     : type_specifier
     ;
 
-// Declarações de typedef e struct
+// Declarações de typedef | struct | enum
 
 type_define_statement
     : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
     | IDENTIFIER  LBRACE list_declaration_statement RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
+    | type_define_enum
+    ;
+
+type_define_enum
+    : IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
+    ;
+
+// Enumerações   COMUM    |   COMUM --> 1   |    COMUM --> 'b'
+enum_list
+    : IDENTIFIER
+    | IDENTIFIER OP_ASSIGN LIT_INT
+    | IDENTIFIER OP_ASSIGN LIT_CHAR
+    | enum_list PIPE IDENTIFIER
+    | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_INT
+    | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
     ;
 
 // Vetor
@@ -422,7 +437,7 @@ vector_statement
     ;
 
 vector_access
-    : IDENTIFIER LBRACKET expression RBRACKET
+    : IDENTIFIER LANGLE expression RANGLE
     ;
 
 %%
