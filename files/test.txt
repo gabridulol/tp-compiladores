@@ -99,6 +99,7 @@ main () Alchemia {
     vetor1 atomus<<N>>;
     [1 | 2 | 3 | 4] --> vetor1 atomus<<>>;
     [1 | 2 | 3 | 4] --> vetor1 atomus<<N>>;
+    [1 | 2 | 3 | 4] --> vetor1;
     [1 | 2 | 3 | 4-->x] --> vetor1 atomus<<N>>;
     array << 3 >> ;
     4 --> array<<3>>;

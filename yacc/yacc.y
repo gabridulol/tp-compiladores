@@ -212,11 +212,6 @@ unary_expression
     | OP_SUBTRACT unary_expression      { $$ = $2; }
     ;
 
-assing_value
-    : IDENTIFIER
-    | vector_access
-    ;
-
 expression
     : unary_expression { $$ = $1; }
     | expression OP_ASSIGN assing_value { $$ = $1; }
@@ -256,6 +251,11 @@ string
     ;
 
 //
+
+assing_value
+    : IDENTIFIER
+    | vector_access
+    ;
 
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON{
@@ -413,13 +413,12 @@ type_define_statement
 vector
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
     | IDENTIFIER SEMICOLON
-    | IDENTIFIER type_specifier LANGLE RANGLE SEMICOLON
     ;
     
 vector_statement
     : vector
     | LBRACKET argument_list RBRACKET OP_ASSIGN vector
-    | LBRACKET argument_list RBRACKET OP_ASSIGN 
+    | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER type_specifier LANGLE RANGLE SEMICOLON
     ;
 
 vector_access
