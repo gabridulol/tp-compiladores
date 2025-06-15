@@ -41,10 +41,13 @@ int main(int argc, char **argv) {
     if (result == 0) {
         correct_program();
         printf("\n");
-        // print_symbol_table(); // opcional
+        st_print(&symbol_table);
+        st_free(&symbol_table);
         return EXIT_SUCCESS;
     } else {
         incorrect_program();
+        st_print(&symbol_table);
+        st_free(&symbol_table);
         printf("\n");
         return EXIT_FAILURE;
     }
