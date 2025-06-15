@@ -96,6 +96,14 @@ main () Alchemia {
     2 --> pedra atomus mol;
     "Augustus" --> nome scriptum mol;
 
+    vetor1 atomus<<N>>;
+    [1 | 2 | 3 | 4] --> vetor1 atomus<<>>;
+    [1 | 2 | 3 | 4] --> vetor1 atomus<<N>>;
+    [1 | 2 | 3 | 4-->x] --> vetor1 atomus<<N>>;
+    array << 3 >> ;
+    4 --> array<<3>>;
+    array<<3>> --> x atomus;
+    array<<N>> --> x atomus;
 
 
     §§ Declaração e uso de arrays

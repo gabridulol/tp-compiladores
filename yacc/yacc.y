@@ -25,9 +25,13 @@ void yyerror(const char *s);
 
 %token KW_CASUS
 %token KW_AXIOM
+%token KW_CONTINUUM
+%token KW_RUPTIO
+%token KW_VERTERE
 /* %token KW_AUT */
 /* %token KW_ET */
-%token KW_CONTINUUM
+/* %token KW_NE */
+/* %token KW_VEL */
 %token KW_DESIGNARE
 %token KW_ENUMERARE
 %token KW_EVOCARE
@@ -37,16 +41,12 @@ void yyerror(const char *s);
 %token KW_LECTURA
 %token KW_MAGNITUDO
 %token KW_MOL
-%token KW_NE
 %token KW_NON_SI
 %token KW_NON
 %token KW_PERSISTO
 %token KW_REDIRE
 %token KW_REVELARE
-%token KW_RUPTIO
 %token KW_SI
-%token KW_VEL
-%token KW_VERTERE
 
 %token TYPE_ATOMUS
 %token TYPE_FRACTIO
@@ -179,7 +179,9 @@ statement
     | function_call_statement
     | return_statement
     | conditional_statement
-    | type_define
+    | type_define_statement
+    | vector_statement
+    | vector_access
     ;
 
 //
@@ -196,6 +198,7 @@ expression_statement
 
 primary_expression
     : IDENTIFIER      { $$ = (void*)$1; }
+    | vector_access   {} 
     | constant        { $$ = $1; }
     | string          { $$ = $1; }
     | LPAREN expression RPAREN { $$ = $2; }
@@ -209,11 +212,16 @@ unary_expression
     | OP_SUBTRACT unary_expression      { $$ = $2; }
     ;
 
+assing_value
+    : IDENTIFIER
+    | vector_access
+    ;
+
 expression
     : unary_expression { $$ = $1; }
-    | expression OP_ASSIGN IDENTIFIER { $$ = $1; }
-    | expression OP_ACCESS_POINTER IDENTIFIER
-    | expression OP_ACCESS_MEMBER IDENTIFIER
+    | expression OP_ASSIGN assing_value { $$ = $1; }
+    | expression OP_ACCESS_POINTER assing_value
+    | expression OP_ACCESS_MEMBER assing_value
 
     | expression OP_LOGICAL_XOR unary_expression
     | expression OP_LOGICAL_OR unary_expression
@@ -396,10 +404,26 @@ type_expression
 
 // Declarações de typedef e struct
 
-type_define
+type_define_statement
     : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
     | IDENTIFIER  LBRACE list_declaration_statement RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
     ;
 
+// Vetor
+vector
+    : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
+    | IDENTIFIER SEMICOLON
+    | IDENTIFIER type_specifier LANGLE RANGLE SEMICOLON
+    ;
+    
+vector_statement
+    : vector
+    | LBRACKET argument_list RBRACKET OP_ASSIGN vector
+    | LBRACKET argument_list RBRACKET OP_ASSIGN 
+    ;
+
+vector_access
+    : IDENTIFIER LBRACKET expression RBRACKET
+    ;
 
 %%
