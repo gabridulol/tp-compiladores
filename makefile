@@ -16,6 +16,7 @@ YACC_SRC = $(YACC_DIR)/yacc.y
 MAIN_SRC = $(SRC_DIR)/main.c
 SYMBOL_TABLE_SRC = $(SRC_DIR)/symbol_table.c
 SOURCE_PRINTER_SRC = $(SRC_DIR)/source_printer.c
+SCOPE_SRC = $(SRC_DIR)/scope.c
 
 # Gerados
 LEX_GEN = $(LEX_DIR)/lex.yy.c
@@ -28,6 +29,7 @@ LEX_OBJ = $(OBJ_DIR)/lex.yy.o
 YACC_OBJ = $(OBJ_DIR)/yacc.tab.o
 SYMBOL_TABLE_OBJ = $(OBJ_DIR)/symbol_table.o
 SOURCE_PRINTER_OBJ = $(OBJ_DIR)/source_printer.o
+SCOPE_OBJ = $(OBJ_DIR)/scope.o
 
 # Executáveis
 COMPILER_EXEC = $(BIN_DIR)/compiler.out
@@ -63,8 +65,11 @@ $(SYMBOL_TABLE_OBJ): $(SYMBOL_TABLE_SRC) | $(OBJ_DIR)
 $(SOURCE_PRINTER_OBJ): $(SOURCE_PRINTER_SRC) | $(OBJ_DIR)
 	$(CC) -c $(SOURCE_PRINTER_SRC) -o $@ -I$(SRC_DIR)
 
+$(SCOPE_OBJ): $(SCOPE_SRC) | $(OBJ_DIR)
+	$(CC) -c $(SCOPE_SRC) -o $@ -I$(SRC_DIR)
+
 # Compilação do compilador completo
-$(COMPILER_EXEC): $(MAIN_OBJ) $(LEX_OBJ) $(YACC_OBJ) $(SYMBOL_TABLE_OBJ) $(SOURCE_PRINTER_OBJ) | $(BIN_DIR)
+$(COMPILER_EXEC): $(MAIN_OBJ) $(LEX_OBJ) $(YACC_OBJ) $(SYMBOL_TABLE_OBJ) $(SOURCE_PRINTER_OBJ) $(SCOPE_OBJ) | $(BIN_DIR)
 	$(CC) $^ -o $@ -lfl
 
 # Execução do compilador (entrada padrão ou redirecionada com <)
