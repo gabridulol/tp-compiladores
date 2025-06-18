@@ -41,9 +41,9 @@ all: $(COMPILER_EXEC)
 $(BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
-# Geração dos arquivos do Bison (header e .c)
-$(YACC_GEN) $(YACC_HDR): $(YACC_SRC) | $(YACC_DIR)
-	$(BISON) -d -o $(YACC_GEN) $(YACC_SRC)
+# Geração dos arquivos do Bison (header, .c e .output)
+$(YACC_DIR)/yacc.tab.c $(YACC_DIR)/yacc.tab.h $(YACC_DIR)/yacc.output: $(YACC_SRC) | $(YACC_DIR)
+	@$(BISON) -d -v -o $(YACC_DIR)/yacc.tab.c $(YACC_SRC)
 
 # Geração do analisador léxico (após o header do yacc)
 $(LEX_GEN): $(LEX_SRC) $(YACC_HDR) | $(LEX_DIR)
@@ -78,4 +78,5 @@ run_compiler: $(COMPILER_EXEC)
 
 # Limpeza
 clean:
-	rm -f $(OBJ_DIR)/*.o $(LEX_GEN) $(YACC_GEN) $(YACC_HDR) $(COMPILER_EXEC)
+	rm -f $(OBJ_DIR)/*.o $(LEX_GEN) $(YACC_GEN) $(YACC_HDR) $(YACC_DIR)/yacc.output $(COMPILER_EXEC)
+

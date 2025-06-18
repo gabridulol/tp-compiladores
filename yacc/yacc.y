@@ -13,6 +13,8 @@ int yylex(void);
 void yyerror(const char *s);
 %}
 
+%debug
+
 %union {
     int val_int;
     double val_float;
