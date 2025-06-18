@@ -8,7 +8,7 @@ typedef struct Scope {
     struct Scope *prev;  // Escopo pai (escopo anterior na pilha)
 } Scope;
 
-extern Scope *current_scope;
+extern Scope *scope_stack;
 
 // Inicializa escopo global
 void scope_init();
@@ -30,5 +30,8 @@ Symbol* scope_lookup_current(const char *name);
 
 // Libera toda a pilha de escopos (ex: no fim do programa)
 void scope_cleanup();
+
+// Imprime todos os símbolos de todos os escopos
+void scope_print_all();
 
 #endif
