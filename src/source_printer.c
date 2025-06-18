@@ -8,7 +8,7 @@ extern int yylineno;
 void token_printer(const char* color, const char* text) {
     if (yylineno != ll_reported) {
         if (ll_reported != 0)
-            printf("\n"); // Só quebra linha se não for o primeiro token
+            printf("\n");
         printf("[%4d] ", yylineno);
         for (int i = 0; i < indent_level; i++)
             printf("    ");
