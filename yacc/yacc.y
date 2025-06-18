@@ -10,6 +10,11 @@ extern int yylineno;
 int yylex(void);
 
 void yyerror(const char *s);
+
+typedef struct {
+    char type[MAX_NAME_LEN];
+    void *value;
+} TypedValue;
 %}
 
 %union {
@@ -17,6 +22,7 @@ void yyerror(const char *s);
     double val_float;
     char *str;
     void *ptr;
+    TypedValue *tv;
 }
 
 %token KW_MAIN
@@ -130,20 +136,20 @@ void yyerror(const char *s);
 %start translation_unit
 
 %type <str> type_specifier
-%type <ptr> expression
-%type <ptr> constant
-%type <ptr> string
-%type <ptr> primary_expression
-%type <ptr> argument_list
-%type <ptr> unary_expression
+%type <tv> expression
+%type <tv> constant
+%type <tv> string
+%type <tv> primary_expression
+%type <tv> argument_list
+%type <tv> unary_expression
 %type <str> access_list
 %type <str> member_access_direct
 %type <str> member_access_dereference
 %type <str> member_access_pointer
-%type <ptr> vector_access
-%type <ptr> pointer_statement
-%type <ptr> pointer_assignment
-%type <ptr> pointer_dereference
+%type <tv> vector_access
+%type <tv> pointer_statement
+%type <tv> pointer_assignment
+%type <tv> pointer_dereference
 
 %%
 
@@ -201,8 +207,11 @@ assignment_statement
           if (sym == NULL) {
               yyerror("Variável não declarada!");
           } else {
+              if(strcmp(sym->type, $1->type) != 0) {
+                  yyerror("Tipo incompatível na atribuição!");
+              }
               if (sym->value) free(sym->value);
-              sym->value = $1;
+              sym->value = $1->value;
           }
           free($3);
       }
@@ -219,9 +228,22 @@ expression_statement
     ;
 
 primary_expression
-    : IDENTIFIER                { $$ = (void*)$1; }
-    | vector_access             
-    | pointer_statement         
+    : IDENTIFIER                {
+          Symbol *sym = st_lookup(&symbol_table, $1);
+          TypedValue *tv = malloc(sizeof(TypedValue));
+          if(sym) {
+              strncpy(tv->type, sym->type, MAX_NAME_LEN);
+              tv->value = sym->value;
+          } else {
+              yyerror("Variável não declarada!");
+              strncpy(tv->type, "desconhecido", MAX_NAME_LEN);
+              tv->value = NULL;
+          }
+          $$ = tv;
+          free($1);
+      }
+    | vector_access
+    | pointer_statement
     | constant                  { $$ = $1; }
     | string                    { $$ = $1; }
     | LPAREN expression RPAREN  { $$ = $2; }
@@ -229,7 +251,12 @@ primary_expression
 
 unary_expression
     : primary_expression                { $$ = $1; }
-    | OP_LOGICAL_NOT unary_expression   { $$ = $2; }
+    | OP_LOGICAL_NOT unary_expression   {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
     | OP_DEREF_POINTER unary_expression { $$ = $2; }
     | OP_ADDR_OF unary_expression       { $$ = $2; }
     | OP_SUBTRACT unary_expression      { $$ = $2; }
@@ -238,39 +265,135 @@ unary_expression
 expression
     : unary_expression { $$ = $1; }
     | expression OP_ASSIGN assing_value { $$ = $1; }
-    | expression OP_ACCESS_POINTER assing_value
-    | expression OP_ACCESS_MEMBER assing_value
+    | expression OP_ACCESS_POINTER assing_value { $$ = $1; }
+    | expression OP_ACCESS_MEMBER assing_value { $$ = $1; }
 
-    | expression OP_LOGICAL_XOR unary_expression
-    | expression OP_LOGICAL_OR unary_expression
-    | expression OP_LOGICAL_AND unary_expression
+    | expression OP_LOGICAL_XOR unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_LOGICAL_OR unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_LOGICAL_AND unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
 
-    | expression OP_EQUAL unary_expression
-    | expression OP_NOT_EQUAL unary_expression
-    | expression OP_LESS_THAN unary_expression
-    | expression OP_GREATER_THAN unary_expression
-    | expression OP_LESS_EQUAL unary_expression
-    | expression OP_GREATER_EQUAL unary_expression
+    | expression OP_EQUAL unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_NOT_EQUAL unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_LESS_THAN unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_GREATER_THAN unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_LESS_EQUAL unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
+    | expression OP_GREATER_EQUAL unary_expression {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            tv->value = NULL;
+            $$ = tv;
+        }
 
-    | expression OP_ADD unary_expression
-    | expression OP_SUBTRACT unary_expression
-    | expression OP_MULTIPLY unary_expression
-    | expression OP_DIVIDE unary_expression
-    | expression OP_MODULUS unary_expression
-    | expression OP_EXP unary_expression
-    | expression OP_INTEGER_DIVIDE unary_expression
+    | expression OP_ADD unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_SUBTRACT unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_MULTIPLY unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_DIVIDE unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_MODULUS unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_EXP unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
+    | expression OP_INTEGER_DIVIDE unary_expression {
+            if(strcmp($1->type, $3->type) != 0) yyerror("Tipos incompatíveis");
+            $$ = $1;
+        }
     ;
 
 constant
-    : LIT_INT    { int *v = malloc(sizeof(int)); *v = $1; $$ = v; }
-    | LIT_FLOAT  { double *v = malloc(sizeof(double)); *v = $1; $$ = v; }
-    | LIT_FACTUM { int *v = malloc(sizeof(int)); *v = 1; $$ = v; }
-    | LIT_FICTUM { int *v = malloc(sizeof(int)); *v = 0; $$ = v; }
-    | LIT_CHAR   { $$ = $1; }
+    : LIT_INT    {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "atomus", MAX_NAME_LEN);
+            int *v = malloc(sizeof(int)); *v = $1; tv->value = v;
+            $$ = tv;
+        }
+    | LIT_FLOAT  {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "fractio", MAX_NAME_LEN);
+            double *v = malloc(sizeof(double)); *v = $1; tv->value = v;
+            $$ = tv;
+        }
+    | LIT_FACTUM {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            int *v = malloc(sizeof(int)); *v = 1; tv->value = v;
+            $$ = tv;
+        }
+    | LIT_FICTUM {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "quantum", MAX_NAME_LEN);
+            int *v = malloc(sizeof(int)); *v = 0; tv->value = v;
+            $$ = tv;
+        }
+    | LIT_CHAR   {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "symbolum", MAX_NAME_LEN);
+            tv->value = $1;
+            $$ = tv;
+        }
     ;
 
 string
-    : LIT_STRING { $$ = $1; }
+    : LIT_STRING {
+            TypedValue *tv = malloc(sizeof(TypedValue));
+            strncpy(tv->type, "scriptum", MAX_NAME_LEN);
+            tv->value = $1;
+            $$ = tv;
+        }
     ;
 
 //
@@ -297,12 +420,15 @@ declaration_statement
           free($1);
       }
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON{
+          if(strcmp($4, $1->type) != 0) {
+              yyerror("Tipo incompatível na declaração!");
+          }
           if (st_lookup(&symbol_table, $3) != NULL) {
               Symbol *sym = st_lookup(&symbol_table, $3);
               if (sym->value) free(sym->value);
-              sym->value = $1;
+              sym->value = $1->value;
           } else {
-              st_insert(&symbol_table, $3, SYM_VAR, $4, yylineno, $1);
+              st_insert(&symbol_table, $3, SYM_VAR, $4, yylineno, $1->value);
           }
           free($3);
       }
@@ -488,7 +614,15 @@ vector_statement
     ;
 
 vector_access
-    : IDENTIFIER LANGLE expression RANGLE { $$ = NULL; }
+    : IDENTIFIER LANGLE expression RANGLE {
+          Symbol *sym = st_lookup(&symbol_table, $1);
+          TypedValue *tv = malloc(sizeof(TypedValue));
+          if(sym) strncpy(tv->type, sym->type, MAX_NAME_LEN);
+          else strncpy(tv->type, "desconhecido", MAX_NAME_LEN);
+          tv->value = NULL;
+          $$ = tv;
+          free($1);
+      }
     ;
 
 
@@ -514,17 +648,27 @@ pointer_declaration
       {
           char tipo_ponteiro[MAX_NAME_LEN];
           snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $5);
-          st_insert(&symbol_table, $3, SYM_VAR, tipo_ponteiro, yylineno, $1);
+          st_insert(&symbol_table, $3, SYM_VAR, tipo_ponteiro, yylineno, $1->value);
           free($3);
           free($5);
       }
 
 pointer_assignment
-    : IDENTIFIER OP_ADDR_OF { $$ = (void*)$1;}
+    : IDENTIFIER OP_ADDR_OF {
+          TypedValue *tv = malloc(sizeof(TypedValue));
+          strncpy(tv->type, "pointer", MAX_NAME_LEN);
+          tv->value = NULL;
+          $$ = tv;
+      }
     ;
 
 pointer_dereference
-    : OP_DEREF_POINTER IDENTIFIER { $$ = (void*)$2;}
+    : OP_DEREF_POINTER IDENTIFIER {
+          TypedValue *tv = malloc(sizeof(TypedValue));
+          strncpy(tv->type, "pointer", MAX_NAME_LEN);
+          tv->value = NULL;
+          $$ = tv;
+      }
     ;
 
 access_list
