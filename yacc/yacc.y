@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../src/symbol_table.h"
+
+#include "../src/scope.h"
 #include "../src/source_printer.h"
 
-extern SymbolTable symbol_table;
+extern ScopeStack scope_stack;
 extern int yylineno;
+
 int yylex(void);
 
 void yyerror(const char *s);
@@ -26,10 +28,10 @@ void yyerror(const char *s);
 %token KW_CONTINUUM
 %token KW_RUPTIO
 %token KW_VERTERE
-/* %token KW_AUT */
-/* %token KW_ET */
-/* %token KW_NE */
-/* %token KW_VEL */
+/* %token KW_AUT -> OP_LOGICAL_XOR */
+/* %token KW_ET -> OP_LOGICAL_AND */
+/* %token KW_NE -> OP_LOGICAL_NOT */
+/* %token KW_VEL -> OP_LOGICAL_OR */
 %token KW_DESIGNARE
 %token KW_ENUMERARE
 %token KW_EVOCARE
@@ -39,7 +41,7 @@ void yyerror(const char *s);
 %token KW_LECTURA
 %token KW_MAGNITUDO
 %token KW_MOL
-%token KW_NON_SI
+%token KW_NON_SI // Deprecated, NON SI is token KW_NON and KW_SI
 %token KW_NON
 %token KW_PERSISTO
 %token KW_REDIRE
@@ -100,8 +102,7 @@ void yyerror(const char *s);
 
 %token <str> IDENTIFIER
 
-%token LEX_ERROR
-
+%token LEX_ERROR // Lexical error token, not used in grammar
 
 %left OP_ADD
 %left OP_SUBTRACT
@@ -117,10 +118,6 @@ void yyerror(const char *s);
 %left OP_GREATER_THAN
 %left OP_LESS_EQUAL
 %left OP_GREATER_EQUAL
-
-/* %left KW_ET
-%left KW_VEL
-%left KW_AUT */
 
 %left OP_ACCESS_MEMBER
 %left OP_ACCESS_POINTER

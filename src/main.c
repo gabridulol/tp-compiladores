@@ -3,16 +3,15 @@
 #include <unistd.h>  // Para isatty()
 
 #include "../src/source_printer.h"
-#include "../src/symbol_table.h"
+#include "../src/scope.h"  // novo!
 
 extern int yyparse(void);
 extern FILE *yyin;
-SymbolTable symbol_table;
 
 int main(int argc, char **argv) {
-    st_init(&symbol_table);
+    scope_init(); // inicializa escopo global
+
     if (argc > 1) {
-        // Arquivo passado como argumento
         yyin = fopen(argv[1], "r");
         if (!yyin) {
             fprintf(stderr, "Erro ao abrir o arquivo '%s'\n", argv[1]);
@@ -20,7 +19,6 @@ int main(int argc, char **argv) {
         }
         printf("Executando compilador com arquivo '%s'...\n", argv[1]);
     } else {
-        // Entrada padrão (stdin), pode ser terminal ou redirecionada
         yyin = stdin;
         if (isatty(fileno(stdin))) {
             printf("Executando compilador com entrada padrão (digite e pressione Ctrl+D para encerrar):\n");
@@ -29,26 +27,23 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Análise sintática
+    // Executa a análise sintática
     int result = yyparse();
 
-    // Fecha o arquivo se necessário
     if (yyin != stdin) {
         fclose(yyin);
     }
 
-    // Resultado da compilação
+    // Imprime resultado final
     if (result == 0) {
         correct_program();
-        printf("\n");
-        st_print(&symbol_table);
-        st_free(&symbol_table);
-        return EXIT_SUCCESS;
     } else {
         incorrect_program();
-        st_print(&symbol_table);
-        st_free(&symbol_table);
-        printf("\n");
-        return EXIT_FAILURE;
     }
+
+    // Libera todos os escopos da pilha
+    scope_cleanup();
+
+    printf("\n");
+    return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
