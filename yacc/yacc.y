@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../src/symbol_table.h"
+#include "../src/scope.h"
 #include "../src/source_printer.h"
 
 extern SymbolTable symbol_table;
@@ -123,10 +124,10 @@ void yyerror(const char *s);
 %left KW_AUT */
 
 %left OP_ACCESS_MEMBER
-%left OP_ACCESS_POINTER
 
 %left OP_ASSIGN
 
+%left OP_ACCESS_POINTER
 %start translation_unit
 
 %type <str> type_specifier
@@ -166,8 +167,16 @@ global_statement
 
 //
 
+block
+    : LBRACE
+        { scope_push(); }     /* cria novo escopo */
+      statement_list
+      RBRACE
+        { scope_pop(); }      /* volta ao escopo pai */
+    ;
+
 alchemia_statement
-    : IDENTIFIER LPAREN RPAREN KW_MAIN LBRACE statement_list RBRACE
+    : IDENTIFIER LPAREN RPAREN KW_MAIN block
     ;
 
 statement_list
@@ -219,7 +228,16 @@ expression_statement
     ;
 
 primary_expression
-    : IDENTIFIER                { $$ = (void*)$1; }
+    : IDENTIFIER
+      {
+        Symbol *s = scope_lookup($1);
+        if (!s)
+            fprintf(stderr,
+                "Erro: identificador '%s' não declarado na linha %d\n",
+                $1, yylineno);
+        $$ = (void*)$1;
+        /* guarde ou use 's' conforme sua AST */
+      }
     | vector_access             
     | pointer_statement         
     | constant                  { $$ = $1; }
@@ -283,8 +301,8 @@ assing_value
 
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON{
-          if (st_lookup(&symbol_table, $1) != NULL) {
-            Symbol *sym = st_lookup(&symbol_table, $1);
+          if (scope_lookup($1) != NULL) {
+            Symbol *sym = scope_lookup($1);
             if(sym->kind != SYM_VAR) {
                 yyerror("Variável já declarada com outro tipo!");
             } else {
@@ -292,17 +310,17 @@ declaration_statement
               sym->line_declared = yylineno;
             }
           } else {
-              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, NULL);
+              scope_insert($1, SYM_VAR, $2, yylineno, NULL);
           }
           free($1);
       }
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON{
-          if (st_lookup(&symbol_table, $3) != NULL) {
-              Symbol *sym = st_lookup(&symbol_table, $3);
+          if (scope_lookup($3) != NULL) {
+              Symbol *sym = scope_lookup($3);
               if (sym->value) free(sym->value);
               sym->value = $1;
           } else {
-              st_insert(&symbol_table, $3, SYM_VAR, $4, yylineno, $1);
+              scope_insert($3, SYM_VAR, $4, yylineno, $1);
           }
           free($3);
       }
@@ -337,14 +355,28 @@ type_specifier
 //
 
 function_declaration_statement
-    : KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier LBRACE statement_list RBRACE {
-          if (st_lookup(&symbol_table, $5) != NULL) {
-              yyerror("Função já declarada!");
-          } else {
-              st_insert(&symbol_table, $5, SYM_FUNC, $7, yylineno, NULL);
-          }
-          free($5);
+    : KW_FORMULA
+      LPAREN
+        { scope_push(); }
+      parameter_list
+    RPAREN
+      IDENTIFIER
+      OP_ASSIGN
+      type_specifier
+      {
+        Scope *parent = current_scope->prev;
+        if (scope_lookup_current($6) != NULL) {
+          yyerror("Função já declarada!");
+        } else {
+          scope_insert($6, SYM_FUNC, $8, yylineno, NULL);
+        }
+        free($6);
       }
+      LBRACE
+        statement_list
+      RBRACE
+        { scope_pop(); }
+    ;
 
 parameter_list
     : /* vazio */
@@ -353,13 +385,15 @@ parameter_list
     ;
 
 parameter
-    : IDENTIFIER type_specifier {
-          if (st_lookup(&symbol_table, $1) != NULL) {
-              yyerror("Parâmetro já declarado!");
-          } else {
-              st_insert(&symbol_table, $1, SYM_VAR, $2, yylineno, NULL);
-          }
-          free($1);
+    : IDENTIFIER type_specifier
+      {
+        /* current_scope → escopo da função, logo insere corretamente */
+        if (scope_lookup_current($1) != NULL) {
+          yyerror("Parâmetro já declarado!");
+        } else {
+          scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+        }
+        free($1);
       }
     ;
 
@@ -385,13 +419,13 @@ jump_statement
 // IF ELSE SWITCH
 
 conditional_statement
-    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE
-    | LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE conditional_non_statement
+    : LPAREN expression RPAREN KW_SI block
+    | LPAREN expression RPAREN KW_SI block conditional_non_statement
     | LPAREN expression RPAREN KW_VERTERE LBRACE causal_statement RBRACE
     ;
 
 conditional_non_statement
-    : KW_NON LBRACE statement_list RBRACE
+    : KW_NON block
     | KW_NON conditional_statement
     ;
 
@@ -404,11 +438,11 @@ causal_statement
 //  Laços de repetição: while() e for(; ;), 
 
 iteration_statement
-	: LPAREN expression RPAREN KW_PERSISTO LBRACE statement_list RBRACE
-	| LPAREN expression_statement expression_statement RPAREN KW_ITERARE LBRACE statement_list RBRACE
-	| LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
-	| LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  LBRACE statement_list RBRACE
-	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE LBRACE statement_list RBRACE
+	: LPAREN expression RPAREN KW_PERSISTO block
+	| LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
+	| LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
+	| LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  block
+	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
 	;
 
 // Funções pontas (lectura / revelare / magnitudo)
@@ -445,6 +479,10 @@ type_expression
 
 type_define_statement
     : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
+      {
+        scope_insert($3, SYM_TYPE, $2, yylineno, NULL);
+        free($3);
+      }
     | IDENTIFIER  LBRACE list_declaration_statement RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
     | type_define_enum
     ;
@@ -456,10 +494,10 @@ type_define_enum
 enum_assignment
     : IDENTIFIER OP_ASSIGN IDENTIFIER IDENTIFIER KW_ENUMERARE SEMICOLON
       {
-            if (st_lookup(&symbol_table, $1) != NULL) {
+            if (scope_lookup($1) != NULL) {
                 yyerror("Enumeração já declarada!");
             } else {
-                st_insert(&symbol_table, $1, SYM_ENUM, $4, yylineno, NULL);
+                scope_insert($1, SYM_ENUM, $4, yylineno, NULL);
             }
             free($1);
       }
@@ -506,7 +544,7 @@ pointer_declaration
       {
           char tipo_ponteiro[MAX_NAME_LEN];
           snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $3);
-          st_insert(&symbol_table, $1, SYM_VAR, tipo_ponteiro, yylineno, NULL);
+          scope_insert($1, SYM_VAR, tipo_ponteiro, yylineno, NULL);
           free($1);
           free($3);
       }
@@ -514,7 +552,7 @@ pointer_declaration
       {
           char tipo_ponteiro[MAX_NAME_LEN];
           snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $5);
-          st_insert(&symbol_table, $3, SYM_VAR, tipo_ponteiro, yylineno, $1);
+          scope_insert($3, SYM_VAR, tipo_ponteiro, yylineno, $1);
           free($3);
           free($5);
       }
