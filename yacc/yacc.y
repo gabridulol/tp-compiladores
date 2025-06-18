@@ -6,7 +6,6 @@
 #include "../src/scope.h"
 #include "../src/source_printer.h"
 
-extern ScopeStack scope_stack;
 extern int yylineno;
 
 int yylex(void);
@@ -202,7 +201,7 @@ statement
 assignment_statement
     : expression OP_ASSIGN IDENTIFIER SEMICOLON
       {
-          Symbol *sym = st_lookup(&symbol_table, $3);
+          Symbol *sym = scope_lookup($3);
           if (sym == NULL) {
               yyerror("Variável não declarada!");
           } else {
@@ -360,7 +359,7 @@ function_declaration_statement
       OP_ASSIGN
       type_specifier
       {
-        Scope *parent = current_scope->prev;
+        Scope *parent = scope_stack->prev;
         if (scope_lookup_current($6) != NULL) {
           yyerror("Função já declarada!");
         } else {

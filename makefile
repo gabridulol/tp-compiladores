@@ -70,7 +70,7 @@ $(SCOPE_OBJ): $(SCOPE_SRC) | $(OBJ_DIR)
 
 # Compilação do compilador completo
 $(COMPILER_EXEC): $(MAIN_OBJ) $(LEX_OBJ) $(YACC_OBJ) $(SYMBOL_TABLE_OBJ) $(SOURCE_PRINTER_OBJ) $(SCOPE_OBJ) | $(BIN_DIR)
-	$(CC) $^ -o $@ -lfl
+	$(CC) $^ -o $@ 
 
 # Execução do compilador (entrada padrão ou redirecionada com <)
 run_compiler: $(COMPILER_EXEC)

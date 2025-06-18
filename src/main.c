@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     }
 
     /* 6. Imprime a tabela de símbolos do escopo corrente */
-    st_print(&current_scope->table);
+    scope_print_all(    );
 
     /* 7. Libera todos os escopos e tabelas alocadas */
     scope_cleanup();
