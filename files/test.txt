@@ -1,4 +1,6 @@
 §§ Função principal
+
+(10) --> a atomus;
 main () Alchemia {
-    
+  (10) --> b atomus;
 }

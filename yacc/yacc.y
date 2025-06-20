@@ -8,6 +8,8 @@
 
 extern int yylineno;
 
+FieldTable *current_struct_fields = NULL;
+
 int yylex(void);
 
 void yyerror(const char *s);
@@ -134,10 +136,10 @@ void yyerror(const char *s);
 %type <ptr> primary_expression
 %type <ptr> argument_list
 %type <ptr> unary_expression
-%type <str> access_list
-%type <str> member_access_direct
-%type <str> member_access_dereference
-%type <str> member_access_pointer
+%type <ptr> access_list
+%type <ptr> member_access_direct
+%type <ptr> member_access_dereference
+%type <ptr> member_access_pointer
 %type <ptr> vector_access
 %type <ptr> pointer_statement
 %type <ptr> pointer_assignment
@@ -169,11 +171,11 @@ block
         { scope_push(); }     /* cria novo escopo */
       statement_list
       RBRACE
-        { scope_pop(); }      /* volta ao escopo pai */
+      // { scope_pop(); }      / remoção do escopo pode ser feita em cada produção individual
     ;
 
 alchemia_statement
-    : IDENTIFIER LPAREN RPAREN KW_MAIN block
+    : IDENTIFIER LPAREN RPAREN KW_MAIN block 
     ;
 
 statement_list
@@ -235,7 +237,16 @@ primary_expression
         $$ = (void*)$1;
         /* guarde ou use 's' conforme sua AST */
       }
-    | vector_access             
+    | vector_access  
+    | member_access_direct
+      {
+          Symbol *campo = (Symbol*)$1;
+          if (!campo) {
+              $$ = NULL;
+          } else {
+              $$ = campo->value;
+          }
+      }           
     | pointer_statement         
     | constant                  { $$ = $1; }
     | string                    { $$ = $1; }
@@ -298,16 +309,20 @@ assing_value
 
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON{
-          if (scope_lookup($1) != NULL) {
-            Symbol *sym = scope_lookup($1);
-            if(sym->kind != SYM_VAR) {
-                yyerror("Variável já declarada com outro tipo!");
-            } else {
-              sym->kind = SYM_VAR;
-              sym->line_declared = yylineno;
-            }
+          if (current_struct_fields) {
+              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL);
           } else {
-              scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+              if (scope_lookup($1) != NULL) {
+                  Symbol *sym = scope_lookup($1);
+                  if(sym->kind != SYM_VAR) {
+                      yyerror("Variável já declarada com outro tipo!");
+                  } else {
+                      sym->kind = SYM_VAR;
+                      sym->line_declared = yylineno;
+                  }
+              } else {
+                  scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+              }
           }
           free($1);
       }
@@ -354,20 +369,20 @@ type_specifier
 function_declaration_statement
     : KW_FORMULA
       LPAREN
-        { scope_push(); }
       parameter_list
     RPAREN
       IDENTIFIER
       OP_ASSIGN
       type_specifier
       {
-        Scope *parent = scope_stack->prev;
-        if (scope_lookup_current($6) != NULL) {
+        // Insere a função no escopo global
+        if (scope_lookup($5) != NULL) {
           yyerror("Função já declarada!");
         } else {
-          scope_insert($6, SYM_FUNC, $8, yylineno, NULL);
+          scope_insert($5, SYM_FUNC, $7, yylineno, NULL);
         }
-        free($6);
+        free($5);
+        scope_push(); // Cria escopo da função após inserir a função
       }
       LBRACE
         statement_list
@@ -416,13 +431,13 @@ jump_statement
 // IF ELSE SWITCH
 
 conditional_statement
-    : LPAREN expression RPAREN KW_SI block
-    | LPAREN expression RPAREN KW_SI block conditional_non_statement
-    | LPAREN expression RPAREN KW_VERTERE LBRACE causal_statement RBRACE
+    : LPAREN expression RPAREN KW_SI block { scope_pop(); }
+    | LPAREN expression RPAREN KW_SI block { scope_pop(); } conditional_non_statement
+    | LPAREN expression RPAREN KW_VERTERE LBRACE { scope_push(); } causal_statement RBRACE { scope_pop(); }
     ;
 
 conditional_non_statement
-    : KW_NON block
+    : KW_NON block { scope_pop(); }
     | KW_NON conditional_statement
     ;
 
@@ -435,13 +450,12 @@ causal_statement
 //  Laços de repetição: while() e for(; ;), 
 
 iteration_statement
-	: LPAREN expression RPAREN KW_PERSISTO block
-	| LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
-	| LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
-	| LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  block
-	| LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
-	;
-
+    : LPAREN expression RPAREN KW_PERSISTO block { scope_pop(); }
+    | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block { scope_pop(); }
+    | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block { scope_pop(); }
+    | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  block { scope_pop(); }
+    | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block { scope_pop(); }
+    ;
 // Funções pontas (lectura / revelare / magnitudo)
 
 io_functions 
@@ -480,7 +494,23 @@ type_define_statement
         scope_insert($3, SYM_TYPE, $2, yylineno, NULL);
         free($3);
       }
-    | IDENTIFIER  LBRACE list_declaration_statement RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
+    | IDENTIFIER LBRACE
+        {
+            // Crie uma nova tabela de campos para a struct
+            FieldTable *ft = malloc(sizeof(FieldTable));
+            st_init(&ft->fields);
+            // Salve o ponteiro em uma variável global/externa temporária
+            current_struct_fields = ft;
+        }
+      list_declaration_statement
+      RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
+      {
+        // Insere o nome da struct como tipo no escopo global, com a tabela de campos
+        Symbol *sym = scope_insert($1, SYM_TYPE, "homunculus", yylineno, NULL);
+        if (sym) sym->field_table = current_struct_fields;
+        current_struct_fields = NULL;
+        free($1);
+      }
     | type_define_enum
     ;
 
@@ -565,16 +595,36 @@ pointer_dereference
 access_list
     : IDENTIFIER
       {
-          $$ = $1; // Retorna o identificador
+          Symbol *sym = scope_lookup($1);
+          if (!sym) {
+              yyerror("Variável não declarada!");
+              $$ = NULL;
+          } else {
+              $$ = sym;
+          }
+          free($1);
       }
     | access_list OP_ACCESS_MEMBER IDENTIFIER
       {
-          $$ = $3; // Retorna o último identificador
+          Symbol *prev = (Symbol*)$1;
+          if (!prev || !prev->field_table) {
+              yyerror("Acesso inválido a membro!");
+              $$ = NULL;
+          } else {
+              Symbol *campo = st_lookup(&prev->field_table->fields, $3);
+              if (!campo) {
+                  yyerror("Campo não existe na struct!");
+                  $$ = NULL;
+              } else {
+                  $$ = campo;
+              }
+          }
+          free($3);
       }
     ;
 
 member_access_direct
-    : access_list
+    : access_list { $$ = $1; }
     ;
 
 member_access_dereference
