@@ -62,15 +62,22 @@ void scope_cleanup() {
 }
 
 void scope_print_all() {
-    Scope *s = scope_stack;
-    int level = 0;
-    if (!s) {
-        printf("Nenhum escopo definido.\n");
-        return;
+    int count = 0;
+    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
+        count++;
     }
-    while (s) {
-        printf("==== Escopo %d ====\n", level++);
-        st_print(&s->table);
-        s = s->prev;
+
+    Scope **scopes = malloc(sizeof(Scope*) * count);
+    int i = count - 1;
+    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
+        scopes[i--] = s;
     }
+
+    for (int j = 0; j < count; j++) {
+        printf("==== Escopo %d ====\n", j);
+        st_print(&scopes[j]->table);
+    }
+
+    free(scopes);
 }
+
