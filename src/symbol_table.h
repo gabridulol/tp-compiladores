@@ -16,6 +16,8 @@ typedef enum {
     // Adicione outros tipos conforme necessário
 } SymbolKind;
 
+struct FieldTable; // Forward declaration
+
 typedef struct Symbol {
     char name[MAX_NAME_LEN];
     SymbolKind kind;
@@ -23,11 +25,16 @@ typedef struct Symbol {
     void *value;
     int line_declared;
     struct Symbol *next; // Para colisões (encadeamento)
+    struct FieldTable *field_table; 
 } Symbol;
 
-typedef struct {
+typedef struct SymbolTable {
     Symbol *table[HASH_SIZE];
 } SymbolTable;
+
+typedef struct FieldTable {
+    SymbolTable fields;
+} FieldTable;
 
 // Funções da tabela
 void st_init(SymbolTable *table);
