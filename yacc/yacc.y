@@ -129,9 +129,9 @@ void yyerror(const char *s);
 %left OP_LESS_EQUAL
 %left OP_GREATER_EQUAL
 
+%left OP_ASSIGN
 %left OP_ACCESS_MEMBER
 
-%left OP_ASSIGN
 
 %left OP_ACCESS_POINTER
 %start translation_unit
@@ -172,6 +172,7 @@ global_statement
     : import_statement
     | declaration_statement
     | function_declaration_statement
+    | type_define_statement
     ;
 
 //
@@ -250,8 +251,17 @@ assignment_statement
           }
           free($3);
       }
-    ;
-;
+    /* | expression OP_ASSIGN access_list SEMICOLON {
+          // $3 pode ser um campo de struct (campo . var)
+          Symbol *campo = (Symbol*)$3;
+          if (!campo) {
+              yyerror("Campo de struct não encontrado!");
+          } else {
+              if (campo->data.value) free(campo->data.value);
+              campo->data.value = $1;
+          }
+      } */
+
 
 import_statement
     : IDENTIFIER KW_EVOCARE SEMICOLON 
@@ -358,7 +368,24 @@ declaration_statement
                       sym->line_declared = yylineno;
                   }
               } else {
-                  scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+                // Verifica se o tipo é uma struct definida
+                Symbol *type_sym = scope_lookup($2);
+                Symbol *var_sym = scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+
+                if (type_sym && type_sym->kind == SYM_TYPE && type_sym->field_table) {
+                    // É uma struct: cria tabela de campos da instância
+                    var_sym->instance_fields = malloc(sizeof(SymbolTable));
+                    st_init(var_sym->instance_fields);
+
+                    // Para cada campo da struct, cria um símbolo na instância
+                    for (int i = 0; i < HASH_SIZE; i++) {
+                        Symbol *field = type_sym->field_table->fields.table[i];
+                        while (field) {
+                            st_insert(var_sym->instance_fields, field->name, SYM_VAR, field->type, yylineno, NULL);
+                            field = field->next;
+                        }
+                    }
+                }
               }
           }
           free($1);
@@ -382,7 +409,8 @@ opcional_constant
     ;
 
 list_declaration_statement
-    : declaration_statement list_declaration_statement
+    : // vazio
+    | declaration_statement list_declaration_statement
     | declaration_statement
     ;
 
@@ -396,6 +424,7 @@ type_specifier
     | TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
     | TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
     | TYPE_VACUUM               { $$ = strdup("vacuum"); }
+    | IDENTIFIER                { $$ = strdup($1); }
     | IDENTIFIER KW_ENUMERARE   { $$ = strdup($1); }
     | OP_DEREF_POINTER type_specifier {}
     
@@ -554,7 +583,12 @@ type_define_statement
         scope_insert($3, SYM_TYPE, $2, yylineno, NULL);
         free($3);
       }
-    | IDENTIFIER LBRACE
+    | type_define_struct
+    | type_define_enum
+    ;
+
+type_define_struct
+    : KW_DESIGNARE IDENTIFIER LBRACE
         {
             // Crie uma nova tabela de campos para a struct
             FieldTable *ft = malloc(sizeof(FieldTable));
@@ -563,16 +597,14 @@ type_define_statement
             current_struct_fields = ft;
         }
       list_declaration_statement
-      RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
+      RBRACE KW_HOMUNCULUS SEMICOLON
       {
         // Insere o nome da struct como tipo no escopo global, com a tabela de campos
-        Symbol *sym = scope_insert($1, SYM_TYPE, "homunculus", yylineno, NULL);
+        Symbol *sym = scope_insert($2, SYM_TYPE, "homunculus", yylineno, NULL);
         if (sym) sym->field_table = current_struct_fields;
         current_struct_fields = NULL;
-        free($1);
+        free($2);
       }
-    | type_define_enum
-    ;
 
 type_define_enum
     : IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
@@ -745,23 +777,25 @@ access_list
           }
           free($1);
       }
-    | access_list OP_ACCESS_MEMBER IDENTIFIER
+    /* | IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
       {
-          Symbol *prev = (Symbol*)$1;
-          if (!prev || !prev->field_table) {
-              yyerror("Acesso inválido a membro!");
+          // Aqui: $1 = campo, $3 = variável
+          Symbol *var = scope_lookup($3);
+          if (!var || !var->instance_fields) {
+              yyerror("Variável de struct não declarada ou não é struct!");
               $$ = NULL;
           } else {
-              Symbol *campo = st_lookup(&prev->field_table->fields, $3);
+              Symbol *campo = st_lookup(var->instance_fields, $1);
               if (!campo) {
-                  yyerror("Campo não existe na struct!");
+                  yyerror("Campo não existe na instância da struct!");
                   $$ = NULL;
               } else {
                   $$ = campo;
               }
           }
+          free($1);
           free($3);
-      }
+      } */
     ;
 
 member_access_direct
