@@ -23,6 +23,11 @@ void lexical_error(const char* text) {
            LEX_COLOR_ERROR, text, yylineno, RESET_COLOR);
 }
 
+void semantic_error(const char *msg) {
+    printf("\n%s[ERRO SEMÂNTICO] %s na linha %d%s",
+           SEMANTIC_COLOR_ERROR, msg, yylineno, RESET_COLOR);
+}
+
 // void syntactic_error() {
 void yyerror(const char *s) {
     extern char *yytext; // Token atual fornecido pelo Flex

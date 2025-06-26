@@ -1,12 +1,7 @@
-§§ Função principal
+TipoInimigo {
+    A | B
+} enumerare;
 
-(10) --> a atomus;
-main () Alchemia {
-  caldeiraoooo atomus << 8 >>;
-  (10) --> b atomus;
-  (3) --> ok atomus;
-  caldeirao atomus << 5 >>;
-  10 --> caldeirao <<0>>;
-  20 --> caldeirao <<1>>;
-  55 --> caldeiraoooo << 7 >>;
-}
+TipoInimigo {
+    X | Y
+} enumerare;
