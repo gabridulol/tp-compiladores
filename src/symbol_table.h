@@ -12,7 +12,8 @@ typedef enum {
     SYM_VAR,
     SYM_FUNC,
     SYM_TYPE,
-    SYM_ENUM
+    SYM_ENUM,
+    SYM_VECTOR
     // Adicione outros tipos conforme necessário
 } SymbolKind;
 
@@ -22,10 +23,18 @@ typedef struct Symbol {
     char name[MAX_NAME_LEN];
     SymbolKind kind;
     char type[MAX_NAME_LEN]; // Ex: "atomus", "fractio", etc.
-    void *value;
     int line_declared;
     struct Symbol *next; // Para colisões (encadeamento)
-    struct FieldTable *field_table; 
+    struct FieldTable *field_table;\
+    
+    union { //Armazena o value para variaveis simples, ou a struct para vetores
+        void* value; //Valor de variaveis simples
+        struct {
+            size_t size; // Tamanho do vetor.
+            void* data_ptr; // Ponteiro para a memória alocada para o primeiro elemento do vetor.
+        } vector_info;
+    } data;
+
 } Symbol;
 
 typedef struct SymbolTable {
@@ -42,5 +51,6 @@ Symbol* st_insert(SymbolTable *table, const char *name, SymbolKind kind, const c
 Symbol* st_lookup(SymbolTable *table, const char *name);
 void st_print(SymbolTable *table);
 void st_free(SymbolTable *table);
+size_t get_size_from_type(const char* type_name);
 
 #endif // SYMBOL_TABLE_H

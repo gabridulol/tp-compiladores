@@ -8,6 +8,12 @@
 
 extern int yylineno;
 
+typedef struct ArgNode {
+    void* value;          // Ponteiro para o valor do argumento
+    struct ArgNode* next; // Ponteiro para o próximo argumento na lista
+} ArgNode;
+
+
 FieldTable *current_struct_fields = NULL;
 
 int yylex(void);
@@ -22,6 +28,7 @@ void yyerror(const char *s);
     double val_float;
     char *str;
     void *ptr;
+    struct ArgNode* arg_list; // ----> ADICIONE ESTA LINHA À SUA UNION <----
 }
 
 %token KW_MAIN
@@ -134,7 +141,7 @@ void yyerror(const char *s);
 %type <ptr> constant
 %type <ptr> string
 %type <ptr> primary_expression
-%type <ptr> argument_list
+
 %type <ptr> unary_expression
 %type <ptr> access_list
 %type <ptr> member_access_direct
@@ -144,6 +151,9 @@ void yyerror(const char *s);
 %type <ptr> pointer_statement
 %type <ptr> pointer_assignment
 %type <ptr> pointer_dereference
+
+%type <arg_list> argument_list
+
 
 %%
 
@@ -203,17 +213,44 @@ statement
 //
 
 assignment_statement
-    : expression OP_ASSIGN IDENTIFIER SEMICOLON
+    : expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuicao de uma variavel simples
       {
           Symbol *sym = scope_lookup($3);
           if (sym == NULL) {
               yyerror("Variável não declarada!");
           } else {
-              if (sym->value) free(sym->value);
-              sym->value = $1;
+              if (sym->data.value) free(sym->data.value);
+              sym->data.value = $1;
           }
           free($3);
       }
+    | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON //Atribuicao a um elemento de um vetor 
+      {
+          Symbol* sym = scope_lookup($3);
+          if (!sym) {
+              char err_msg[100]; sprintf(err_msg, "Erro: Vetor '%s' não declarado.", $3); yyerror(err_msg);
+              free($1); free($5);
+          } else if (sym->kind != SYM_VECTOR) {
+              char err_msg[100]; sprintf(err_msg, "Erro: Identificador '%s' não é um vetor.", $3); yyerror(err_msg);
+              free($1); free($5);
+          } else {
+              int index = *(int*)$5;
+              if (index < 0 || index >= sym->data.vector_info.size) {
+                  char err_msg[128]; sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, $3); yyerror(err_msg);
+              } else {
+                  // Calcula o endereço de destino e o tamanho do elemento.
+                  size_t element_size = get_size_from_type(sym->type);
+                  void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
+                  
+                  // Copia o valor da expressão para a memória do elemento do vetor.
+                  memcpy(dest_ptr, $1, element_size);
+              }
+              free($1); // Libera memória da expressão fonte.
+              free($5); // Libera memória da expressão de índice.
+          }
+          free($3);
+      }
+    ;
 ;
 
 import_statement
@@ -244,7 +281,7 @@ primary_expression
           if (!campo) {
               $$ = NULL;
           } else {
-              $$ = campo->value;
+              $$ = campo->data.value;
           }
       }           
     | pointer_statement         
@@ -329,8 +366,8 @@ declaration_statement
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON{
           if (scope_lookup($3) != NULL) {
               Symbol *sym = scope_lookup($3);
-              if (sym->value) free(sym->value);
-              sym->value = $1;
+              if (sym->data.value) free(sym->data.value);
+              sym->data.value = $1;
           } else {
               scope_insert($3, SYM_VAR, $4, yylineno, $1);
           }
@@ -415,9 +452,32 @@ function_call_statement
     : LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
 
 argument_list
-    : /* vazio */ { $$ = NULL; }
-    | expression  { $$ = $1; }
-    | argument_list PIPE expression { /* ... */ }
+    // Um único item na lista: cria o primeiro nó.
+    : expression
+      {
+          $$ = (ArgNode*)malloc(sizeof(ArgNode));
+          $$->value = $1;
+          $$->next = NULL;
+      }
+    // Item recursivo: anexa um novo nó ao final da lista existente.
+    | argument_list PIPE expression
+      {
+          // Cria um novo nó para o valor atual ($3)
+          ArgNode* newNode = (ArgNode*)malloc(sizeof(ArgNode));
+          newNode->value = $3;
+          newNode->next = NULL;
+
+          // Encontra o final da lista existente ($1)
+          ArgNode* current = $1;
+          while (current->next != NULL) {
+              current = current->next;
+          }
+          // Anexa o novo nó
+          current->next = newNode;
+
+          // Retorna o início da lista original
+          $$ = $1;
+      }
     ;
 
 // Declarações de salto: continuum, ruptio e redire
@@ -547,13 +607,94 @@ vector
     ;
     
 vector_statement
+    // Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
-    | LBRACKET argument_list RBRACKET OP_ASSIGN vector
-    | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER type_specifier LANGLE RANGLE SEMICOLON
+      {
+          if (!$4) {
+              yyerror("Expressão de tamanho do vetor é inválida.");
+          } else {
+              int vector_size = *(int*)$4; // Obtém o tamanho a partir da expressão
+              if (vector_size <= 0) {
+                  yyerror("O tamanho do vetor deve ser positivo.");
+              } else {
+                  // Insere o símbolo com o tipo SYM_VECTOR
+                  Symbol* sym = scope_insert($1, SYM_VECTOR, $2, yylineno, NULL);
+                  if (sym) {
+                      // Preenche as informações específicas do vetor no símbolo
+                      sym->data.vector_info.size = (size_t)vector_size;
+                      
+                      // Aloca memória zerada para os dados do vetor
+                      size_t element_size = get_size_from_type($2);
+                      sym->data.vector_info.data_ptr = malloc(vector_size * element_size);
+
+                      if (!sym->data.vector_info.data_ptr) {
+                          yyerror("Falha ao alocar memória para o vetor.");
+                      }
+                  } else {
+                      yyerror("Erro: Símbolo já declarado neste escopo.");
+                  }
+              }
+              free($4); // Libera a memória da expressão de tamanho
+          }
+          free($1);
+          free($2);
+      }
+    // Inicialização de um vetor (ex: [1 | 2 | 3] --> meuVetor;)
+    | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
+      {
+          Symbol* sym = scope_lookup($5);
+          if (!sym || sym->kind != SYM_VECTOR) {
+              yyerror("Identificador à direita da atribuição não é um vetor declarado.");
+          } else {
+              // Lógica para percorrer a argument_list ($2) e preencher
+              // a memória em sym->data.vector_info.data_ptr.
+              // Esta parte requer que 'argument_list' seja implementada
+              // para construir uma lista de valores que possa ser iterada.
+              printf("AVISO: Ação de inicialização de vetor ainda não implementada.\n");
+          }
+          free($5);
+      }
     ;
 
 vector_access
-    : IDENTIFIER LANGLE expression RANGLE { $$ = NULL; }
+    : IDENTIFIER LANGLE expression RANGLE 
+      {
+          Symbol* sym = scope_lookup($1);
+          if (!sym) {
+              char err_msg[100];
+              sprintf(err_msg, "Erro: Vetor '%s' não declarado.", $1);
+              yyerror(err_msg);
+              $$ = NULL;
+          } else if (sym->kind != SYM_VECTOR) {
+              char err_msg[100];
+              sprintf(err_msg, "Erro: Identificador '%s' não é um vetor.", $1);
+              yyerror(err_msg);
+              $$ = NULL;
+          } else {
+              if (!$3) {
+                  yyerror("Expressão de índice inválida.");
+                  $$ = NULL;
+              } else {
+                  int index = *(int*)$3; // Obtém o índice
+
+                  // Verificação de limites (bounds checking)
+                  if (index < 0 || index >= sym->data.vector_info.size) {
+                      char err_msg[128];
+                      sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s' (tamanho %zu).", index, sym->name, sym->data.vector_info.size);
+                      yyerror(err_msg);
+                      $$ = NULL;
+                  } else {
+                      // Calcula o endereço exato do elemento e o propaga via $$
+                      size_t element_size = get_size_from_type(sym->type);
+                      char* base_ptr = (char*)sym->data.vector_info.data_ptr;
+                      // Retorna um ponteiro para a localização do elemento na memória
+                      $$ = (void*)(base_ptr + (index * element_size));
+                  }
+                  free($3); // Libera a memória da expressão de índice
+              }
+          }
+          free($1);
+      }
     ;
 
 
