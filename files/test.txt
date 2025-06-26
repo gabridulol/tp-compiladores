@@ -1,7 +1,13 @@
-TipoInimigo {
-    A | B
-} enumerare;
 
-TipoInimigo {
-    X | Y
-} enumerare;
+designare Pessoa {
+    nome scriptum;
+    idade atomus;
+    altura fractio;
+} homunculus;
+
+p Pessoa;
+
+"Alan" --> nome.p;
+30 --> idade.p;
+1.75 --> altura.p;
+
