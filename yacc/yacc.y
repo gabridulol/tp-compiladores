@@ -451,8 +451,8 @@ parameter
 function_call_statement
     : LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
 
+// Um único item na lista: cria o primeiro nó.
 argument_list
-    // Um único item na lista: cria o primeiro nó.
     : expression
       {
           $$ = (ArgNode*)malloc(sizeof(ArgNode));
@@ -581,9 +581,9 @@ type_define_enum
 enum_assignment
     : IDENTIFIER OP_ASSIGN IDENTIFIER IDENTIFIER KW_ENUMERARE SEMICOLON
       {
-            if (scope_lookup($1) != NULL) {
-                yyerror("Enumeração já declarada!");
-            } else {
+           if (scope_lookup($1) != NULL) {
+                semantic_error("Enumeração já declarada!");
+            }else{
                 scope_insert($1, SYM_ENUM, $4, yylineno, NULL);
             }
             free($1);
@@ -606,8 +606,8 @@ vector
     | IDENTIFIER SEMICOLON
     ;
     
-vector_statement
-    // Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
+// Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
+vector_statement     
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
       {
           if (!$4) {
