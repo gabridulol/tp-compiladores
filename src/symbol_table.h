@@ -25,7 +25,8 @@ typedef struct Symbol {
     char type[MAX_NAME_LEN]; // Ex: "atomus", "fractio", etc.
     int line_declared;
     struct Symbol *next; // Para colisões (encadeamento)
-    struct FieldTable *field_table;\
+    struct FieldTable *field_table;
+    struct SymbolTable *instance_fields;
     
     union { //Armazena o value para variaveis simples, ou a struct para vetores
         void* value; //Valor de variaveis simples

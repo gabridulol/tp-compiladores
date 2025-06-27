@@ -132,9 +132,9 @@ void yyerror(const char *s);
 %left OP_LESS_EQUAL
 %left OP_GREATER_EQUAL
 
+%left OP_ASSIGN
 %left OP_ACCESS_MEMBER
 
-%left OP_ASSIGN
 
 %left OP_ACCESS_POINTER
 %start translation_unit
@@ -174,6 +174,7 @@ global_statement
     : import_statement
     | declaration_statement
     | function_declaration_statement
+    | type_define_statement
     ;
 
 //
@@ -539,7 +540,8 @@ opcional_constant
     ;
 
 list_declaration_statement
-    : declaration_statement list_declaration_statement
+    : // vazio
+    | declaration_statement list_declaration_statement
     | declaration_statement
     ;
 

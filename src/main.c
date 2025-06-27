@@ -8,10 +8,12 @@
 
 extern int yyparse(void);
 extern FILE *yyin;
+extern int yydebug;
 
 int main(int argc, char **argv) {
     /* 1. Inicializa escopo global */
     scope_init();
+        //yydebug = 1;
 
     /* 2. Abre o arquivo ou stdin */
     if (argc > 1) {
