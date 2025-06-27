@@ -1,0 +1,3 @@
+main() Alchemia{
+    10.5 --> x atomus;
+}

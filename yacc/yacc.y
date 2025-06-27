@@ -5,6 +5,7 @@
 #include "../src/symbol_table.h"
 #include "../src/scope.h"
 #include "../src/source_printer.h"
+#include "../src/expression.h"
 
 extern int yylineno;
 
@@ -27,8 +28,10 @@ void yyerror(const char *s);
     int val_int;
     double val_float;
     char *str;
-    void *ptr;
+    // void *ptr; Substituido
     struct ArgNode* arg_list; // ----> ADICIONE ESTA LINHA À SUA UNION <----
+    struct Expression* expr;
+    struct Symbol* sym_ptr;
 }
 
 %token KW_MAIN
@@ -58,15 +61,15 @@ void yyerror(const char *s);
 %token KW_REVELARE
 %token KW_SI
 
-%token TYPE_ATOMUS
-%token TYPE_FRACTIO
-%token TYPE_FRAGMENTUM
-%token TYPE_MAGNUS
-%token TYPE_MINIMUS
-%token TYPE_QUANTUM
-%token TYPE_SCRIPTUM
-%token TYPE_SYMBOLUM
-%token TYPE_VACUUM
+%token KW_TYPE_ATOMUS
+%token KW_TYPE_FRACTIO
+%token KW_TYPE_FRAGMENTUM
+%token KW_TYPE_MAGNUS
+%token KW_TYPE_MINIMUS
+%token KW_TYPE_QUANTUM
+%token KW_TYPE_SCRIPTUM
+%token KW_TYPE_SYMBOLUM
+%token KW_TYPE_VACUUM
 
 %token LIT_FACTUM
 %token LIT_FICTUM
@@ -137,20 +140,19 @@ void yyerror(const char *s);
 %start translation_unit
 
 %type <str> type_specifier
-%type <ptr> expression
-%type <ptr> constant
-%type <ptr> string
-%type <ptr> primary_expression
+%type <expr> expression
+%type <expr> constant
+%type <expr> string
+%type <expr> primary_expression
 
-%type <ptr> unary_expression
-%type <ptr> access_list
-%type <ptr> member_access_direct
-%type <ptr> member_access_dereference
-%type <ptr> member_access_pointer
-%type <ptr> vector_access
-%type <ptr> pointer_statement
-%type <ptr> pointer_assignment
-%type <ptr> pointer_dereference
+%type <expr> unary_expression
+%type <expr> member_access_direct  
+%type <expr> member_access_dereference
+%type <expr> member_access_pointer
+%type <expr> vector_access
+%type <expr> pointer_statement
+%type <expr> pointer_assignment
+%type <expr> pointer_dereference
 
 %type <arg_list> argument_list
 
@@ -159,7 +161,7 @@ void yyerror(const char *s);
 
 translation_unit
     : global_statement_list alchemia_statement
-    ;
+   ;
 
 //
 
@@ -213,82 +215,148 @@ statement
 //
 
 assignment_statement
-    : expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuicao de uma variavel simples
+    : expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
       {
-          Symbol *sym = scope_lookup($3);
+          Expression* value_expr = $1;
+          char* var_name = $3;
+          Symbol* sym = scope_lookup(var_name);
+
+          // 1. Validar se a variável existe
           if (sym == NULL) {
-              yyerror("Variável não declarada!");
+              char err_msg[128];
+              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", var_name);
+              yyerror(err_msg);
           } else {
-              if (sym->data.value) free(sym->data.value);
-              sym->data.value = $1;
-          }
-          free($3);
-      }
-    | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON //Atribuicao a um elemento de um vetor 
-      {
-          Symbol* sym = scope_lookup($3);
-          if (!sym) {
-              char err_msg[100]; sprintf(err_msg, "Erro: Vetor '%s' não declarado.", $3); yyerror(err_msg);
-              free($1); free($5);
-          } else if (sym->kind != SYM_VECTOR) {
-              char err_msg[100]; sprintf(err_msg, "Erro: Identificador '%s' não é um vetor.", $3); yyerror(err_msg);
-              free($1); free($5);
-          } else {
-              int index = *(int*)$5;
-              if (index < 0 || index >= sym->data.vector_info.size) {
-                  char err_msg[128]; sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, $3); yyerror(err_msg);
+              // 2. Checar se os tipos são compatíveis
+              DataType declared_type = string_to_type(sym->type);
+              if (value_expr->type != declared_type) {
+                  char err_msg[256];
+                  sprintf(err_msg, "Erro de tipo: impossível atribuir valor à variável '%s'.", var_name);
+                  yyerror(err_msg);
               } else {
-                  // Calcula o endereço de destino e o tamanho do elemento.
-                  size_t element_size = get_size_from_type(sym->type);
-                  void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
-                  
-                  // Copia o valor da expressão para a memória do elemento do vetor.
-                  memcpy(dest_ptr, $1, element_size);
+                  // 3. Atribuir o novo valor, liberando o antigo se existir
+                  if (sym->data.value) {
+                      free(sym->data.value);
+                  }
+                  sym->data.value = value_expr->value; // Transfere o ponteiro do valor
+                  value_expr->value = NULL;            // Evita o duplo free
               }
-              free($1); // Libera memória da expressão fonte.
-              free($5); // Libera memória da expressão de índice.
           }
-          free($3);
+
+          // 4. Limpeza da memória
+          free_expression(value_expr); // Libera o "invólucro" da Expression
+          free(var_name);
+      }
+    | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
+      {
+          Expression* value_expr = $1;
+          Expression* index_expr = $5;
+          char* vec_name = $3;
+          Symbol* sym = scope_lookup(vec_name);
+
+          // 1. Validar se o símbolo existe e é um vetor
+          if (!sym || sym->kind != SYM_VECTOR) {
+              char err_msg[128];
+              sprintf(err_msg, "Erro semântico: identificador '%s' não é um vetor declarado.", vec_name);
+              yyerror(err_msg);
+          } else {
+              // 2. Checar os tipos da expressão de índice e do valor
+              DataType element_type = string_to_type(sym->type);
+              if (index_expr->type != TYPE_ATOMUS) {
+                  yyerror("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
+              } else if (value_expr->type != element_type) {
+                  yyerror("Erro de tipo: o valor a ser atribuído é incompatível com o tipo do vetor.");
+              } else {
+                  // 3. Realizar a atribuição
+                  int index = *(int*)(index_expr->value); // Extrai o valor do índice
+
+                  // Verificação de limites (bounds checking)
+                  if (index < 0 || index >= sym->data.vector_info.size) {
+                      char err_msg[128];
+                      sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, vec_name);
+                      yyerror(err_msg);
+                  } else {
+                      // Se tudo estiver certo, copia o valor
+                      size_t element_size = get_size_from_type(sym->type);
+                      void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
+                      memcpy(dest_ptr, value_expr->value, element_size);
+                  }
+              }
+          }
+
+          // 4. Limpeza da memória
+          free_expression(value_expr);
+          free_expression(index_expr);
+          free(vec_name);
       }
     ;
-;
 
 import_statement
     : IDENTIFIER KW_EVOCARE SEMICOLON 
-    ;
+   ;
 
 //
 
 expression_statement
     : expression SEMICOLON
+      {
+          // $1 é o Expression* final da expressão
+          if ($1) {
+              if ($1->type == TYPE_ATOMUS && $1->value) {
+                  printf(">> Resultado Final (atomus): %d\n", *(int*)$1->value);
+              } else if ($1->type == TYPE_FRACTIO && $1->value) {
+                  printf(">> Resultado Final (fractio): %f\n", *(double*)$1->value);
+              }
+              free_expression($1); // Libera a expressão final
+          }
+      }
     ;
 
 primary_expression
     : IDENTIFIER
       {
-        Symbol *s = scope_lookup($1);
-        if (!s)
-            fprintf(stderr,
-                "Erro: identificador '%s' não declarado na linha %d\n",
-                $1, yylineno);
-        $$ = (void*)$1;
-        /* guarde ou use 's' conforme sua AST */
-      }
-    | vector_access  
-    | member_access_direct
-      {
-          Symbol *campo = (Symbol*)$1;
-          if (!campo) {
+          Symbol *s = scope_lookup($1);
+          if (!s) {
+              fprintf(stderr, "Erro: identificador '%s' não declarado na linha %d\n", $1, yylineno);
               $$ = NULL;
           } else {
-              $$ = campo->data.value;
+              DataType type = string_to_type(s->type);
+              size_t value_size = get_size_from_type(s->type);
+              void* value_copy = malloc(value_size);
+              if (s->data.value) { 
+                  memcpy(value_copy, s->data.value, value_size);
+              } else {
+                  free(value_copy);
+                  value_copy = NULL;
+              }
+              $$ = create_expression(type, value_copy);
           }
-      }           
-    | pointer_statement         
-    | constant                  { $$ = $1; }
-    | string                    { $$ = $1; }
-    | LPAREN expression RPAREN  { $$ = $2; }
-    ;
+          free($1);
+      }
+    | constant
+      {
+          $$ = $1;
+      }
+    | string
+      {
+          $$ = $1;
+      }
+    | LPAREN expression RPAREN
+      {
+          $$ = $2;
+      }
+    | vector_access
+      {
+        $$ = $1;
+      }
+    | member_access_direct
+      {
+          $$ = $1;
+      }
+    | pointer_statement
+      {
+          $$ = $1;
+      }
 
 unary_expression
     : primary_expression                { $$ = $1; }
@@ -299,41 +367,105 @@ unary_expression
     ;
 
 expression
-    : unary_expression { $$ = $1; }
-    | expression OP_ASSIGN assing_value { $$ = $1; }
-    | expression OP_ACCESS_POINTER assing_value
-    | expression OP_ACCESS_MEMBER assing_value
+    : unary_expression
+      {
+          // O caso base: propaga a expressão unária, que já é um Expression*.
+          $$ = $1;
+      }
 
-    | expression OP_LOGICAL_XOR unary_expression
-    | expression OP_LOGICAL_OR unary_expression
-    | expression OP_LOGICAL_AND unary_expression
-
-    | expression OP_EQUAL unary_expression
-    | expression OP_NOT_EQUAL unary_expression
-    | expression OP_LESS_THAN unary_expression
-    | expression OP_GREATER_THAN unary_expression
-    | expression OP_LESS_EQUAL unary_expression
-    | expression OP_GREATER_EQUAL unary_expression
-
+    /* --- Operadores Aritméticos --- */
     | expression OP_ADD unary_expression
+      { $$ = evaluate_binary_expression($1, OP_ADD, $3); }
     | expression OP_SUBTRACT unary_expression
+      { $$ = evaluate_binary_expression($1, OP_SUBTRACT, $3); }
     | expression OP_MULTIPLY unary_expression
+      { $$ = evaluate_binary_expression($1, OP_MULTIPLY, $3); }
     | expression OP_DIVIDE unary_expression
+      { $$ = evaluate_binary_expression($1, OP_DIVIDE, $3); }
     | expression OP_MODULUS unary_expression
+      { $$ = evaluate_binary_expression($1, OP_MODULUS, $3); }
     | expression OP_EXP unary_expression
+      { $$ = evaluate_binary_expression($1, OP_EXP, $3); }
     | expression OP_INTEGER_DIVIDE unary_expression
+      { $$ = evaluate_binary_expression($1, OP_INTEGER_DIVIDE, $3); }
+
+    /* --- Operadores Relacionais (de Comparação) --- */
+    | expression OP_EQUAL unary_expression
+      { $$ = evaluate_binary_expression($1, OP_EQUAL, $3); }
+    | expression OP_NOT_EQUAL unary_expression
+      { $$ = evaluate_binary_expression($1, OP_NOT_EQUAL, $3); }
+    | expression OP_LESS_THAN unary_expression
+      { $$ = evaluate_binary_expression($1, OP_LESS_THAN, $3); }
+    | expression OP_GREATER_THAN unary_expression
+      { $$ = evaluate_binary_expression($1, OP_GREATER_THAN, $3); }
+    | expression OP_LESS_EQUAL unary_expression
+      { $$ = evaluate_binary_expression($1, OP_LESS_EQUAL, $3); }
+    | expression OP_GREATER_EQUAL unary_expression
+      { $$ = evaluate_binary_expression($1, OP_GREATER_EQUAL, $3); }
+
+    /* --- Operadores Lógicos --- */
+    | expression OP_LOGICAL_AND unary_expression
+      { $$ = evaluate_binary_expression($1, OP_LOGICAL_AND, $3); }
+    | expression OP_LOGICAL_OR unary_expression
+      { $$ = evaluate_binary_expression($1, OP_LOGICAL_OR, $3); }
+    | expression OP_LOGICAL_XOR unary_expression
+      { $$ = evaluate_binary_expression($1, OP_LOGICAL_XOR, $3); }
+
+    /* --- Operadores de Atribuição e Acesso (se forem expressões) --- */
+    // Nota: A atribuição como expressão (ex: a = b = 5) é mais complexa.
+    // A regra abaixo funciona se 'evaluate_binary_expression' for adaptada
+    // para modificar o símbolo e retornar o valor.
+    | expression OP_ASSIGN assing_value
+      {
+          // O tratamento para atribuição como expressão precisa de uma lógica
+          // especial. Por simplicidade, é comum tratar atribuição apenas
+          // como um statement (instrução), não como uma expressão que retorna valor.
+          // Se precisar que 'a = 5' retorne '5', a função de avaliação
+          // precisará ser mais inteligente.
+      }
     ;
 
 constant
-    : LIT_INT    { int *v = malloc(sizeof(int)); *v = $1; $$ = v; }
-    | LIT_FLOAT  { double *v = malloc(sizeof(double)); *v = $1; $$ = v; }
-    | LIT_FACTUM { int *v = malloc(sizeof(int)); *v = 1; $$ = v; }
-    | LIT_FICTUM { int *v = malloc(sizeof(int)); *v = 0; $$ = v; }
-    | LIT_CHAR   { $$ = $1; }
+    : LIT_INT
+      {
+          int *val = malloc(sizeof(int));
+          *val = $1;
+          // CORREÇÃO: Usar o nome do ENUM
+          $$ = create_expression(TYPE_ATOMUS, val); 
+      }
+    | LIT_FLOAT
+      {
+          double *val = malloc(sizeof(double));
+          *val = $1;
+          // CORREÇÃO: Usar o nome do ENUM (este já estava certo)
+          $$ = create_expression(TYPE_FRACTIO, val); 
+      }
+    | LIT_FACTUM
+      {
+          int *val = malloc(sizeof(int));
+          *val = 1; // 1 para verdadeiro
+          // CORREÇÃO: Usar o nome do ENUM
+          $$ = create_expression(TYPE_QUANTUM, val);
+      }
+    | LIT_FICTUM
+      {
+          int *val = malloc(sizeof(int));
+          *val = 0; // 0 para falso
+          // CORREÇÃO: Usar o nome do ENUM
+          $$ = create_expression(TYPE_QUANTUM, val);
+      }
+    | LIT_CHAR
+      {
+          // CORREÇÃO: Usar o nome do ENUM
+          $$ = create_expression(TYPE_SYMBOLUM, strdup($1)); 
+      }
     ;
 
 string
-    : LIT_STRING { $$ = $1; }
+    : LIT_STRING
+      {
+        $$ = create_expression(KW_TYPE_SCRIPTUM, strdup($1));
+      }
     ;
 
 //
@@ -345,35 +477,60 @@ assing_value
     ;
 
 declaration_statement
-    : IDENTIFIER type_specifier opcional_constant SEMICOLON{
+    : IDENTIFIER type_specifier opcional_constant SEMICOLON
+      {
+          // Esta regra não lida com valores de expressão, então a lógica original é mantida.
+          // Ela declara uma variável sem um valor inicial.
           if (current_struct_fields) {
-              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL);
+              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL); 
           } else {
-              if (scope_lookup($1) != NULL) {
-                  Symbol *sym = scope_lookup($1);
-                  if(sym->kind != SYM_VAR) {
-                      yyerror("Variável já declarada com outro tipo!");
-                  } else {
-                      sym->kind = SYM_VAR;
-                      sym->line_declared = yylineno;
-                  }
+              if (scope_lookup_current($1) != NULL) { 
+                  yyerror("Erro: Variável já declarada neste escopo.");
               } else {
-                  scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+                  scope_insert($1, SYM_VAR, $2, yylineno, NULL); 
               }
           }
-          free($1);
+          free($1); 
+          // free($2) pode ser necessário dependendo da implementação de type_specifier
       }
-    | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON{
-          if (scope_lookup($3) != NULL) {
-              Symbol *sym = scope_lookup($3);
-              if (sym->data.value) free(sym->data.value);
-              sym->data.value = $1;
+    | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
+      {
+          // Esta é a regra atualizada para declaração com inicialização.
+          Expression* initial_value_expr = $1;
+          char* var_name = $3;
+          char* type_name = $4;
+
+          // 1. VERIFICAÇÃO DE TIPO
+          DataType declared_type = string_to_type(type_name);
+          if (initial_value_expr->type != declared_type && declared_type != TYPE_UNDEFINED) {
+              yyerror("Erro de tipo: O valor da expressão é incompatível com o tipo da variável declarada.");
+              free_expression(initial_value_expr);
           } else {
-              scope_insert($3, SYM_VAR, $4, yylineno, $1);
+              // A lógica original permitia "redeclaração" para atualizar um valor,
+              // o que é incomum. Uma abordagem mais estrita é recomendada.
+              Symbol* existing_sym = scope_lookup_current(var_name);
+              if (existing_sym != NULL) {
+                  yyerror("Erro: Variável já declarada neste escopo.");
+                  free_expression(initial_value_expr);
+              } else {
+                  // 2. EXTRAÇÃO DO VALOR E INSERÇÃO NO ESCOPO
+                  // A tabela de símbolos agora recebe o ponteiro para o valor.
+                  scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value); 
+
+                  // 3. GERENCIAMENTO DE MEMÓRIA
+                  // Impedimos que a memória do valor seja liberada junto com o "invólucro" da expressão,
+                  // pois ela agora pertence à tabela de símbolos.
+                  initial_value_expr->value = NULL;
+                  free_expression(initial_value_expr);
+              }
           }
-          free($3);
+          free(var_name);
+          // free(type_name); // Descomente se type_specifier alocar memória.
       }
     | pointer_declaration
+      {
+          // Esta regra precisará de ajustes similares se envolver inicialização.
+      }
     ;
 
 opcional_constant
@@ -387,19 +544,19 @@ list_declaration_statement
     ;
 
 type_specifier
-    : TYPE_ATOMUS               { $$ = strdup("atomus"); }
-    | TYPE_FRACTIO              { $$ = strdup("fractio"); }
-    | TYPE_FRAGMENTUM           { $$ = strdup("fragmentum"); }
-    | TYPE_MAGNUS               { $$ = strdup("magnus"); }
-    | TYPE_MINIMUS              { $$ = strdup("minimus"); }
-    | TYPE_QUANTUM              { $$ = strdup("quantum"); }
-    | TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
-    | TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
-    | TYPE_VACUUM               { $$ = strdup("vacuum"); }
+    : KW_TYPE_ATOMUS               { $$ = strdup("atomus"); }
+    | KW_TYPE_FRACTIO              { $$ = strdup("fractio"); }
+    | KW_TYPE_FRAGMENTUM           { $$ = strdup("fragmentum"); }
+    | KW_TYPE_MAGNUS               { $$ = strdup("magnus"); }
+    | KW_TYPE_MINIMUS              { $$ = strdup("minimus"); }
+    | KW_TYPE_QUANTUM              { $$ = strdup("quantum"); }
+    | KW_TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
+    | KW_TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
+    | KW_TYPE_VACUUM               { $$ = strdup("vacuum"); }
     | IDENTIFIER KW_ENUMERARE   { $$ = strdup($1); }
     | OP_DEREF_POINTER type_specifier {}
     
-    ;
+   ;
 
 //
 
@@ -480,15 +637,14 @@ argument_list
       }
     ;
 
-// Declarações de salto: continuum, ruptio e redire
+/* ```
+Declarações de salto: continuum, ruptio e redire */
 jump_statement
     : KW_CONTINUUM SEMICOLON
     | KW_RUPTIO SEMICOLON
     | KW_REDIRE SEMICOLON
     | expression KW_REDIRE SEMICOLON
     ;
-
-// IF ELSE SWITCH
 
 conditional_statement
     : LPAREN expression RPAREN KW_SI block { scope_pop(); }
@@ -501,13 +657,10 @@ conditional_non_statement
     | KW_NON conditional_statement
     ;
 
-// Causas | Axiomas 
 causal_statement
     : KW_CASUS expression COLON statement_list 
     | KW_AXIOM COLON statement_list 
     ;
-
-//  Laços de repetição: while() e for(; ;), 
 
 iteration_statement
     : LPAREN expression RPAREN KW_PERSISTO block { scope_pop(); }
@@ -546,32 +699,18 @@ type_expression
     : type_specifier
     ;
 
-// Declarações de typedef | struct | enum
-
 type_define_statement
     : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
       {
-        scope_insert($3, SYM_TYPE, $2, yylineno, NULL);
+        // Esta parte implementa 'typedef'.
+        // Ex: designare atomus meu_inteiro;
+        scope_insert($3, SYM_TYPE, $2, yylineno, NULL); 
         free($3);
       }
-    | IDENTIFIER LBRACE
-        {
-            // Crie uma nova tabela de campos para a struct
-            FieldTable *ft = malloc(sizeof(FieldTable));
-            st_init(&ft->fields);
-            // Salve o ponteiro em uma variável global/externa temporária
-            current_struct_fields = ft;
-        }
-      list_declaration_statement
-      RBRACE KW_DESIGNARE KW_HOMUNCULUS SEMICOLON
-      {
-        // Insere o nome da struct como tipo no escopo global, com a tabela de campos
-        Symbol *sym = scope_insert($1, SYM_TYPE, "homunculus", yylineno, NULL);
-        if (sym) sym->field_table = current_struct_fields;
-        current_struct_fields = NULL;
-        free($1);
-      }
     | type_define_enum
+      {
+        // Mantém a capacidade de definir enumerações.
+      }
     ;
 
 type_define_enum
@@ -600,32 +739,37 @@ enum_list
     | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
     ;
 
-// Vetor
 vector
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
     | IDENTIFIER SEMICOLON
     ;
     
 // Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
-vector_statement     
+vector_statement
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
       {
-          if (!$4) {
+          char* vec_name = $1;
+          char* type_name = $2;
+          Expression* size_expr = $4;
+
+          // 1. Validar a expressão de tamanho
+          if (!size_expr) {
               yyerror("Expressão de tamanho do vetor é inválida.");
+          } else if (size_expr->type != TYPE_ATOMUS) {
+              yyerror("Erro de tipo: o tamanho de um vetor deve ser um inteiro (atomus).");
           } else {
-              int vector_size = *(int*)$4; // Obtém o tamanho a partir da expressão
+              int vector_size = *(int*)(size_expr->value); // Extração correta do valor
+
               if (vector_size <= 0) {
-                  yyerror("O tamanho do vetor deve ser positivo.");
+                  yyerror("O tamanho do vetor deve ser um número positivo.");
               } else {
-                  // Insere o símbolo com o tipo SYM_VECTOR
-                  Symbol* sym = scope_insert($1, SYM_VECTOR, $2, yylineno, NULL);
+                  // 2. Inserir o símbolo do vetor na tabela de escopo
+                  Symbol* sym = scope_insert(vec_name, SYM_VECTOR, type_name, yylineno, NULL);
                   if (sym) {
-                      // Preenche as informações específicas do vetor no símbolo
+                      // 3. Alocar memória e preencher informações do vetor
                       sym->data.vector_info.size = (size_t)vector_size;
-                      
-                      // Aloca memória zerada para os dados do vetor
-                      size_t element_size = get_size_from_type($2);
-                      sym->data.vector_info.data_ptr = malloc(vector_size * element_size);
+                      size_t element_size = get_size_from_type(type_name);
+                      sym->data.vector_info.data_ptr = calloc(vector_size, element_size); // Usar calloc para zerar a memória
 
                       if (!sym->data.vector_info.data_ptr) {
                           yyerror("Falha ao alocar memória para o vetor.");
@@ -634,66 +778,97 @@ vector_statement
                       yyerror("Erro: Símbolo já declarado neste escopo.");
                   }
               }
-              free($4); // Libera a memória da expressão de tamanho
           }
-          free($1);
-          free($2);
+          // 4. Limpeza da memória
+          free(vec_name);
+          free(type_name);
+          if(size_expr) free_expression(size_expr);
       }
-    // Inicialização de um vetor (ex: [1 | 2 | 3] --> meuVetor;)
+    // Inicialização de um vetor (ex: [1 | 2 | 3] = meuVetor;)
     | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
       {
-          Symbol* sym = scope_lookup($5);
+          ArgNode* arg_list = $2;
+          char* vec_name = $5;
+          Symbol* sym = scope_lookup(vec_name);
+
           if (!sym || sym->kind != SYM_VECTOR) {
               yyerror("Identificador à direita da atribuição não é um vetor declarado.");
           } else {
-              // Lógica para percorrer a argument_list ($2) e preencher
-              // a memória em sym->data.vector_info.data_ptr.
-              // Esta parte requer que 'argument_list' seja implementada
-              // para construir uma lista de valores que possa ser iterada.
-              printf("AVISO: Ação de inicialização de vetor ainda não implementada.\n");
+              DataType element_type = string_to_type(sym->type);
+              size_t element_size = get_size_from_type(sym->type);
+              ArgNode* current = arg_list;
+              int index = 0;
+
+              // Itera pela lista de argumentos para preencher o vetor
+              while(current != NULL) {
+                  if (index >= sym->data.vector_info.size) {
+                      yyerror("Erro: Mais inicializadores do que o tamanho do vetor.");
+                      break;
+                  }
+                  Expression* current_expr = (Expression*)current->value;
+                  if (current_expr->type != element_type) {
+                      yyerror("Erro de tipo na lista de inicialização do vetor.");
+                  } else {
+                      void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
+                      memcpy(dest_ptr, current_expr->value, element_size);
+                  }
+                  index++;
+                  current = current->next;
+              }
           }
-          free($5);
+          // Limpeza completa da lista de argumentos e das expressões contidas nela
+          ArgNode* current = arg_list;
+          while(current != NULL) {
+              ArgNode* next = current->next;
+              free_expression((Expression*)current->value);
+              free(current);
+              current = next;
+          }
+          free(vec_name);
       }
     ;
 
 vector_access
-    : IDENTIFIER LANGLE expression RANGLE 
+    : IDENTIFIER LANGLE expression RANGLE
       {
-          Symbol* sym = scope_lookup($1);
-          if (!sym) {
-              char err_msg[100];
-              sprintf(err_msg, "Erro: Vetor '%s' não declarado.", $1);
-              yyerror(err_msg);
-              $$ = NULL;
-          } else if (sym->kind != SYM_VECTOR) {
-              char err_msg[100];
-              sprintf(err_msg, "Erro: Identificador '%s' não é um vetor.", $1);
-              yyerror(err_msg);
-              $$ = NULL;
-          } else {
-              if (!$3) {
-                  yyerror("Expressão de índice inválida.");
-                  $$ = NULL;
-              } else {
-                  int index = *(int*)$3; // Obtém o índice
+          char* vec_name = $1;
+          Expression* index_expr = $3;
+          Symbol* sym = scope_lookup(vec_name);
+          $$ = NULL; // Inicializa o resultado como nulo (falha)
 
-                  // Verificação de limites (bounds checking)
-                  if (index < 0 || index >= sym->data.vector_info.size) {
-                      char err_msg[128];
-                      sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s' (tamanho %zu).", index, sym->name, sym->data.vector_info.size);
-                      yyerror(err_msg);
-                      $$ = NULL;
+          // 1. Validar o símbolo e o índice
+          if (!sym || sym->kind != SYM_VECTOR) {
+              yyerror("Erro semântico: identificador não é um vetor declarado.");
+          } else if (!index_expr || index_expr->type != TYPE_ATOMUS) {
+              yyerror("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
+          } else {
+              int index = *(int*)(index_expr->value);
+
+              // 2. Verificação de limites (bounds checking)
+              if (index < 0 || index >= sym->data.vector_info.size) {
+                  char err_msg[128];
+                  sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, vec_name);
+                  yyerror(err_msg);
+              } else {
+                  // 3. Copiar o valor e criar uma nova Expression
+                  DataType element_type = string_to_type(sym->type);
+                  size_t element_size = get_size_from_type(sym->type);
+                  void* element_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
+
+                  // Aloca memória para a CÓPIA do valor
+                  void* value_copy = malloc(element_size);
+                  if(value_copy) {
+                      memcpy(value_copy, element_ptr, element_size);
+                      // Cria a nova Expression com a cópia do valor
+                      $$ = create_expression(element_type, value_copy);
                   } else {
-                      // Calcula o endereço exato do elemento e o propaga via $$
-                      size_t element_size = get_size_from_type(sym->type);
-                      char* base_ptr = (char*)sym->data.vector_info.data_ptr;
-                      // Retorna um ponteiro para a localização do elemento na memória
-                      $$ = (void*)(base_ptr + (index * element_size));
+                      yyerror("Falha ao alocar memória para o valor do acesso ao vetor.");
                   }
-                  free($3); // Libera a memória da expressão de índice
               }
           }
-          free($1);
+          // 4. Limpeza da memória
+          free(vec_name);
+          if(index_expr) free_expression(index_expr);
       }
     ;
 
@@ -726,59 +901,178 @@ pointer_declaration
       }
 
 pointer_assignment
-    : IDENTIFIER OP_ADDR_OF { $$ = (void*)$1;}
-    ;
-
-pointer_dereference
-    : OP_DEREF_POINTER IDENTIFIER { $$ = (void*)$2;}
-    ;
-
-access_list
-    : IDENTIFIER
+    : OP_ADDR_OF IDENTIFIER
       {
-          Symbol *sym = scope_lookup($1);
-          if (!sym) {
-              yyerror("Variável não declarada!");
-              $$ = NULL;
+          $$ = NULL; // Inicializa como falha
+          Symbol* s = scope_lookup($2);
+
+          if (!s) {
+              char err_msg[128];
+              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", $2);
+              yyerror(err_msg);
           } else {
-              $$ = sym;
-          }
-          free($1);
-      }
-    | access_list OP_ACCESS_MEMBER IDENTIFIER
-      {
-          Symbol *prev = (Symbol*)$1;
-          if (!prev || !prev->field_table) {
-              yyerror("Acesso inválido a membro!");
-              $$ = NULL;
-          } else {
-              Symbol *campo = st_lookup(&prev->field_table->fields, $3);
-              if (!campo) {
-                  yyerror("Campo não existe na struct!");
-                  $$ = NULL;
+              // 1. O "valor" desta expressão é o endereço onde o valor de 's' está armazenado.
+              //    s->data.value já é um ponteiro para o valor da variável.
+              void* address_of_variable = s->data.value;
+
+              // 2. Criamos um ponteiro para guardar esse endereço.
+              void** address_holder = malloc(sizeof(void*));
+              if(address_holder) {
+                  *address_holder = address_of_variable;
+                  
+                  // 3. O resultado é uma expressão do tipo ponteiro.
+                  $$ = create_expression(TYPE_POINTER, address_holder);
               } else {
-                  $$ = campo;
+                  yyerror("Falha ao alocar memória para o endereço.");
               }
           }
-          free($3);
+          free($2);
+      }
+    ;
+
+pointer_dereference 
+    : OP_DEREF_POINTER IDENTIFIER
+      {
+          $$ = NULL; // Inicializa o resultado como falha
+          Symbol* s = scope_lookup($2);
+
+          // 1. Validar se a variável existe e é um ponteiro
+          if (!s || strstr(s->type, "*") == NULL) {
+              char err_msg[128];
+              sprintf(err_msg, "Erro semântico: a variável '%s' não é um ponteiro.", $2);
+              yyerror(err_msg);
+          } else {
+              // 2. Obter o endereço que o ponteiro armazena
+              void* address_held_by_pointer = s->data.value;
+              if (address_held_by_pointer == NULL) {
+                  yyerror("Erro em tempo de execução: dereferência de ponteiro nulo.");
+              } else {
+                  // 3. Determinar o tipo e o tamanho do dado que está no endereço
+                  char base_type_name[MAX_NAME_LEN];
+                  get_base_type_from_pointer(s->type, base_type_name); // Função auxiliar
+                  
+                  DataType base_type = string_to_type(base_type_name); // Função auxiliar
+                  size_t value_size = get_size_from_type(base_type_name);   // Função auxiliar
+
+                  if (base_type == TYPE_UNDEFINED) {
+                      yyerror("Erro interno: tipo base do ponteiro desconhecido.");
+                  } else {
+                      // 4. Alocar memória para uma CÓPIA do valor e copiar
+                      void* value_copy = malloc(value_size);
+                      if (value_copy) {
+                          memcpy(value_copy, address_held_by_pointer, value_size);
+                          
+                          // 5. Criar a Expression com o valor copiado
+                          $$ = create_expression(base_type, value_copy);
+                      } else {
+                          yyerror("Falha ao alocar memória para o valor dereferenciado.");
+                      }
+                  }
+              }
+          }
+          free($2);
       }
     ;
 
 member_access_direct
-    : access_list { $$ = $1; }
+    : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
+      {
+          $$ = NULL; // Por padrão, a operação falha.
+          char* struct_var_name = $1;
+          char* member_name = $3;
+          
+          // 1. Buscar a variável da struct na tabela de símbolos.
+          Symbol* struct_sym = scope_lookup(struct_var_name);
+
+          if (!struct_sym) {
+              yyerror("Erro: Variável da struct não declarada.");
+          } else if (strcmp(struct_sym->type, "homunculus") != 0) { // Checa se é uma struct
+              yyerror("Erro: Acesso a membro em uma variável que não é uma struct.");
+          } else if (!struct_sym->field_table) {
+              yyerror("Erro interno: Tabela de campos da struct não encontrada.");
+          } else {
+              // --- Lógica a ser implementada quando as structs estiverem funcionais ---
+              
+              // TODO 1: Buscar o 'member_name' na tabela de campos da struct.
+              // Symbol* member_sym = st_lookup(&struct_sym->field_table->fields, member_name);
+              // if (!member_sym) { yyerror("Membro não existe na struct."); }
+
+              // TODO 2: Calcular o offset do membro e obter o ponteiro para o dado.
+              // Onde 'member_sym->offset' seria o deslocamento em bytes do membro.
+              // void* member_data_ptr = (char*)struct_sym->data.value + member_sym->offset;
+              
+              // TODO 3: Copiar o valor do membro para uma nova Expression.
+              // DataType member_type = string_to_type(member_sym->type);
+              // size_t member_size = get_size_from_type(member_sym->type);
+              // void* value_copy = malloc(member_size);
+              // memcpy(value_copy, member_data_ptr, member_size);
+              // $$ = create_expression(member_type, value_copy);
+
+              printf("AVISO: Lógica de acesso a membro '.' ainda não totalmente implementada.\n");
+              // Por enquanto, retornamos uma expressão vazia para não quebrar a gramática.
+              $$ = create_expression(TYPE_UNDEFINED, NULL);
+          }
+
+          free(struct_var_name);
+          free(member_name);
+      }
     ;
 
+
 member_access_dereference
-    : LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER access_list
+    : LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
       {
-          $$ = $6; // Retorna o último identificador
+          // Esta forma de acesso é semanticamente idêntica a '->'.
+          // A implementação seria a mesma de 'member_access_pointer',
+          // usando $3 como o nome da variável ponteiro e $6 como o nome do membro.
+          
+          // (Aqui entraria a mesma lógica de 'member_access_pointer' com os devidos ajustes de índice)
+          
+          printf("AVISO: Lógica de acesso a membro '(*p).' ainda não totalmente implementada.\n");
+          $$ = create_expression(TYPE_UNDEFINED, NULL);
+          free($3);
+          free($6);
       }
     ;
 
 member_access_pointer
-    : IDENTIFIER OP_ACCESS_POINTER access_list
+    : IDENTIFIER OP_ACCESS_POINTER IDENTIFIER
       {
-          $$ = $3; // Retorna o último identificador
+          $$ = NULL;
+          char* pointer_var_name = $1;
+          char* member_name = $3;
+          
+          // 1. Buscar a variável ponteiro na tabela de símbolos.
+          Symbol* pointer_sym = scope_lookup(pointer_var_name);
+
+          // 2. Validar se é um ponteiro para uma struct.
+          if (!pointer_sym || strstr(pointer_sym->type, "*") == NULL) {
+              yyerror("Erro: Acesso '->' em uma variável que não é um ponteiro.");
+          } else {
+              // --- Lógica a ser implementada ---
+
+              // TODO 1: Obter a definição do tipo da struct.
+              // char base_type_name[MAX_NAME_LEN];
+              // get_base_type_from_pointer(pointer_sym->type, base_type_name);
+              // Symbol* struct_type_def = scope_lookup(base_type_name);
+              // if (!struct_type_def || !struct_type_def->field_table) { ... }
+              
+              // TODO 2: Buscar o membro na 'field_table' da DEFINIÇÃO do tipo.
+              // Symbol* member_sym = st_lookup(&struct_type_def->field_table->fields, member_name);
+              
+              // TODO 3: Obter o endereço da struct para a qual o ponteiro aponta.
+              // void* struct_data_ptr = pointer_sym->data.value;
+
+              // TODO 4: Calcular o endereço do membro e copiar seu valor.
+              // void* member_data_ptr = (char*)struct_data_ptr + member_sym->offset;
+              // ... (lógica de cópia e criação de Expression, como no acesso direto) ...
+
+              printf("AVISO: Lógica de acesso a membro '->' ainda não totalmente implementada.\n");
+              $$ = create_expression(TYPE_UNDEFINED, NULL);
+          }
+          
+          free(pointer_var_name);
+          free(member_name);
       }
     ;
 

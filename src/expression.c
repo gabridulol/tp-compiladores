@@ -1,0 +1,165 @@
+#include "expression.h"
+#include "../yacc/yacc.tab.h"
+#include "symbol_table.h"
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+
+// Por enquanto, vamos deixar a mais complexa vazia.
+
+Expression* create_expression(DataType type, void* value) {
+    Expression* expr = (Expression*)malloc(sizeof(Expression));
+    expr->type = type;
+    expr->value = value;
+    return expr;
+}
+
+void free_expression(Expression* expr) {
+    if (expr) {
+        free(expr->value); // Libera o valor interno
+        free(expr);        // Libera a própria estrutura
+    }
+}
+
+// Converte a string de tipo do seu YACC para o nosso enum
+DataType string_to_type(const char* type_str) {
+    if (strcmp(type_str, "atomus") == 0) return TYPE_ATOMUS;
+    if (strcmp(type_str, "fractio") == 0) return TYPE_FRACTIO;
+    if (strcmp(type_str, "symbolum") == 0) return TYPE_SYMBOLUM;
+    // ... adicione os outros tipos aqui
+    return TYPE_UNDEFINED;
+}
+
+
+Expression* evaluate_binary_expression(Expression* left, int op, Expression* right) {
+    if (!left || !right) {
+        perror("Erro semântico: operando nulo em expressão binária.");
+        return NULL;
+    }
+
+    // --- Print de Depuração Inicial ---
+    printf("[DEBUG: evaluate_binary] Op: %d, Left Type: %d, Right Type: %d\n", op, left->type, right->type);
+
+    // --- 1. Verificação de Tipos ---
+    // Por enquanto, exigimos que os tipos sejam idênticos.
+    // Uma melhoria futura seria permitir "promoção de tipo" (ex: atomus + fractio).
+    if (left->type != right->type) {
+        perror("Erro semântico: tipos incompatíveis para operação binária.");
+        free_expression(left);
+        free_expression(right);
+        return NULL;
+    }
+
+    DataType result_type = left->type; // O tipo do resultado geralmente é o mesmo dos operandos.
+    void* result_value = NULL;         // Ponteiro para o valor calculado.
+
+    // --- 2. Realizar a operação baseada no tipo e no operador ---
+    switch (left->type) {
+        case TYPE_ATOMUS: {
+            int lval = *(int*)left->value;
+            int rval = *(int*)right->value;
+            printf("[DEBUG: evaluate_atomus] Left: %d, Op: %d, Right: %d\n", lval, op, rval);
+
+            int* result = malloc(sizeof(int));
+            if (!result) { yyerror("Falha de alocação de memória."); break; }
+
+            switch (op) {
+                // Operadores Aritméticos
+                case OP_ADD: *result = lval + rval; result_type = TYPE_ATOMUS; break;
+                case OP_SUBTRACT: *result = lval - rval; result_type = TYPE_ATOMUS; break;
+                case OP_MULTIPLY: *result = lval * rval; result_type = TYPE_ATOMUS; break;
+                case OP_DIVIDE: *result = lval / rval; result_type = TYPE_ATOMUS; break; // Cuidado com divisão por zero!
+                case OP_MODULUS: *result = lval % rval; result_type = TYPE_ATOMUS; break;
+
+                // Operadores Relacionais (retornam um booleano/TYPE_QUANTUM)
+                case OP_EQUAL: *result = (lval == rval); result_type = TYPE_QUANTUM; break;
+                case OP_NOT_EQUAL: *result = (lval != rval); result_type = TYPE_QUANTUM; break;
+                case OP_GREATER_THAN: *result = (lval > rval); result_type = TYPE_QUANTUM; break;
+                case OP_LESS_THAN: *result = (lval < rval); result_type = TYPE_QUANTUM; break;
+                case OP_GREATER_EQUAL: *result = (lval >= rval); result_type = TYPE_QUANTUM; break;
+                case OP_LESS_EQUAL: *result = (lval <= rval); result_type = TYPE_QUANTUM; break;
+
+                default:
+                    yyerror("Erro semântico: operador não suportado para o tipo atomus.");
+                    free(result);
+                    result = NULL;
+                    break;
+            }
+            result_value = result;
+            break;
+        }
+
+        case TYPE_FRACTIO: {
+            double lval = *(double*)left->value;
+            double rval = *(double*)right->value;
+            printf("[DEBUG: evaluate_fractio] Left: %f, Op: %d, Right: %f\n", lval, op, rval);
+
+            double* result = malloc(sizeof(double));
+            int* bool_result = NULL;
+            if (!result) { yyerror("Falha de alocação de memória."); break; }
+
+            switch (op) {
+                // Operadores Aritméticos
+                case OP_ADD: *result = lval + rval; result_type = TYPE_FRACTIO; break;
+                case OP_SUBTRACT: *result = lval - rval; result_type = TYPE_FRACTIO; break;
+                case OP_MULTIPLY: *result = lval * rval; result_type = TYPE_FRACTIO; break;
+                case OP_DIVIDE: *result = lval / rval; result_type = TYPE_FRACTIO; break;
+                case OP_MODULUS: *result = fmod(lval, rval); result_type = TYPE_FRACTIO; break;
+
+                // Operadores Relacionais
+                case OP_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval == rval); result_type = TYPE_QUANTUM; break;
+                case OP_NOT_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval != rval); result_type = TYPE_QUANTUM; break;
+                case OP_GREATER_THAN: bool_result = malloc(sizeof(int)); *bool_result = (lval > rval); result_type = TYPE_QUANTUM; break;
+                case OP_LESS_THAN: bool_result = malloc(sizeof(int)); *bool_result = (lval < rval); result_type = TYPE_QUANTUM; break;
+                case OP_GREATER_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval >= rval); result_type = TYPE_QUANTUM; break;
+                case OP_LESS_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval <= rval); result_type = TYPE_QUANTUM; break;
+                default:
+                    yyerror("Erro semântico: operador não suportado para o tipo fractio.");
+                    free(result);
+                    result = NULL;
+                    break;
+            }
+            // Define o valor do resultado dependendo se foi uma op booleana ou de double
+            if (bool_result) {
+                result_value = bool_result;
+                free(result); // Libera o double não utilizado
+            } else {
+                result_value = result;
+            }
+            break;
+        }
+
+        default:
+            yyerror("Erro semântico: tipo de dado não suporta operações binárias.");
+            break;
+    }
+
+    // --- Limpeza dos operandos ---
+    // As expressões 'left' e 'right' foram "consumidas" nesta operação,
+    // então liberamos a memória que elas ocupavam.
+    free_expression(left);
+    free_expression(right);
+
+    if (result_value == NULL) {
+        // Se result_value for nulo, significa que uma operação falhou.
+        return NULL;
+    }
+
+    // --- 3. Criar e retornar a nova Expression com o resultado ---
+    printf("[DEBUG: evaluate_binary] Result Type: %d\n", result_type);
+    return create_expression(result_type, result_value);
+}
+
+void get_base_type_from_pointer(const char* pointer_type, char* base_type_buffer) {
+    const char* asterisk_pos = strchr(pointer_type, '*');
+    if (asterisk_pos != NULL) {
+        size_t length = asterisk_pos - pointer_type;
+        strncpy(base_type_buffer, pointer_type, length);
+        base_type_buffer[length] = '\0';
+    } else {
+        // Caso não seja um ponteiro, apenas copia (para segurança)
+        strcpy(base_type_buffer, pointer_type);
+    }
+}
+
+

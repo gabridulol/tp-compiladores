@@ -57,15 +57,15 @@ STRING          \"([^\\\"\n]|\\.)*\"
 "vel"               { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_OR; }
 "vertere"           { token_printer(COLOR_KEYWORD, yytext); return KW_VERTERE; }
 
-"atomus"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_ATOMUS; }
-"fractio"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_FRACTIO; }
-"fragmentum"        { token_printer(COLOR_KEYWORD, yytext); return TYPE_FRAGMENTUM; }
-"magnus"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_MAGNUS; }
-"minimus"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_MINIMUS; }
-"quantum"           { token_printer(COLOR_KEYWORD, yytext); return TYPE_QUANTUM; }
-"scriptum"          { token_printer(COLOR_KEYWORD, yytext); return TYPE_SCRIPTUM; }
-"symbolum"          { token_printer(COLOR_KEYWORD, yytext); return TYPE_SYMBOLUM; }
-"vacuum"            { token_printer(COLOR_KEYWORD, yytext); return TYPE_VACUUM; }
+"atomus"            { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_ATOMUS; }
+"fractio"           { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_FRACTIO; }
+"fragmentum"        { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_FRAGMENTUM; }
+"magnus"            { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_MAGNUS; }
+"minimus"           { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_MINIMUS; }
+"quantum"           { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_QUANTUM; }
+"scriptum"          { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_SCRIPTUM; }
+"symbolum"          { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_SYMBOLUM; }
+"vacuum"            { token_printer(COLOR_KEYWORD, yytext); return KW_TYPE_VACUUM; }
 
 "Factum"            { token_printer(COLOR_LITERAL, yytext); return LIT_FACTUM; }
 "Fictum"            { token_printer(COLOR_LITERAL, yytext); return LIT_FICTUM; }
