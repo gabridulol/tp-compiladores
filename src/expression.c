@@ -61,7 +61,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
             printf("[DEBUG: evaluate_atomus] Left: %d, Op: %d, Right: %d\n", lval, op, rval);
 
             int* result = malloc(sizeof(int));
-            if (!result) { yyerror("Falha de alocação de memória."); break; }
+            if (!result) { perror("Falha de alocação de memória."); break; }
 
             switch (op) {
                 // Operadores Aritméticos
@@ -80,7 +80,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
                 case OP_LESS_EQUAL: *result = (lval <= rval); result_type = TYPE_QUANTUM; break;
 
                 default:
-                    yyerror("Erro semântico: operador não suportado para o tipo atomus.");
+                    perror("Erro semântico: operador não suportado para o tipo atomus.");
                     free(result);
                     result = NULL;
                     break;
@@ -96,7 +96,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
 
             double* result = malloc(sizeof(double));
             int* bool_result = NULL;
-            if (!result) { yyerror("Falha de alocação de memória."); break; }
+            if (!result) { perror("Falha de alocação de memória."); break; }
 
             switch (op) {
                 // Operadores Aritméticos
@@ -114,7 +114,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
                 case OP_GREATER_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval >= rval); result_type = TYPE_QUANTUM; break;
                 case OP_LESS_EQUAL: bool_result = malloc(sizeof(int)); *bool_result = (lval <= rval); result_type = TYPE_QUANTUM; break;
                 default:
-                    yyerror("Erro semântico: operador não suportado para o tipo fractio.");
+                    perror("Erro semântico: operador não suportado para o tipo fractio.");
                     free(result);
                     result = NULL;
                     break;
@@ -130,7 +130,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
         }
 
         default:
-            yyerror("Erro semântico: tipo de dado não suporta operações binárias.");
+            perror("Erro semântico: tipo de dado não suporta operações binárias.");
             break;
     }
 

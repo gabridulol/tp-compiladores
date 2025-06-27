@@ -25,6 +25,7 @@ void token_printer(const char* color, const char* text);
 void lexical_error(const char* text);
 // void syntactic_error();
 void yyerror(const char *s);
+void semantic_error(const char *msg);
 void correct_program();
 void incorrect_program();
 
