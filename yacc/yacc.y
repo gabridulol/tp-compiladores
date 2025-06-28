@@ -237,9 +237,9 @@ unary_expression
 
 expression
     : unary_expression { $$ = $1; }
-    | expression OP_ASSIGN assing_value { $$ = $1; }
-    | expression OP_ACCESS_POINTER assing_value
-    | expression OP_ACCESS_MEMBER assing_value
+    | expression OP_ASSIGN assign_value { $$ = $1; }
+    | expression OP_ACCESS_POINTER assign_value
+    | expression OP_ACCESS_MEMBER assign_value
 
     | expression OP_LOGICAL_XOR unary_expression
     | expression OP_LOGICAL_OR unary_expression
@@ -275,7 +275,7 @@ string
 
 //
 
-assing_value
+assign_value
     : IDENTIFIER
     | vector_access
     | pointer_statement
