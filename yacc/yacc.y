@@ -123,8 +123,8 @@ void yyerror(const char *s);
 %left OP_EQUAL OP_NOT_EQUAL OP_LESS_THAN OP_GREATER_THAN OP_LESS_EQUAL OP_GREATER_EQUAL
 %left OP_LOGICAL_AND OP_LOGICAL_OR OP_LOGICAL_XOR
 
-%left OP_ASSIGN
 %left OP_ACCESS_MEMBER
+%left OP_ASSIGN
 
 
 %left OP_ACCESS_POINTER
@@ -136,6 +136,7 @@ void yyerror(const char *s);
 %type <expr> string
 %type <expr> primary_expression
 
+%type <sym_ptr> member_access_lvalue
 %type <expr> unary_expression
 %type <expr> member_access_direct  
 %type <expr> member_access_dereference
@@ -146,6 +147,9 @@ void yyerror(const char *s);
 %type <expr> pointer_dereference
 
 %type <arg_list> argument_list
+%type <sym_ptr> lvalue
+%type <sym_ptr> simple_lvalue
+
 
 %type <ptr> block
 %type <ptr> declaration_statement
@@ -157,7 +161,6 @@ translation_unit
     : global_statement_list alchemia_statement
    ;
 
-//
 
 global_statement_list
     : /* vazio */
@@ -212,39 +215,100 @@ statement
 
 //
 
-assignment_statement
-    : expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
+simple_lvalue
+    : IDENTIFIER
       {
-          Expression* value_expr = $1;
-          char* var_name = $3;
-          Symbol* sym = scope_lookup(var_name);
-
-          // 1. Validar se a variável existe
-          if (sym == NULL) {
-              char err_msg[128];
-              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", var_name);
-              yyerror(err_msg);
+          Symbol *s = scope_lookup($1);
+          if (!s) {
+              fprintf(stderr, "Erro: identificador '%s' não declarado na linha %d\n", $1, yylineno);
+              $$ = NULL;
+              semantic_error("Identificador não declarado.");
           } else {
-              // 2. Checar se os tipos são compatíveis
-              DataType declared_type = string_to_type(sym->type);
-              if (value_expr->type != declared_type) {
-                  char err_msg[256];
-                  sprintf(err_msg, "Erro de tipo: impossível atribuir valor à variável '%s'.", var_name);
-                  yyerror(err_msg);
+              $$ = s;
+          }
+          free($1);
+      }
+
+member_access_lvalue
+    : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
+      {
+        fprintf(stderr, "[YACC] Entrou em assignment_statement/lvalue/member_access_lvalue\n");
+          // $1 = membro, $3 = variável struct
+          Symbol* var = scope_lookup($3);
+          if (!var || !var->instance_fields) {
+              yyerror("Variável de struct não declarada ou não é struct!");
+              $$ = NULL;
+          } else {
+              Symbol* campo = st_lookup(var->instance_fields, $1);
+              if (!campo) {
+                  yyerror("Campo não existe na instância da struct!");
+                  $$ = NULL;
               } else {
-                  // 3. Atribuir o novo valor, liberando o antigo se existir
-                  if (sym->data.value) {
-                      free(sym->data.value);
-                  }
-                  sym->data.value = value_expr->value; // Transfere o ponteiro do valor
-                  value_expr->value = NULL;            // Evita o duplo free
+                  $$ = campo;
               }
           }
-
-          // 4. Limpeza da memória
-          free_expression(value_expr); // Libera o "invólucro" da Expression
-          free(var_name);
+          free($1);
+          free($3);
       }
+    ;
+
+/*---------------------------------------------------------------*/
+/* Destinos de atribuição: variável simples, struct e ponteiro   */
+/*---------------------------------------------------------------*/
+lvalue
+
+    : member_access_lvalue 
+    | simple_lvalue
+    /* 3) Referência (&a) */
+    | OP_ADDR_OF IDENTIFIER
+      {
+          Symbol* s = scope_lookup($2);
+          if (!s) {
+              yyerror("Variável não declarada para '&'!");
+              $$ = NULL;
+          } else {
+              /* criamos simbolicamente um lugar para armazenar o endereço */
+              $$ = s;  
+          }
+          free($2);
+      }
+    /* 4) Desreferência (*p) */
+    | OP_DEREF_POINTER IDENTIFIER
+      {
+          Symbol* s = scope_lookup($2);
+          if (!s || strstr(s->type, "*") == NULL) {
+              yyerror("Variável não é ponteiro para desreferenciar!");
+              $$ = NULL;
+          } else {
+              /* aqui você pode opcionalmente resolver p->data para retornar
+                 um Symbol temporário, mas para atribuição vale usar $2 mesmo */
+              $$ = s;
+          }
+          free($2);
+      }
+    ;
+
+assignment_statement
+    : expression OP_ASSIGN lvalue SEMICOLON
+    {
+        fprintf(stderr, "[YACC] Entrou em assignment_statement/lvalue\n");
+      Expression* value_expr = $1;
+      Symbol* destino      = $3;
+      if (!destino) {
+        yyerror("Destino não encontrado!");
+      } else {
+        DataType td = string_to_type(destino->type);
+        if (td != value_expr->type) {
+          yyerror("Tipo incompatível na atribuição!");
+        } else {
+          if (destino->data.value) free(destino->data.value);
+          size_t sz = get_size_from_type(destino->type);
+          destino->data.value = malloc(sz);
+          memcpy(destino->data.value, value_expr->value, sz);
+        }
+      }
+      free_expression(value_expr);
+    }
     | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
       {
           Expression* value_expr = $1;
@@ -286,7 +350,7 @@ assignment_statement
           free_expression(value_expr);
           free_expression(index_expr);
           free(vec_name);
-      }
+      } 
     ;
 
 import_statement
@@ -311,7 +375,7 @@ expression_statement
     ;
 
 primary_expression
-    : IDENTIFIER
+     : IDENTIFIER
       {
           Symbol *s = scope_lookup($1);
           if (!s) {
@@ -332,7 +396,7 @@ primary_expression
           }
           free($1);
       }
-    | constant
+    | constant 
       {
           $$ = $1;
       }
@@ -348,10 +412,10 @@ primary_expression
       {
         $$ = $1;
       }
-    | member_access_direct
+    /* | member_access_direct
       {
           $$ = $1;
-      }
+      } */
     | pointer_statement
       {
           $$ = $1;
@@ -414,14 +478,14 @@ expression
     // Nota: A atribuição como expressão (ex: a = b = 5) é mais complexa.
     // A regra abaixo funciona se 'evaluate_binary_expression' for adaptada
     // para modificar o símbolo e retornar o valor.
-    | expression OP_ASSIGN assing_value
+    /* | expression OP_ASSIGN assing_value
       {
           // O tratamento para atribuição como expressão precisa de uma lógica
           // especial. Por simplicidade, é comum tratar atribuição apenas
           // como um statement (instrução), não como uma expressão que retorna valor.
           // Se precisar que 'a = 5' retorne '5', a função de avaliação
           // precisará ser mais inteligente.
-      }
+      } */
     ;
 
 constant
@@ -469,11 +533,11 @@ string
 
 //
 
-assing_value
+/* assing_value
     : IDENTIFIER
     | vector_access
     | pointer_statement
-    ;
+    ; */
 
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON{
@@ -906,10 +970,10 @@ enum_list
     | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
     ;
 
-vector
+/* vector
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
     | IDENTIFIER SEMICOLON
-    ;
+    ; */
     
 // Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
 vector_statement
@@ -1141,47 +1205,35 @@ pointer_dereference
       }
     ;
 
-member_access_direct
+ member_access_direct
     : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
       {
-          $$ = NULL; // Por padrão, a operação falha.
-          char* struct_var_name = $1;
-          char* member_name = $3;
-          
-          // 1. Buscar a variável da struct na tabela de símbolos.
-          Symbol* struct_sym = scope_lookup(struct_var_name);
+          // $1 = membro (campo), $3 = variável (instância da struct)
+          char* member_name = $1;
+          char* var_name = $3;
+          Symbol* var = scope_lookup(var_name);
 
-          if (!struct_sym) {
-              yyerror("Erro: Variável da struct não declarada.");
-          } else if (strcmp(struct_sym->type, "homunculus") != 0) { // Checa se é uma struct
-              yyerror("Erro: Acesso a membro em uma variável que não é uma struct.");
-          } else if (!struct_sym->field_table) {
-              yyerror("Erro interno: Tabela de campos da struct não encontrada.");
-          } else {
-              // --- Lógica a ser implementada quando as structs estiverem funcionais ---
-              
-              // TODO 1: Buscar o 'member_name' na tabela de campos da struct.
-              // Symbol* member_sym = st_lookup(&struct_sym->field_table->fields, member_name);
-              // if (!member_sym) { yyerror("Membro não existe na struct."); }
-
-              // TODO 2: Calcular o offset do membro e obter o ponteiro para o dado.
-              // Onde 'member_sym->offset' seria o deslocamento em bytes do membro.
-              // void* member_data_ptr = (char*)struct_sym->data.value + member_sym->offset;
-              
-              // TODO 3: Copiar o valor do membro para uma nova Expression.
-              // DataType member_type = string_to_type(member_sym->type);
-              // size_t member_size = get_size_from_type(member_sym->type);
-              // void* value_copy = malloc(member_size);
-              // memcpy(value_copy, member_data_ptr, member_size);
-              // $$ = create_expression(member_type, value_copy);
-
-              printf("AVISO: Lógica de acesso a membro '.' ainda não totalmente implementada.\n");
-              // Por enquanto, retornamos uma expressão vazia para não quebrar a gramática.
+          if (!var || !var->instance_fields) {
+              yyerror("Variável de struct não declarada ou não é struct!");
               $$ = create_expression(TYPE_UNDEFINED, NULL);
+          } else {
+              Symbol* campo = st_lookup(var->instance_fields, member_name);
+              if (!campo) {
+                  yyerror("Campo não existe na instância da struct!");
+                  $$ = create_expression(TYPE_UNDEFINED, NULL);
+              } else {
+                  DataType campo_type = string_to_type(campo->type);
+                  size_t campo_size = get_size_from_type(campo->type);
+                  void* value_copy = NULL;
+                  if (campo->data.value) {
+                      value_copy = malloc(campo_size);
+                      memcpy(value_copy, campo->data.value, campo_size);
+                  }
+                  $$ = create_expression(campo_type, value_copy);
+              }
           }
-
-          free(struct_var_name);
           free(member_name);
+          free(var_name);
       }
     ;
 
