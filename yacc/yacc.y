@@ -309,6 +309,7 @@ primary_expression
           if (!s) {
               fprintf(stderr, "Erro: identificador '%s' não declarado na linha %d\n", $1, yylineno);
               $$ = NULL;
+              semantic_error("Identificador não declarado.");
           } else {
               DataType type = string_to_type(s->type);
               size_t value_size = get_size_from_type(s->type);
@@ -467,21 +468,40 @@ assing_value
     ;
 
 declaration_statement
-    : IDENTIFIER type_specifier opcional_constant SEMICOLON
-      {
-          // Esta regra não lida com valores de expressão, então a lógica original é mantida.
-          // Ela declara uma variável sem um valor inicial.
+    : IDENTIFIER type_specifier opcional_constant SEMICOLON{
           if (current_struct_fields) {
-              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL); 
+              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL);
           } else {
-              if (scope_lookup_current($1) != NULL) { 
-                  yyerror("Erro: Variável já declarada neste escopo.");
+              if (scope_lookup($1) != NULL) {
+                  Symbol *sym = scope_lookup($1);
+                  if(sym->kind != SYM_VAR) {
+                      semantic_error("Variável já declarada com outro tipo!");
+                  } else {
+                      sym->kind = SYM_VAR;
+                      sym->line_declared = yylineno;
+                  }
               } else {
-                  scope_insert($1, SYM_VAR, $2, yylineno, NULL); 
+                // Verifica se o tipo é uma struct definida
+                Symbol *type_sym = scope_lookup($2);
+                Symbol *var_sym = scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+
+                if (type_sym && type_sym->kind == SYM_TYPE && type_sym->field_table) {
+                    // É uma struct: cria tabela de campos da instância
+                    var_sym->instance_fields = malloc(sizeof(SymbolTable));
+                    st_init(var_sym->instance_fields);
+
+                    // Para cada campo da struct, cria um símbolo na instância
+                    for (int i = 0; i < HASH_SIZE; i++) {
+                        Symbol *field = type_sym->field_table->fields.table[i];
+                        while (field) {
+                            st_insert(var_sym->instance_fields, field->name, SYM_VAR, field->type, yylineno, NULL);
+                            field = field->next;
+                        }
+                    }
+                }
               }
           }
-          free($1); 
-          // free($2) pode ser necessário dependendo da implementação de type_specifier
+          free($1);
       }
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
       {
@@ -493,14 +513,14 @@ declaration_statement
           // 1. VERIFICAÇÃO DE TIPO
           DataType declared_type = string_to_type(type_name);
           if (initial_value_expr->type != declared_type && declared_type != TYPE_UNDEFINED) {
-              yyerror("Erro de tipo: O valor da expressão é incompatível com o tipo da variável declarada.");
+              semantic_error("Erro de tipo: O valor da expressão é incompatível com o tipo da variável declarada.");
               free_expression(initial_value_expr);
           } else {
               // A lógica original permitia "redeclaração" para atualizar um valor,
               // o que é incomum. Uma abordagem mais estrita é recomendada.
               Symbol* existing_sym = scope_lookup_current(var_name);
               if (existing_sym != NULL) {
-                  yyerror("Erro: Variável já declarada neste escopo.");
+                  semantic_error("Erro: Variável já declarada neste escopo.");
                   free_expression(initial_value_expr);
               } else {
                   // 2. EXTRAÇÃO DO VALOR E INSERÇÃO NO ESCOPO
@@ -544,6 +564,7 @@ type_specifier
     | KW_TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
     | KW_TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
     | KW_TYPE_VACUUM               { $$ = strdup("vacuum"); }
+    | IDENTIFIER                   { $$ = strdup($1); }
     | IDENTIFIER KW_ENUMERARE   { $$ = strdup($1); }
     | OP_DEREF_POINTER type_specifier {}
     
@@ -698,11 +719,31 @@ type_define_statement
         scope_insert($3, SYM_TYPE, $2, yylineno, NULL); 
         free($3);
       }
+    | type_define_struct
     | type_define_enum
       {
         // Mantém a capacidade de definir enumerações.
       }
     ;
+
+type_define_struct
+    : KW_DESIGNARE IDENTIFIER LBRACE
+        {
+            // Crie uma nova tabela de campos para a struct
+            FieldTable *ft = malloc(sizeof(FieldTable));
+            st_init(&ft->fields);
+            // Salve o ponteiro em uma variável global/externa temporária
+            current_struct_fields = ft;
+        }
+      list_declaration_statement
+      RBRACE KW_HOMUNCULUS SEMICOLON
+      {
+        // Insere o nome da struct como tipo no escopo global, com a tabela de campos
+        Symbol *sym = scope_insert($2, SYM_TYPE, "homunculus", yylineno, NULL);
+        if (sym) sym->field_table = current_struct_fields;
+        current_struct_fields = NULL;
+        free($2);
+      }
 
 type_define_enum
     : IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
