@@ -7,6 +7,26 @@
 
 // Por enquanto, vamos deixar a mais complexa vazia.
 
+const char* get_type_name(int type) {
+    switch (type) {
+        case 1: return "QUANTUM";
+        case 5: return "ATOMUS";
+        case 10: return "VECTOR";
+        // Adicione outros tipos conforme seu projeto
+        default: return "UNKNOWN_TYPE";
+    }
+}
+
+const char* get_op_name(int op) {
+    switch (op) {
+        case 305: return "+";
+        case 304: return "*";
+        case 312: return "<";
+        // Adicione outros operadores conforme seu projeto
+        default: return "UNKNOWN_OP";
+    }
+}
+
 Expression* create_expression(DataType type, void* value) {
     Expression* expr = (Expression*)malloc(sizeof(Expression));
     expr->type = type;
@@ -38,7 +58,10 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
     }
 
     // --- Print de Depuração Inicial ---
-    printf("[DEBUG: evaluate_binary] Op: %d, Left Type: %d, Right Type: %d\n", op, left->type, right->type);
+    printf("[DEBUG: evaluate_binary] Operação: %d, Tipo da Esquerda: %s (%d), Tipo da Direita: %s (%d)\n",
+       op,
+       get_type_name(left->type), left->type,
+       get_type_name(right->type), right->type);
 
     // --- 1. Verificação de Tipos ---
     // Por enquanto, exigimos que os tipos sejam idênticos.
@@ -58,7 +81,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
         case TYPE_ATOMUS: {
             int lval = *(int*)left->value;
             int rval = *(int*)right->value;
-            printf("[DEBUG: evaluate_atomus] Left: %d, Op: %d, Right: %d\n", lval, op, rval);
+            printf("[DEBUG: evaluate_atomus] Left: %d, Op: %s (%d), Right: %d\n",
+       lval, get_op_name(op), op, rval);
 
             int* result = malloc(sizeof(int));
             double* fresult = malloc(sizeof(double));
@@ -73,7 +97,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
                 case OP_MULTIPLY: *result = lval * rval; result_type = TYPE_ATOMUS; break;
                 case OP_DIVIDE: *fresult = (double)lval / (double)rval; result_type = TYPE_FRACTIO; break;
                 case OP_MODULUS: *result = lval % rval; result_type = TYPE_ATOMUS; break;
-                case OP_EXP: *result = (int)pow((double)lval, (double)rval); result_type == TYPE_ATOMUS; break;
+                case OP_EXP: *result = (int)pow((double)lval, (double)rval); result_type = TYPE_ATOMUS; break;
 
                 // Operadores Relacionais (retornam um booleano/TYPE_QUANTUM)
                 case OP_EQUAL: *result = (lval == rval); result_type = TYPE_QUANTUM; break;
@@ -100,7 +124,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
         case TYPE_FRACTIO: {
             double lval = *(double*)left->value;
             double rval = *(double*)right->value;
-            printf("[DEBUG: evaluate_fractio] Left: %f, Op: %d, Right: %f\n", lval, op, rval);
+            printf("[DEBUG: evaluate_fractio] Left: %.6f, Op: %s (%d), Right: %.6f\n",
+       lval, get_op_name(op), op, rval);
 
             double* result = malloc(sizeof(double));
             int* bool_result = NULL;
@@ -154,7 +179,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
     }
 
     // --- 3. Criar e retornar a nova Expression com o resultado ---
-    printf("[DEBUG: evaluate_binary] Result Type: %d\n", result_type);
+    printf("[DEBUG: evaluate_binary] Result Type: %s (%d)\n",
+       get_type_name(result_type), result_type);
     return create_expression(result_type, result_value);
 }
 

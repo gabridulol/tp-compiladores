@@ -6,6 +6,7 @@
 #include "../src/scope.h"
 #include "../src/source_printer.h"
 #include "../src/expression.h"
+#include "../src/loops.h"
 
 extern int yylineno;
 
@@ -28,6 +29,7 @@ void yyerror(const char *s);
     int val_int;
     double val_float;
     char *str;
+    void* ptr;
     // void *ptr; Substituido
     struct ArgNode* arg_list; // ----> ADICIONE ESTA LINHA À SUA UNION <----
     struct Expression* expr;
@@ -129,7 +131,7 @@ void yyerror(const char *s);
 %start translation_unit
 
 %type <str> type_specifier
-%type <expr> expression
+%type <expr> expression expression_statement
 %type <expr> constant
 %type <expr> string
 %type <expr> primary_expression
@@ -144,6 +146,9 @@ void yyerror(const char *s);
 %type <expr> pointer_dereference
 
 %type <arg_list> argument_list
+
+%type <ptr> block
+%type <ptr> declaration_statement
 
 
 %%
@@ -173,6 +178,9 @@ block
         { scope_push(); }     /* cria novo escopo */
       statement_list
       RBRACE
+      {
+          $$ = NULL; // OU ponteiro real para o bloco
+      }
       // { scope_pop(); }      / remoção do escopo pode ser feita em cada produção individual
     ;
 
@@ -653,13 +661,140 @@ causal_statement
     | KW_AXIOM COLON statement_list 
     ;
 
+    
 iteration_statement
-    : LPAREN expression RPAREN KW_PERSISTO block { scope_pop(); }
-    | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block { scope_pop(); }
-    | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block { scope_pop(); }
-    | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE  block { scope_pop(); }
-    | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block { scope_pop(); }
+    : LPAREN expression RPAREN KW_PERSISTO block
+      {
+        scope_push();
+
+        Expression* cond = $2;
+        if (cond == NULL) {
+            yyerror("Expressão condicional do 'persisto' não pode ser nula.");
+            scope_pop();
+            YYERROR;  // Para abortar o parsing
+        }
+        if (cond->type != TYPE_QUANTUM) {
+            yyerror("Expressão condicional do 'persisto' precisa ser do tipo 'quantum'.");
+            free_expression(cond);
+            scope_pop();
+            YYERROR;
+        }
+
+        current_loop_block = $5;
+        fprintf(stderr, "[DEBUG] Persisto (while) iniciado. current_loop_block = %p\n", (void*)current_loop_block);
+        execute_iterare(cond, NULL, iter_block_wrapper);
+        free_expression(cond);
+
+        scope_pop();
+      }
+
+    | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
+      {
+        scope_push();
+
+        fprintf(stderr, "[DEBUG] FOR estilo C: inicialização; condição; incremento\n");
+        fprintf(stderr, "[DEBUG] current_loop_block = %p\n", (void*)$7);
+
+        current_loop_block = $7;
+
+        if ($3 == NULL) {
+            yyerror("Expressão de condição no for não pode ser nula.");
+            scope_pop();
+            YYERROR;
+        }
+        if ($3->type != TYPE_QUANTUM) {
+            yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
+            free_expression($3);
+            scope_pop();
+            YYERROR;
+        }
+
+        execute_iterare($3, $4, iter_block_wrapper);
+
+        scope_pop();
+      }
+
+    | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
+      {
+        scope_push();
+
+        fprintf(stderr, "[DEBUG] FOR estilo C: inicialização; condição (sem incremento)\n");
+        fprintf(stderr, "[DEBUG] current_loop_block = %p\n", (void*)$6);
+
+        current_loop_block = $6;
+
+        if ($3 == NULL) {
+            yyerror("Expressão de condição no for não pode ser nula.");
+            scope_pop();
+            YYERROR;
+        }
+        if ($3->type != TYPE_QUANTUM) {
+            yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
+            free_expression($3);
+            scope_pop();
+            YYERROR;
+        }
+
+        execute_iterare($3, NULL, iter_block_wrapper);
+
+        scope_pop();
+      }
+
+    | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
+      {
+        scope_push();
+
+        fprintf(stderr, "[DEBUG] FOR estilo C: declaração; condição; incremento\n");
+        fprintf(stderr, "[DEBUG] current_loop_block = %p\n", (void*)$7);
+
+        current_loop_block = $7;
+
+        if ($3 == NULL) {
+            yyerror("Expressão de condição no for não pode ser nula.");
+            scope_pop();
+            YYERROR;
+        }
+        if ($3->type != TYPE_QUANTUM) {
+            yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
+            free_expression($3);
+            scope_pop();
+            YYERROR;
+        }
+
+        execute_iterare($3, $4, iter_block_wrapper);
+
+        scope_pop();
+      }
+
+    | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block
+      {
+        scope_push();
+
+        fprintf(stderr, "[DEBUG] FOR estilo C: declaração; condição (sem incremento)\n");
+        fprintf(stderr, "[DEBUG] current_loop_block = %p\n", (void*)$6);
+
+        current_loop_block = $6;
+
+        if ($3 == NULL) {
+            yyerror("Expressão de condição no for não pode ser nula.");
+            scope_pop();
+            YYERROR;
+        }
+        if ($3->type != TYPE_QUANTUM) {
+            yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
+            free_expression($3);
+            scope_pop();
+            YYERROR;
+        }
+
+        execute_iterare($3, NULL, iter_block_wrapper);
+
+        scope_pop();
+      }
     ;
+
+
+
 // Funções pontas (lectura / revelare / magnitudo)
 
 io_functions 

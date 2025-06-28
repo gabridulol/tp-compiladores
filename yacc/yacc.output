@@ -181,10 +181,10 @@ Grammar
   105                 | KW_AXIOM COLON statement_list
 
   106 iteration_statement: LPAREN expression RPAREN KW_PERSISTO block
-  107                    | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
-  108                    | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
-  109                    | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block
-  110                    | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
+  107                    | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
+  108                    | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
+  109                    | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
+  110                    | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block
 
   111 io_functions: function_input_output
   112             | function_magnitudo
@@ -331,7 +331,7 @@ Nonterminals, with rules where they appear
     global_statement (77)
         on left: 4 5 6 7
         on right: 3
-    block (78)
+    block <ptr> (78)
         on left: 9
         on right: 10 97 99 102 106 107 108 109 110
     $@1 (79)
@@ -352,7 +352,7 @@ Nonterminals, with rules where they appear
     import_statement (84)
         on left: 27
         on right: 4
-    expression_statement (85)
+    expression_statement <expr> (85)
         on left: 28
         on right: 13 107 108 109 110
     primary_expression <expr> (86)
@@ -363,7 +363,7 @@ Nonterminals, with rules where they appear
         on right: 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57
     expression <expr> (88)
         on left: 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58
-        on right: 25 26 28 32 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 69 91 92 96 97 99 101 104 106 108 110 131 133 140
+        on right: 25 26 28 32 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 69 91 92 96 97 99 101 104 106 107 109 131 133 140
     constant <expr> (89)
         on left: 59 60 61 62 63
         on right: 30
@@ -373,7 +373,7 @@ Nonterminals, with rules where they appear
     assing_value (91)
         on left: 65 66 67
         on right: 58
-    declaration_statement (92)
+    declaration_statement <ptr> (92)
         on left: 68 69 70
         on right: 5 16 109 110
     opcional_constant (93)
@@ -2889,10 +2889,10 @@ State 175
    99                      | LPAREN • expression RPAREN KW_SI block $@3 conditional_non_statement
   101                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
   106 iteration_statement: LPAREN • expression RPAREN KW_PERSISTO block
-  107                    | LPAREN • expression_statement expression_statement RPAREN KW_ITERARE block
-  108                    | LPAREN • expression_statement expression_statement expression RPAREN KW_ITERARE block
-  109                    | LPAREN • declaration_statement expression_statement RPAREN KW_ITERARE block
-  110                    | LPAREN • declaration_statement expression_statement expression RPAREN KW_ITERARE block
+  107                    | LPAREN • expression_statement expression_statement expression RPAREN KW_ITERARE block
+  108                    | LPAREN • expression_statement expression_statement RPAREN KW_ITERARE block
+  109                    | LPAREN • declaration_statement expression_statement expression RPAREN KW_ITERARE block
+  110                    | LPAREN • declaration_statement expression_statement RPAREN KW_ITERARE block
   119 function_magnitudo: LPAREN • type_expression RPAREN KW_MAGNITUDO SEMICOLON
   144 member_access_dereference: LPAREN • OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
 
@@ -3339,8 +3339,8 @@ State 204
 
 State 205
 
-  107 iteration_statement: LPAREN expression_statement • expression_statement RPAREN KW_ITERARE block
-  108                    | LPAREN expression_statement • expression_statement expression RPAREN KW_ITERARE block
+  107 iteration_statement: LPAREN expression_statement • expression_statement expression RPAREN KW_ITERARE block
+  108                    | LPAREN expression_statement • expression_statement RPAREN KW_ITERARE block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3425,8 +3425,8 @@ State 206
 
 State 207
 
-  109 iteration_statement: LPAREN declaration_statement • expression_statement RPAREN KW_ITERARE block
-  110                    | LPAREN declaration_statement • expression_statement expression RPAREN KW_ITERARE block
+  109 iteration_statement: LPAREN declaration_statement • expression_statement expression RPAREN KW_ITERARE block
+  110                    | LPAREN declaration_statement • expression_statement RPAREN KW_ITERARE block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3883,8 +3883,8 @@ State 224
 
 State 225
 
-  107 iteration_statement: LPAREN expression_statement expression_statement • RPAREN KW_ITERARE block
-  108                    | LPAREN expression_statement expression_statement • expression RPAREN KW_ITERARE block
+  107 iteration_statement: LPAREN expression_statement expression_statement • expression RPAREN KW_ITERARE block
+  108                    | LPAREN expression_statement expression_statement • RPAREN KW_ITERARE block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3972,8 +3972,8 @@ State 227
 
 State 228
 
-  109 iteration_statement: LPAREN declaration_statement expression_statement • RPAREN KW_ITERARE block
-  110                    | LPAREN declaration_statement expression_statement • expression RPAREN KW_ITERARE block
+  109 iteration_statement: LPAREN declaration_statement expression_statement • expression RPAREN KW_ITERARE block
+  110                    | LPAREN declaration_statement expression_statement • RPAREN KW_ITERARE block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -4330,7 +4330,7 @@ State 245
 
 State 246
 
-  107 iteration_statement: LPAREN expression_statement expression_statement RPAREN • KW_ITERARE block
+  108 iteration_statement: LPAREN expression_statement expression_statement RPAREN • KW_ITERARE block
 
     KW_ITERARE  shift, and go to state 263
 
@@ -4354,7 +4354,7 @@ State 247
    56           | expression • OP_LOGICAL_OR unary_expression
    57           | expression • OP_LOGICAL_XOR unary_expression
    58           | expression • OP_ASSIGN assing_value
-  108 iteration_statement: LPAREN expression_statement expression_statement expression • RPAREN KW_ITERARE block
+  107 iteration_statement: LPAREN expression_statement expression_statement expression • RPAREN KW_ITERARE block
 
     OP_ASSIGN          shift, and go to state 92
     OP_GREATER_EQUAL   shift, and go to state 69
@@ -4404,7 +4404,7 @@ State 250
 
 State 251
 
-  109 iteration_statement: LPAREN declaration_statement expression_statement RPAREN • KW_ITERARE block
+  110 iteration_statement: LPAREN declaration_statement expression_statement RPAREN • KW_ITERARE block
 
     KW_ITERARE  shift, and go to state 268
 
@@ -4428,7 +4428,7 @@ State 252
    56           | expression • OP_LOGICAL_OR unary_expression
    57           | expression • OP_LOGICAL_XOR unary_expression
    58           | expression • OP_ASSIGN assing_value
-  110 iteration_statement: LPAREN declaration_statement expression_statement expression • RPAREN KW_ITERARE block
+  109 iteration_statement: LPAREN declaration_statement expression_statement expression • RPAREN KW_ITERARE block
 
     OP_ASSIGN          shift, and go to state 92
     OP_GREATER_EQUAL   shift, and go to state 69
@@ -4616,7 +4616,7 @@ State 262
 
 State 263
 
-  107 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE • block
+  108 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE • block
 
     LBRACE  shift, and go to state 149
 
@@ -4625,7 +4625,7 @@ State 263
 
 State 264
 
-  108 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN • KW_ITERARE block
+  107 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN • KW_ITERARE block
 
     KW_ITERARE  shift, and go to state 277
 
@@ -4659,7 +4659,7 @@ State 267
 
 State 268
 
-  109 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE • block
+  110 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE • block
 
     LBRACE  shift, and go to state 149
 
@@ -4668,7 +4668,7 @@ State 268
 
 State 269
 
-  110 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN • KW_ITERARE block
+  109 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN • KW_ITERARE block
 
     KW_ITERARE  shift, and go to state 281
 
@@ -4752,14 +4752,14 @@ State 275
 
 State 276
 
-  107 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE block •
+  108 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE block •
 
-    $default  reduce using rule 107 (iteration_statement)
+    $default  reduce using rule 108 (iteration_statement)
 
 
 State 277
 
-  108 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE • block
+  107 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE • block
 
     LBRACE  shift, and go to state 149
 
@@ -4787,14 +4787,14 @@ State 279
 
 State 280
 
-  109 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block •
+  110 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block •
 
-    $default  reduce using rule 109 (iteration_statement)
+    $default  reduce using rule 110 (iteration_statement)
 
 
 State 281
 
-  110 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE • block
+  109 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE • block
 
     LBRACE  shift, and go to state 149
 
@@ -4835,9 +4835,9 @@ State 285
 
 State 286
 
-  108 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block •
+  107 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block •
 
-    $default  reduce using rule 108 (iteration_statement)
+    $default  reduce using rule 107 (iteration_statement)
 
 
 State 287
@@ -4868,9 +4868,9 @@ State 289
 
 State 290
 
-  110 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block •
+  109 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block •
 
-    $default  reduce using rule 110 (iteration_statement)
+    $default  reduce using rule 109 (iteration_statement)
 
 
 State 291

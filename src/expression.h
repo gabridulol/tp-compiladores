@@ -22,6 +22,8 @@ typedef struct Expression {
     void* value;    // Ponteiro para o valor real (ex: um int*)
 } Expression;
 
+const char* get_type_name(int type);
+const char* get_op_name(int op);
 
 // Cria uma expressão a partir de um tipo e um valor
 Expression* create_expression(DataType type, void* value);
