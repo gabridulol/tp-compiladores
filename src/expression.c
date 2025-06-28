@@ -61,14 +61,17 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
             printf("[DEBUG: evaluate_atomus] Left: %d, Op: %d, Right: %d\n", lval, op, rval);
 
             int* result = malloc(sizeof(int));
+            double* fresult = malloc(sizeof(double));
+            
             if (!result) { perror("Falha de alocação de memória."); break; }
+            if (!fresult) { perror("Falha de alocação de memória."); break; }
 
             switch (op) {
                 // Operadores Aritméticos
                 case OP_ADD: *result = lval + rval; result_type = TYPE_ATOMUS; break;
                 case OP_SUBTRACT: *result = lval - rval; result_type = TYPE_ATOMUS; break;
                 case OP_MULTIPLY: *result = lval * rval; result_type = TYPE_ATOMUS; break;
-                case OP_DIVIDE: *result = lval / rval; result_type = TYPE_ATOMUS; break; // Cuidado com divisão por zero!
+                case OP_DIVIDE: *fresult = (double)lval / (double)rval; result_type = TYPE_FRACTIO; break;
                 case OP_MODULUS: *result = lval % rval; result_type = TYPE_ATOMUS; break;
                 case OP_EXP: *result = (int)pow((double)lval, (double)rval); result_type == TYPE_ATOMUS; break;
 
@@ -86,7 +89,11 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
                     result = NULL;
                     break;
             }
-            result_value = result;
+            if (op == OP_DIVIDE){
+                result_value = fresult;
+            } else {
+                result_value = result;
+            }
             break;
         }
 
