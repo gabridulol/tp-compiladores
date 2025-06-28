@@ -476,7 +476,6 @@ assing_value
     : IDENTIFIER 
     | vector_access
     | pointer_statement
-    | member_access_direct
     ;
 
 declaration_statement
