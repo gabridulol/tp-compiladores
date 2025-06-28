@@ -10,7 +10,7 @@ void execute_block(void* bloco);
 
 void iter_block_wrapper(void);
 
-void execute_iterare_ast(ASTNode* cond, ASTNode* incr, ASTNode* body);
+// void execute_iterare_ast(ASTNode* cond, ASTNode* incr, ASTNode* body);
 
 
 Expression* clone_expression(const Expression* expr);

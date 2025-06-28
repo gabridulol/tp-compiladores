@@ -706,7 +706,7 @@ iteration_statement
 
         current_loop_block = $5;
         fprintf(stderr, "[DEBUG] Persisto (while) iniciado. current_loop_block = %p\n", (void*)current_loop_block);
-        execute_iterare(cond, NULL, iter_block_wrapper);
+        // execute_iterare(cond, NULL, iter_block_wrapper);
         free_expression(cond);
 
         scope_pop();
@@ -733,7 +733,7 @@ iteration_statement
             YYERROR;
         }
 
-        execute_iterare($3, $4, iter_block_wrapper);
+        // execute_iterare($3, $4, iter_block_wrapper);
 
         scope_pop();
       }
@@ -759,7 +759,7 @@ iteration_statement
             YYERROR;
         }
 
-        execute_iterare($3, NULL, iter_block_wrapper);
+        // execute_iterare($3, NULL, iter_block_wrapper);
 
         scope_pop();
       }
@@ -774,10 +774,10 @@ iteration_statement
         fprintf(stderr, "[DEBUG] declaração (inicialização) executada.\n");
 
         fprintf(stderr, "[DEBUG] expressão_statement (condição): ");
-        print_expression($3);
+        // print_expression($3);
 
         fprintf(stderr, "[DEBUG] expressão (incremento): ");
-        print_expression($4);
+        // print_expression($4);
 
         current_loop_block = $7;
 
@@ -793,7 +793,7 @@ iteration_statement
             YYERROR;
         }
 
-        execute_iterare($3, $4, iter_block_wrapper);
+        // execute_iterare($3, $4, iter_block_wrapper);
 
         scope_pop();
       }
@@ -819,7 +819,7 @@ iteration_statement
             YYERROR;
         }
 
-        execute_iterare($3, NULL, iter_block_wrapper);
+        // execute_iterare($3, NULL, iter_block_wrapper);
 
         scope_pop();
       }

@@ -106,51 +106,51 @@ Expression* clone_expression(const Expression* expr) {
 //   Expression* evaluate_ast(ASTNode* node);
 // que percorre a árvore e retorna uma nova Expression* com o valor atual.
 
-void execute_iterare(ASTNode* condition_node,
-                     ASTNode* increment_node,
-                     void (*loop_block_fn)(void))
-{
-    if (!condition_node || !loop_block_fn) {
-        fprintf(stderr, "[Erro] [execute_iterare] condição ou bloco nulo.\n");
-        return;
-    }
+// void execute_iterare(ASTNode* condition_node,
+//                      ASTNode* increment_node,
+//                      void (*loop_block_fn)(void))
+// {
+//     if (!condition_node || !loop_block_fn) {
+//         fprintf(stderr, "[Erro] [execute_iterare] condição ou bloco nulo.\n");
+//         return;
+//     }
 
-    fprintf(stderr, "[DEBUG] [execute_iterare] Iniciando laço ITERARE\n");
+//     fprintf(stderr, "[DEBUG] [execute_iterare] Iniciando laço ITERARE\n");
 
-    scope_push();
-    int iter = 0;
+//     scope_push();
+//     int iter = 0;
 
-    while (1) {
-        // 1) Re-avalia a condição a cada iteração
-        Expression* cond_expr = evaluate_ast(condition_node);
-        Expression* cond_bool = evaluate_boolean(cond_expr, "condição do ITERARE");
-        if (!cond_bool) {
-            // erro ou não-booleano
-            break;
-        }
+//     while (1) {
+//         // 1) Re-avalia a condição a cada iteração
+//         Expression* cond_expr = evaluate_ast(condition_node);
+//         Expression* cond_bool = evaluate_boolean(cond_expr, "condição do ITERARE");
+//         if (!cond_bool) {
+//             // erro ou não-booleano
+//             break;
+//         }
 
-        fprintf(stderr, "[DEBUG] [execute_iterare] Iter %d – condição = ", iter);
-        print_expression(cond_bool);
-        int keep = *(int*)cond_bool->value;
-        free_expression(cond_bool);
+//         fprintf(stderr, "[DEBUG] [execute_iterare] Iter %d – condição = ", iter);
+//         print_expression(cond_bool);
+//         int keep = *(int*)cond_bool->value;
+//         free_expression(cond_bool);
 
-        if (!keep) {
-            fprintf(stderr, "[DEBUG] [execute_iterare] Condição falsa. Saindo do laço.\n");
-            break;
-        }
+//         if (!keep) {
+//             fprintf(stderr, "[DEBUG] [execute_iterare] Condição falsa. Saindo do laço.\n");
+//             break;
+//         }
 
-        // 2) Executa o corpo
-        loop_block_fn();
+//         // 2) Executa o corpo
+//         loop_block_fn();
 
-        // 3) Re-avalia o incremento (para aplicar side-effect em 'i')
-        if (increment_node) {
-            Expression* inc_expr = evaluate_ast(increment_node);
-            free_expression(inc_expr);
-        }
+//         // 3) Re-avalia o incremento (para aplicar side-effect em 'i')
+//         if (increment_node) {
+//             Expression* inc_expr = evaluate_ast(increment_node);
+//             free_expression(inc_expr);
+//         }
 
-        iter++;
-    }
+//         iter++;
+//     }
 
-    scope_pop();
-    fprintf(stderr, "[DEBUG] [execute_iterare] Laço encerrado após %d iterações.\n", iter);
-}
+//     scope_pop();
+//     fprintf(stderr, "[DEBUG] [execute_iterare] Laço encerrado após %d iterações.\n", iter);
+// }
