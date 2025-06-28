@@ -1,3 +1,6 @@
 main() Alchemia {
+    10 --> teste atomus;
+    "string" --> teste2 scriptum;
+    teste + teste2 --> teste;
     "ola" + 5;
 }

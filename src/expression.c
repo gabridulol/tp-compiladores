@@ -70,6 +70,7 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
                 case OP_MULTIPLY: *result = lval * rval; result_type = TYPE_ATOMUS; break;
                 case OP_DIVIDE: *result = lval / rval; result_type = TYPE_ATOMUS; break; // Cuidado com divisão por zero!
                 case OP_MODULUS: *result = lval % rval; result_type = TYPE_ATOMUS; break;
+                case OP_EXP: *result = (int)pow((double)lval, (double)rval); result_type == TYPE_ATOMUS; break;
 
                 // Operadores Relacionais (retornam um booleano/TYPE_QUANTUM)
                 case OP_EQUAL: *result = (lval == rval); result_type = TYPE_QUANTUM; break;
