@@ -213,7 +213,7 @@ statement
 //
 
 assignment_statement
-    : expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
+    : expression OP_ASSIGN assing_value SEMICOLON // Atribuição a uma variável simples
       {
           Expression* value_expr = $1;
           char* var_name = $3;
@@ -473,47 +473,92 @@ string
 //
 
 assing_value
-    : IDENTIFIER
+    : IDENTIFIER 
     | vector_access
     | pointer_statement
+    | member_access_direct
     ;
 
 declaration_statement
-    : IDENTIFIER type_specifier opcional_constant SEMICOLON{
+    : IDENTIFIER type_specifier opcional_constant SEMICOLON
+      {
+          char* var_name = $1;
+          char* var_type = $2;
+
+          /* DEBUG: início da declaração */
+          printf("[DEBUG] DECLARATION_START: name='%s', type='%s', current_struct_fields=%p\n",
+                 var_name, var_type, (void*)current_struct_fields);
+
           if (current_struct_fields) {
-              st_insert(&current_struct_fields->fields, $1, SYM_VAR, $2, yylineno, NULL);
+              /* DEBUG: dentro de definição de struct */
+              printf("[DEBUG] STRUCT CONTEXT: inserindo campo '%s' de tipo '%s'\n",
+                     var_name, var_type);
+              st_insert(&current_struct_fields->fields,
+                        var_name, SYM_VAR, var_type, yylineno, NULL);
           } else {
-              if (scope_lookup($1) != NULL) {
-                  Symbol *sym = scope_lookup($1);
-                  if(sym->kind != SYM_VAR) {
+              /* DEBUG: contexto normal, buscando símbolo existente */
+              printf("[DEBUG] NORMAL CONTEXT: scope_lookup('%s')...\n", var_name);
+              Symbol *existing = scope_lookup(var_name);
+              printf("[DEBUG] scope_lookup returned %p\n", (void*)existing);
+
+              if (existing) {
+                  printf("[DEBUG] Símbolo existente: kind=%d (SYM_VAR=%d)\n",
+                         existing->kind, SYM_VAR);
+                  if (existing->kind != SYM_VAR) {
                       semantic_error("Variável já declarada com outro tipo!");
                   } else {
-                      sym->kind = SYM_VAR;
-                      sym->line_declared = yylineno;
+                      existing->kind = SYM_VAR;
+                      existing->line_declared = yylineno;
+                      printf("[DEBUG] Atualizado existing->kind para SYM_VAR\n");
                   }
               } else {
-                // Verifica se o tipo é uma struct definida
-                Symbol *type_sym = scope_lookup($2);
-                Symbol *var_sym = scope_insert($1, SYM_VAR, $2, yylineno, NULL);
+                  /* DEBUG: inserindo nova variável */
+                  printf("[DEBUG] Inserindo '%s' do tipo '%s'\n",
+                         var_name, var_type);
+                  Symbol *type_sym = scope_lookup(var_type);
+                  printf("[DEBUG] scope_lookup(type '%s') -> %p\n",
+                         var_type, (void*)type_sym);
 
-                if (type_sym && type_sym->kind == SYM_TYPE && type_sym->field_table) {
-                    // É uma struct: cria tabela de campos da instância
-                    var_sym->instance_fields = malloc(sizeof(SymbolTable));
-                    st_init(var_sym->instance_fields);
+                  Symbol *var_sym = scope_insert(var_name, SYM_VAR, var_type,
+                                                 yylineno, NULL);
+                  printf("[DEBUG] scope_insert returned %p\n", (void*)var_sym);
 
-                    // Para cada campo da struct, cria um símbolo na instância
-                    for (int i = 0; i < HASH_SIZE; i++) {
-                        Symbol *field = type_sym->field_table->fields.table[i];
-                        while (field) {
-                            st_insert(var_sym->instance_fields, field->name, SYM_VAR, field->type, yylineno, NULL);
-                            field = field->next;
-                        }
-                    }
-                }
+                  /* DEBUG: informações do type_sym */
+                  if (type_sym) {
+                      printf("[DEBUG] type_sym->kind=%d, field_table=%p\n",
+                             type_sym->kind, (void*)type_sym->field_table);
+                  }
+
+                  if (type_sym && type_sym->kind == SYM_TYPE
+                      && type_sym->field_table) {
+                      /* DEBUG: criando instance_fields */
+                      printf("[DEBUG] Criando instance_fields para '%s'\n", var_name);
+                      var_sym->instance_fields =
+                          malloc(sizeof(SymbolTable));
+                      st_init(var_sym->instance_fields);
+
+                      for (int i = 0; i < HASH_SIZE; i++) {
+                          Symbol *field =
+                              type_sym->field_table->fields.table[i];
+                          while (field) {
+                              printf("[DEBUG] adicionando campo '%s' tipo '%s'\n",
+                                     field->name, field->type);
+                              st_insert(var_sym->instance_fields,
+                                        field->name,
+                                        SYM_VAR,
+                                        field->type,
+                                        yylineno,
+                                        NULL);
+                              field = field->next;
+                          }
+                      }
+                  }
               }
           }
-          free($1);
+
+          free(var_name);
       }
+
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
       {
           // Esta é a regra atualizada para declaração com inicialização.
@@ -1154,45 +1199,68 @@ pointer_dereference
 member_access_direct
     : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
       {
-          $$ = NULL; // Por padrão, a operação falha.
-          char* struct_var_name = $1;
-          char* member_name = $3;
-          
-          // 1. Buscar a variável da struct na tabela de símbolos.
-          Symbol* struct_sym = scope_lookup(struct_var_name);
-          if (!struct_sym) {
-              yyerror("Erro: Variável da struct não declarada.");
-          } else if (strcmp(struct_sym->type, "homunculus") != 0) { // Checa se é uma struct
-              yyerror("Erro: Acesso a membro em uma variável que não é uma struct.");
-          } else if (!struct_sym->field_table) {
-              yyerror("Erro interno: Tabela de campos da struct não encontrada.");
-          } else {
-              // --- Lógica a ser implementada quando as structs estiverem funcionais ---
-              
-              // TODO 1: Buscar o 'member_name' na tabela de campos da struct.
-              // Symbol* member_sym = st_lookup(&struct_sym->field_table->fields, member_name);
-              // if (!member_sym) { yyerror("Membro não existe na struct."); }
+          /* $1 = membro (campo), $3 = variável (instância da struct) */
+          char* member_name = $1;
+          char* var_name    = $3;
 
-              // TODO 2: Calcular o offset do membro e obter o ponteiro para o dado.
-              // Onde 'member_sym->offset' seria o deslocamento em bytes do membro.
-              // void* member_data_ptr = (char*)struct_sym->data.value + member_sym->offset;
-              
-              // TODO 3: Copiar o valor do membro para uma nova Expression.
-              // DataType member_type = string_to_type(member_sym->type);
-              // size_t member_size = get_size_from_type(member_sym->type);
-              // void* value_copy = malloc(member_size);
-              // memcpy(value_copy, member_data_ptr, member_size);
-              // $$ = create_expression(member_type, value_copy);
+          /* DEBUG: início do acesso */
+          printf("[DEBUG] member_access_direct: var='%s', member='%s'\\n",
+                 var_name, member_name);
 
-              printf("AVISO: Lógica de acesso a membro '.' ainda não totalmente implementada.\n");
-              // Por enquanto, retornamos uma expressão vazia para não quebrar a gramática.
+          Symbol* var = scope_lookup(var_name);
+
+          /* DEBUG: resultado do lookup da variável */
+          printf("[DEBUG] scope_lookup('%s') returned %p\\n",
+                 var_name, (void*)var);
+
+          if (!var || !var->instance_fields) {
+              yyerror("Variável de struct não declarada ou não é struct!");
               $$ = create_expression(TYPE_UNDEFINED, NULL);
+          } else {
+              /* DEBUG: ponteiro para tabela de campos */
+              printf("[DEBUG] var->instance_fields = %p\\n",
+                     (void*)var->instance_fields);
+
+              /* DEBUG: buscando campo na tabela */
+              printf("[DEBUG] st_lookup(instance_fields, '%s')...\\n",
+                     member_name);
+              Symbol* campo = st_lookup(var->instance_fields, member_name);
+
+              /* DEBUG: resultado do lookup do campo */
+              printf("[DEBUG] st_lookup returned %p\\n",
+                     (void*)campo);
+
+              if (!campo) {
+                  yyerror("Campo não existe na instância da struct!");
+                  $$ = create_expression(TYPE_UNDEFINED, NULL);
+              } else {
+                  /* DEBUG: detalhes do campo */
+                  printf("[DEBUG] campo->type = '%s', campo->data.value = %p\\n",
+                         campo->type, campo->data.value);
+
+                  DataType campo_type = string_to_type(campo->type);
+                  size_t campo_size   = get_size_from_type(campo->type);
+                  void*  value_copy   = NULL;
+
+                  if (campo->data.value) {
+                      /* DEBUG: alocando %zu bytes para cópia do campo */
+                      printf("[DEBUG] malloc(%zu) for value_copy\\n", campo_size);
+                      value_copy = malloc(campo_size);
+                      memcpy(value_copy, campo->data.value, campo_size);
+                  }
+
+                  $$ = create_expression(campo_type, value_copy);
+
+                  /* DEBUG: expressão criada */
+                  printf("[DEBUG] create_expression returned %p\\n", (void*)$$);
+              }
           }
 
-          free(struct_var_name);
           free(member_name);
+          free(var_name);
       }
     ;
+
 
 
 member_access_dereference

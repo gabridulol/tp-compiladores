@@ -5,13 +5,15 @@
 #include "ast.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-// --- Execução de bloco (a ser substituído por execução real do AST) ---
+// --- Execução genérica de bloco AST (stub) ---
 void execute_block(void* bloco) {
+    // Substituir por execução real de ASTNode*
     printf("[DEBUG] Executando bloco (placeholder)\n");
 }
 
-// Bloco atual para usar em wrapper, se necessário
+// Bloco corrente para uso em wrapper
 void* current_loop_block = NULL;
 
 void iter_block_wrapper(void) {
@@ -20,16 +22,13 @@ void iter_block_wrapper(void) {
     }
 }
 
-
-// --- Impressão útil para debug de expressões ---
-void print_expression(Expression* expr) {
+// Debug: imprime Expression para rastreamento
+static void print_expression(const Expression* expr) {
     if (!expr) {
-        fprintf(stderr, "NULL");
+        fprintf(stderr, "NULL\n");
         return;
     }
-
     fprintf(stderr, "Expression(Type: %s, Value: ", get_type_name(expr->type));
-
     switch (expr->type) {
         case TYPE_ATOMUS:
         case TYPE_QUANTUM:
@@ -45,112 +44,98 @@ void print_expression(Expression* expr) {
             fprintf(stderr, "\"%s\"", (char*)expr->value);
             break;
         default:
-            fprintf(stderr, "???");
-            break;
+            fprintf(stderr, "???:%p", expr->value);
     }
     fprintf(stderr, ")\n");
 }
 
-// --- Validação de booleano ---
+// Valida se expr é TYPE_QUANTUM (booleano)
 Expression* evaluate_boolean(Expression* expr, const char* context) {
     if (!expr) {
-        fprintf(stderr, "[Erro] Expressão nula no contexto: %s\n", context);
+        fprintf(stderr, "[Erro] Expressão nula em '%s'\n", context);
         return NULL;
     }
-
     if (expr->type != TYPE_QUANTUM) {
-        fprintf(stderr, "[Erro] Expressão no contexto '%s' deve ser do tipo 'quantum'.\n", context);
-        fprintf(stderr, "[Erro] Expression = ");
+        fprintf(stderr, "[Erro] Expressão em '%s' deve ser 'quantum'.\n", context);
         print_expression(expr);
         free_expression(expr);
         return NULL;
     }
-
     return expr;
 }
 
-// --- Avaliação de expressão ---
-// Aqui é onde incrementos com efeito colateral deveriam ser tratados, como "i --> i + 1"
-// Caso contrário, será ignorado
+// Avalia expressões com side-effects (ex: i = i + 1)
 Expression* evaluate_expression(Expression* expr) {
-    // Se a linguagem tiver atribuições como expressões, implemente aqui
-    // Por agora, consideramos que expr já está avaliado
+    // Se a AST suportar atribuições como expressões, trate aqui
     return expr;
 }
 
+// Clona expressão para uso independente
 Expression* clone_expression(const Expression* expr) {
     if (!expr) return NULL;
-
-    Expression* new_expr = malloc(sizeof(Expression));
-    if (!new_expr) return NULL;
-
-    new_expr->type = expr->type;
-    new_expr->value = NULL;
-
-    size_t size = get_size_from_type(get_type_name(expr->type));
-    if (expr->value && size > 0) {
-        new_expr->value = malloc(size);
-        if (new_expr->value) {
-            memcpy(new_expr->value, expr->value, size);
-        }
+    Expression* copy = malloc(sizeof(Expression));
+    if (!copy) return NULL;
+    copy->type = expr->type;
+    copy->value = NULL;
+    size_t sz = get_size_from_type(get_type_name(expr->type));
+    if (expr->value && sz > 0) {
+        copy->value = malloc(sz);
+        if (copy->value) memcpy(copy->value, expr->value, sz);
     }
-
-    // Copie outros campos, se existirem
-
-    return new_expr;
+    return copy;
 }
 
-
-// --- Execução de laço estilo FOR / WHILE ---
-// Supondo que você tenha um tipo ASTNode e uma função:
-//   Expression* evaluate_ast(ASTNode* node);
-// que percorre a árvore e retorna uma nova Expression* com o valor atual.
-
+// Laço FOR: reavalia condição, executa corpo e aplica incremento
 // void execute_iterare(ASTNode* condition_node,
 //                      ASTNode* increment_node,
-//                      void (*loop_block_fn)(void))
-// {
+//                      void (*loop_block_fn)(void)) {
 //     if (!condition_node || !loop_block_fn) {
-//         fprintf(stderr, "[Erro] [execute_iterare] condição ou bloco nulo.\n");
+//         fprintf(stderr, "[Erro] execute_iterare: condição ou bloco nulo.\n");
 //         return;
 //     }
-
-//     fprintf(stderr, "[DEBUG] [execute_iterare] Iniciando laço ITERARE\n");
-
+//     fprintf(stderr, "[DEBUG] Iniciando FOR\n");
 //     scope_push();
 //     int iter = 0;
-
 //     while (1) {
-//         // 1) Re-avalia a condição a cada iteração
-//         Expression* cond_expr = evaluate_ast(condition_node);
-//         Expression* cond_bool = evaluate_boolean(cond_expr, "condição do ITERARE");
-//         if (!cond_bool) {
-//             // erro ou não-booleano
-//             break;
-//         }
-
-//         fprintf(stderr, "[DEBUG] [execute_iterare] Iter %d – condição = ", iter);
-//         print_expression(cond_bool);
-//         int keep = *(int*)cond_bool->value;
-//         free_expression(cond_bool);
-
-//         if (!keep) {
-//             fprintf(stderr, "[DEBUG] [execute_iterare] Condição falsa. Saindo do laço.\n");
-//             break;
-//         }
-
-//         // 2) Executa o corpo
+//         Expression* cond = evaluate_ast(condition_node);
+//         Expression* cb   = evaluate_boolean(cond, "condição do FOR");
+//         if (!cb) break;
+//         int keep = *(int*)cb->value;
+//         free_expression(cb);
+//         if (!keep) break;
+//         fprintf(stderr, "[DEBUG] Iter %d - condição verdadeira\n", iter);
 //         loop_block_fn();
-
-//         // 3) Re-avalia o incremento (para aplicar side-effect em 'i')
 //         if (increment_node) {
-//             Expression* inc_expr = evaluate_ast(increment_node);
-//             free_expression(inc_expr);
+//             Expression* inc = evaluate_ast(increment_node);
+//             free_expression(inc);
 //         }
-
 //         iter++;
 //     }
-
 //     scope_pop();
-//     fprintf(stderr, "[DEBUG] [execute_iterare] Laço encerrado após %d iterações.\n", iter);
+//     fprintf(stderr, "[DEBUG] FOR encerrado após %d iterações\n", iter);
+// }
+
+// // Laço WHILE: reavalia condição e executa corpo
+// void execute_dum(ASTNode* condition_node,
+//                  void (*loop_block_fn)(void)) {
+//     if (!condition_node || !loop_block_fn) {
+//         fprintf(stderr, "[Erro] execute_dum: condição ou bloco nulo.\n");
+//         return;
+//     }
+//     fprintf(stderr, "[DEBUG] Iniciando WHILE\n");
+//     scope_push();
+//     int iter = 0;
+//     while (1) {
+//         Expression* cond = evaluate_ast(condition_node);
+//         Expression* cb   = evaluate_boolean(cond, "condição do WHILE");
+//         if (!cb) break;
+//         int keep = *(int*)cb->value;
+//         free_expression(cb);
+//         if (!keep) break;
+//         fprintf(stderr, "[DEBUG] Iter %d - condição verdadeira\n", iter);
+//         loop_block_fn();
+//         iter++;
+//     }
+//     scope_pop();
+//     fprintf(stderr, "[DEBUG] WHILE encerrado após %d iterações\n", iter);
 // }

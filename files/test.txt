@@ -1,7 +1,7 @@
 
 designare Pessoa {
     nome scriptum;
-    2 --> idade atomus;
+    idade atomus;
     altura fractio;
 } homunculus;
 
