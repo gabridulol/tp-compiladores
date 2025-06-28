@@ -562,7 +562,6 @@ opcional_constant
 list_declaration_statement
     : // vazio
     | declaration_statement list_declaration_statement
-    | declaration_statement
     ;
 
 type_specifier
@@ -917,10 +916,10 @@ enum_list
     | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
     ;
 
-vector
+/* vector
     : IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
     | IDENTIFIER SEMICOLON
-    ;
+    ; */
     
 // Declaração de um vetor (ex: vetor1 atomus << 10 >>;)
 vector_statement
@@ -1161,7 +1160,6 @@ member_access_direct
           
           // 1. Buscar a variável da struct na tabela de símbolos.
           Symbol* struct_sym = scope_lookup(struct_var_name);
-
           if (!struct_sym) {
               yyerror("Erro: Variável da struct não declarada.");
           } else if (strcmp(struct_sym->type, "homunculus") != 0) { // Checa se é uma struct
