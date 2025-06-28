@@ -16,6 +16,11 @@ typedef enum {
     TYPE_POINTER     // Tipo ponteiro genérico
 } DataType;
 
+typedef struct {
+    const char* key;
+    DataType value;
+} TypeMapEntry;
+
 // Estrutura que representa o resultado de QUALQUER expressão
 typedef struct Expression {
     DataType type;  // O tipo do resultado (ex: TYPE_ATOMUS)

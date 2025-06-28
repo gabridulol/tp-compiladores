@@ -2,6 +2,7 @@
 #include "symbol_table.h"
 #include "scope.h"
 #include "expression.h"
+#include "ast.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -37,6 +38,12 @@ void print_expression(Expression* expr) {
         case TYPE_FRACTIO:
             fprintf(stderr, "%.2f", *(double*)expr->value);
             break;
+        case TYPE_SYMBOLUM:
+            fprintf(stderr, "'%c'", *(char*)expr->value);
+            break;
+        case TYPE_SCRIPTUM:
+            fprintf(stderr, "\"%s\"", (char*)expr->value);
+            break;
         default:
             fprintf(stderr, "???");
             break;
@@ -71,44 +78,79 @@ Expression* evaluate_expression(Expression* expr) {
     return expr;
 }
 
+Expression* clone_expression(const Expression* expr) {
+    if (!expr) return NULL;
+
+    Expression* new_expr = malloc(sizeof(Expression));
+    if (!new_expr) return NULL;
+
+    new_expr->type = expr->type;
+    new_expr->value = NULL;
+
+    size_t size = get_size_from_type(get_type_name(expr->type));
+    if (expr->value && size > 0) {
+        new_expr->value = malloc(size);
+        if (new_expr->value) {
+            memcpy(new_expr->value, expr->value, size);
+        }
+    }
+
+    // Copie outros campos, se existirem
+
+    return new_expr;
+}
+
+
 // --- Execução de laço estilo FOR / WHILE ---
-void execute_iterare(Expression* condition_expr, Expression* increment_expr, void (*loop_block_fn)(void)) {
-    if (!condition_expr) {
-        fprintf(stderr, "[Erro] Expressão de condição nula no ITERARE.\n");
+// Supondo que você tenha um tipo ASTNode e uma função:
+//   Expression* evaluate_ast(ASTNode* node);
+// que percorre a árvore e retorna uma nova Expression* com o valor atual.
+
+void execute_iterare(ASTNode* condition_node,
+                     ASTNode* increment_node,
+                     void (*loop_block_fn)(void))
+{
+    if (!condition_node || !loop_block_fn) {
+        fprintf(stderr, "[Erro] [execute_iterare] condição ou bloco nulo.\n");
         return;
     }
 
-    fprintf(stderr,
-        "[DEBUG] execute_iterare - Condição: Tipo %s (%d), Incremento: %s\n",
-        get_type_name(condition_expr->type), condition_expr->type,
-        increment_expr ? get_type_name(increment_expr->type) : "NENHUM"
-    );
+    fprintf(stderr, "[DEBUG] [execute_iterare] Iniciando laço ITERARE\n");
 
-    // Avalia primeira vez a condição
-    Expression* cond = evaluate_boolean(condition_expr, "condição do ITERARE");
-    if (!cond) return;
+    scope_push();
+    int iter = 0;
 
-    scope_push();  // novo escopo para o loop
-
-    while (*(int*)cond->value) {
-        free_expression(cond);  // libera resultado anterior
-
-        loop_block_fn();        // executa o corpo do laço
-
-        if (increment_expr) {
-            Expression* incr_result = evaluate_expression(increment_expr);
-            if (incr_result) {
-                free_expression(incr_result);  // apenas para manter coerência
-            } else {
-                fprintf(stderr, "[Erro] Incremento malformado no ITERARE.\n");
-                break;
-            }
+    while (1) {
+        // 1) Re-avalia a condição a cada iteração
+        Expression* cond_expr = evaluate_ast(condition_node);
+        Expression* cond_bool = evaluate_boolean(cond_expr, "condição do ITERARE");
+        if (!cond_bool) {
+            // erro ou não-booleano
+            break;
         }
 
-        cond = evaluate_boolean(condition_expr, "reavaliação da condição do ITERARE");
-        if (!cond) break;  // condição malformada
+        fprintf(stderr, "[DEBUG] [execute_iterare] Iter %d – condição = ", iter);
+        print_expression(cond_bool);
+        int keep = *(int*)cond_bool->value;
+        free_expression(cond_bool);
+
+        if (!keep) {
+            fprintf(stderr, "[DEBUG] [execute_iterare] Condição falsa. Saindo do laço.\n");
+            break;
+        }
+
+        // 2) Executa o corpo
+        loop_block_fn();
+
+        // 3) Re-avalia o incremento (para aplicar side-effect em 'i')
+        if (increment_node) {
+            Expression* inc_expr = evaluate_ast(increment_node);
+            free_expression(inc_expr);
+        }
+
+        iter++;
     }
 
-    if (cond) free_expression(cond);
-    scope_pop(); // fecha escopo do loop
+    scope_pop();
+    fprintf(stderr, "[DEBUG] [execute_iterare] Laço encerrado após %d iterações.\n", iter);
 }

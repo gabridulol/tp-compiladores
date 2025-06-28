@@ -10,10 +10,13 @@ void execute_block(void* bloco);
 
 void iter_block_wrapper(void);
 
-void execute_iterare(Expression* condition_expr, Expression* increment_expr, void (*loop_block_fn)(void));
+void execute_iterare_ast(ASTNode* cond, ASTNode* incr, ASTNode* body);
 
+
+Expression* clone_expression(const Expression* expr);
 
 Expression* evaluate_boolean(Expression* expr, const char* context);
+
 Expression* evaluate_expression(Expression* expr); // assume já avaliada
 
 #endif

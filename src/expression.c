@@ -9,23 +9,35 @@
 
 const char* get_type_name(int type) {
     switch (type) {
-        case 1: return "QUANTUM";
-        case 5: return "ATOMUS";
-        case 10: return "VECTOR";
-        // Adicione outros tipos conforme seu projeto
-        default: return "UNKNOWN_TYPE";
+        case TYPE_UNDEFINED: return "UNDEFINED";
+        case TYPE_ATOMUS:    return "ATOMUS";     // inteiro
+        case TYPE_FRACTIO:   return "FRACTIO";    // float/double
+        case TYPE_SYMBOLUM:  return "SYMBOLUM";   // char
+        case TYPE_SCRIPTUM:  return "SCRIPTUM";   // string
+        case TYPE_QUANTUM:   return "QUANTUM";    // booleano
+        case TYPE_POINTER:   return "POINTER";    // ponteiro
+        default:             return "UNKNOWN_TYPE";
     }
 }
 
 const char* get_op_name(int op) {
     switch (op) {
-        case 305: return "+";
-        case 304: return "*";
-        case 312: return "<";
-        // Adicione outros operadores conforme seu projeto
-        default: return "UNKNOWN_OP";
+        case 305: return "+";   // soma
+        case 304: return "*";   // multiplicação
+        case 312: return "<";   // menor que
+        case 306: return "-";   // subtração
+        case 307: return "/";   // divisão
+        case 308: return "%";   // módulo
+        case 309: return "^";   // exponenciação
+        case 310: return "==";  // igualdade
+        case 311: return "!=";  // diferente
+        case 313: return ">";   // maior que
+        case 314: return ">=";  // maior ou igual
+        case 315: return "<=";  // menor ou igual
+        default:  return "UNKNOWN_OP";
     }
 }
+
 
 Expression* create_expression(DataType type, void* value) {
     Expression* expr = (Expression*)malloc(sizeof(Expression));
@@ -43,12 +55,27 @@ void free_expression(Expression* expr) {
 
 // Converte a string de tipo do seu YACC para o nosso enum
 DataType string_to_type(const char* type_str) {
-    if (strcmp(type_str, "atomus") == 0) return TYPE_ATOMUS;
-    if (strcmp(type_str, "fractio") == 0) return TYPE_FRACTIO;
-    if (strcmp(type_str, "symbolum") == 0) return TYPE_SYMBOLUM;
-    // ... adicione os outros tipos aqui
+    static const TypeMapEntry map[] = {
+        {"atomus", TYPE_ATOMUS},
+        {"fractio", TYPE_FRACTIO},
+        {"symbolum", TYPE_SYMBOLUM},
+        {"scriptum", TYPE_SCRIPTUM},
+        {"quantum", TYPE_QUANTUM},
+        {"pointer", TYPE_POINTER},
+        {NULL, TYPE_UNDEFINED}
+    };
+
+    for (int i = 0; map[i].key != NULL; i++) {
+        if (strcmp(type_str, map[i].key) == 0) {
+            fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d\n", type_str, map[i].value);
+            return map[i].value;
+        }
+    }
+
+    fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d (undefined)\n", type_str, TYPE_UNDEFINED);
     return TYPE_UNDEFINED;
 }
+
 
 
 Expression* evaluate_binary_expression(Expression* left, int op, Expression* right) {

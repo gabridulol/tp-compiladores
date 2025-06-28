@@ -299,13 +299,15 @@ expression_statement
     : expression SEMICOLON
       {
           // $1 é o Expression* final da expressão
+          $$ = $1;
+
           if ($1) {
               if ($1->type == TYPE_ATOMUS && $1->value) {
                   printf(">> Resultado Final (atomus): %d\n", *(int*)$1->value);
               } else if ($1->type == TYPE_FRACTIO && $1->value) {
                   printf(">> Resultado Final (fractio): %f\n", *(double*)$1->value);
               }
-              free_expression($1); // Libera a expressão final
+            //   free_expression($1); // Libera a expressão final
           }
       }
     ;
@@ -320,6 +322,7 @@ primary_expression
               semantic_error("Identificador não declarado.");
           } else {
               DataType type = string_to_type(s->type);
+              fprintf(stderr, "[DEBUG] símbolo '%s', tipo string = '%s', tipo enum = %d\n", $1, s->type, type);
               size_t value_size = get_size_from_type(s->type);
               void* value_copy = malloc(value_size);
               if (s->data.value) { 
@@ -767,6 +770,14 @@ iteration_statement
 
         fprintf(stderr, "[DEBUG] FOR estilo C: declaração; condição; incremento\n");
         fprintf(stderr, "[DEBUG] current_loop_block = %p\n", (void*)$7);
+
+        fprintf(stderr, "[DEBUG] declaração (inicialização) executada.\n");
+
+        fprintf(stderr, "[DEBUG] expressão_statement (condição): ");
+        print_expression($3);
+
+        fprintf(stderr, "[DEBUG] expressão (incremento): ");
+        print_expression($4);
 
         current_loop_block = $7;
 

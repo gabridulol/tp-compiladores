@@ -12,7 +12,8 @@ main() Alchemia {
     §§ 3. Preenche o vetor com alguns valores.
     §§ Atribui 10 à posição 0, 20 à posição 1, etc.
 
-    5 --> tam atomus;
+    3 --> tam atomus;
+    tam + 2 --> tam;
 
     (0 --> i atomus; i < tam; i + 1 --> i) iterare {
         i + 1 * 10 --> caldeirao << i >>;
