@@ -1,2 +1,10 @@
 main:
 a = 5
+a = 4
+t0 = a < 100
+L0:
+ifFalse t0 goto L1
+t1 = a + 1
+a = t1
+goto L0
+L1:

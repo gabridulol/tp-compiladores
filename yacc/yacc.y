@@ -165,8 +165,8 @@ void yyerror(const char *s);
 %type <expr> conditional_statement
 %type <expr> conditional_non_statement
 %type <expr> assignment_statement
-%type <expr> import_statement
-%type <expr> alchemia_statement
+/* %type <expr> import_statement
+%type <expr> alchemia_statement */
 
 
 %type <arg_list> argument_list
@@ -246,42 +246,40 @@ statement
 struct_member_lvalue
     : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
       {
-          // $1 = membro, $3 = variável struct
-          char* member_name = $1;
-          char* var_name = $3;
-          Symbol* var = scope_lookup(var_name);
-
+          Symbol* var = scope_lookup($3);
           if (!var || !var->instance_fields) {
-              yyerror("Variável de struct não declarada ou não é struct!");
+              char err[128];
+              snprintf(err, sizeof(err), "Variável de struct '%s' não declarada ou não é struct", $3);
+              semantic_error(err);
               $$ = NULL;
           } else {
-              Symbol* campo = st_lookup(var->instance_fields, member_name);
+              Symbol* campo = st_lookup(var->instance_fields, $1);
               if (!campo) {
-                  yyerror("Campo não existe na instância da struct!");
+                  char err[128];
+                  snprintf(err, sizeof(err), "Campo '%s' não existe na instância da struct '%s'", $1, $3);
+                  semantic_error(err);
                   $$ = NULL;
               } else {
                   $$ = campo;
               }
           }
-          free(member_name);
-          free(var_name);
+          free($1);
+          free($3);
       }
     ;
 
 assignment_statement
     :  expression OP_ASSIGN struct_member_lvalue SEMICOLON
       {
-          Expression* value_expr = $1;
           Symbol* campo = $3;
           if (!campo) {
-              yyerror("Campo de struct não encontrado!");
+              semantic_error("Campo de struct não encontrado!");
           } else {
               DataType campo_type = string_to_type(campo->type);
-              if (campo_type != value_expr->type) {
-                  yyerror("Tipo incompatível na atribuição ao campo da struct!");
-              } 
+              if (campo_type != $1->type) {
+                  semantic_error("Tipo incompatível na atribuição ao campo da struct!");
+              }
           }
-          free_expression(value_expr);
           emit("=", get_temp_name($1), "", $3);
       }
     | expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
@@ -310,9 +308,6 @@ assignment_statement
         else {
             yyerror("Erro de tipo: impossível atribuir a variável.");
         }
-
-        free_expression(val);
-        free(var_name);
         $$ = NULL;
       }
     | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
@@ -326,14 +321,14 @@ assignment_statement
           if (!sym || sym->kind != SYM_VECTOR) {
               char err_msg[128];
               sprintf(err_msg, "Erro semântico: identificador '%s' não é um vetor declarado.", vec_name);
-              yyerror(err_msg);
+              semantic_error(err_msg);
           } else {
               // 2. Checar os tipos da expressão de índice e do valor
               DataType element_type = string_to_type(sym->type);
               if (index_expr->type != TYPE_ATOMUS) {
-                  yyerror("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
+                  semantic_error("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
               } else if (value_expr->type != element_type) {
-                  yyerror("Erro de tipo: o valor a ser atribuído é incompatível com o tipo do vetor.");
+                  semantic_error("Erro de tipo: o valor a ser atribuído é incompatível com o tipo do vetor.");
               } else {
                   // 3. Realizar a atribuição
                   int index = *(int*)(index_expr->value); // Extrai o valor do índice
@@ -342,7 +337,7 @@ assignment_statement
                   if (index < 0 || index >= sym->data.vector_info.size) {
                       char err_msg[128];
                       sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, vec_name);
-                      yyerror(err_msg);
+                      semantic_error(err_msg);
                   } 
               }
           }
@@ -351,6 +346,71 @@ assignment_statement
           free_expression(value_expr);
           free_expression(index_expr);
           free(vec_name);
+      }
+    | IDENTIFIER OP_ADDR_OF OP_ASSIGN IDENTIFIER SEMICOLON
+      {
+          // Exemplo: a£ --> b;
+          // $1 = a, $4 = b
+          Symbol* var = scope_lookup($1);
+          Symbol* ptr = scope_lookup($4);
+
+          if (!var) {
+              char err[128];
+              snprintf(err, sizeof(err), "Variável '%s' não declarada.", $1);
+              semantic_error(err);
+          } else if (!ptr || !strstr(ptr->type, "*")) {
+              char err[128];
+              snprintf(err, sizeof(err), "Variável '%s' não é um ponteiro.", $4);
+              semantic_error(err);
+          } else {
+              char base_type[MAX_NAME_LEN];
+              get_base_type_from_pointer(ptr->type, base_type);
+              if (strcmp(var->type, base_type) != 0) {
+                  semantic_error("Tipo do ponteiro incompatível com o endereço atribuído.");
+              } else {
+                if (ptr->data.value) free(ptr->data.value);
+                void** endereco = malloc(sizeof(void*));
+                *endereco = var; // Armazena o ponteiro para o símbolo da struct
+                ptr->data.value = endereco;
+            }
+          }
+          free($1);
+          free($4);
+      }
+    | OP_DEREF_POINTER IDENTIFIER OP_ASSIGN IDENTIFIER SEMICOLON
+      {
+          // Exemplo: °a --> x;
+          // $2 = a, $4 = x
+          Symbol* ptr = scope_lookup($2);
+          Symbol* dest = scope_lookup($4);
+
+          if (!ptr || !strstr(ptr->type, "*")) {
+              char err[128];
+              snprintf(err, sizeof(err), "Variável '%s' não é um ponteiro.", $2);
+              semantic_error(err);
+          } else if (!dest) {
+              char err[128];
+              snprintf(err, sizeof(err), "Variável '%s' não declarada.", $4);
+              semantic_error(err);
+          } else {
+              char base_type[MAX_NAME_LEN];
+              get_base_type_from_pointer(ptr->type, base_type);
+              if (strcmp(dest->type, base_type) != 0) {
+                  semantic_error("Tipo incompatível na atribuição do valor desreferenciado.");
+              } else {
+                  void* endereco = ptr->data.value ? *((void**)ptr->data.value) : NULL;
+                  if (!endereco) {
+                      semantic_error("Ponteiro nulo ao desreferenciar.");
+                  } else {
+                      size_t sz = get_size_from_type(dest->type);
+                      if (dest->data.value) free(dest->data.value);
+                      dest->data.value = malloc(sz);
+                      memcpy(dest->data.value, endereco, sz);
+                  }
+              }
+          }
+          free($2);
+          free($4);
       }
     
     ;
@@ -427,9 +487,10 @@ primary_expression
       {
           Symbol *s = scope_lookup($1);
           if (!s) {
-              fprintf(stderr, "Erro: identificador '%s' não declarado na linha %d\n", $1, yylineno);
+              char err[128];
+              snprintf(err, sizeof(err), "Identificador '%s' não declarado", $1);
+              semantic_error(err);
               $$ = NULL;
-              semantic_error("Identificador não declarado.");
           } else {
               DataType type = string_to_type(s->type);
               fprintf(stderr, "[DEBUG] símbolo '%s', tipo string = '%s', tipo enum = %d\n", $1, s->type, type);
@@ -486,6 +547,7 @@ expression
       }
 
     /* --- Operadores Aritméticos --- */
+
     | expression OP_ADD unary_expression
       {
         Expression *L = $1, *R = $3;
@@ -495,39 +557,302 @@ expression
         free(L); free(R);
         $$->tac_name = t;}
     | expression OP_SUBTRACT unary_expression
-      { $$ = evaluate_binary_expression($1, OP_SUBTRACT, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                       ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO))) {
+              semantic_error("Subtração só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("-", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;}
+          }
     | expression OP_MULTIPLY unary_expression
-      { $$ = evaluate_binary_expression($1, OP_MULTIPLY, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                       ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO))) {
+              semantic_error("Multiplicação só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("*", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;}
+        }
     | expression OP_DIVIDE unary_expression
-      { $$ = evaluate_binary_expression($1, OP_DIVIDE, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                       ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO))) {
+              semantic_error("Divisão só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else if (
+              ($3->type == TYPE_ATOMUS && $3->value && *(int*)$3->value == 0) ||
+              ($3->type == TYPE_FRACTIO && $3->value && *(double*)$3->value == 0.0)
+          ) {
+              semantic_error("Divisão por zero.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("/", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_MODULUS unary_expression
-      { $$ = evaluate_binary_expression($1, OP_MODULUS, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS)) {
+              semantic_error("Módulo só pode ser feito entre atomus.");
+              $$ = NULL;
+          } else if ($3->value && *(int*)$3->value == 0) {
+              semantic_error("Módulo por zero.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("%", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_EXP unary_expression
-      { $$ = evaluate_binary_expression($1, OP_EXP, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                       ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO))) {
+              semantic_error("Exponenciação só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              $$ = evaluate_binary_expression($1, OP_EXP, $3);
+          }
+      }
     | expression OP_INTEGER_DIVIDE unary_expression
-      { $$ = evaluate_binary_expression($1, OP_INTEGER_DIVIDE, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS)) {
+              semantic_error("Divisão inteira só pode ser feita entre atomus.");
+              $$ = NULL;
+          } else if ($3->value && *(int*)$3->value == 0) {
+              semantic_error("Divisão inteira por zero.");
+              $$ = NULL;
+          } else {
+              $$ = evaluate_binary_expression($1, OP_INTEGER_DIVIDE, $3);
+          }
+      }
 
-    /* --- Operadores Relacionais (de Comparação) --- */
+
+       /* --- Operadores Relacionais (de Comparação) --- */
     | expression OP_EQUAL unary_expression
-      { $$ = evaluate_binary_expression($1, OP_EQUAL, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if ($1->type != $3->type) {
+              semantic_error("Comparação só pode ser feita entre tipos iguais.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+                char *t = new_temp();
+                emit("==", L->tac_name, R->tac_name, t);
+                $$ = create_expression(L->type, NULL, t);
+                free(L); free(R);
+                $$->tac_name = t;
+          }
+      }
     | expression OP_NOT_EQUAL unary_expression
-      { $$ = evaluate_binary_expression($1, OP_NOT_EQUAL, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if ($1->type != $3->type) {
+              semantic_error("Comparação só pode ser feita entre tipos iguais.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("!=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_LESS_THAN unary_expression
-      { $$ = evaluate_binary_expression($1, OP_LESS_THAN, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(
+                ($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO)
+          )) {
+              semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("<", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_GREATER_THAN unary_expression
-      { $$ = evaluate_binary_expression($1, OP_GREATER_THAN, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(
+                ($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO)
+          )) {
+              semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit(">", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_LESS_EQUAL unary_expression
-      { $$ = evaluate_binary_expression($1, OP_LESS_EQUAL, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(
+                ($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO)
+          )) {
+              semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("<=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
     | expression OP_GREATER_EQUAL unary_expression
-      { $$ = evaluate_binary_expression($1, OP_GREATER_EQUAL, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão inválida.");
+              $$ = NULL;
+          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
+              semantic_error("Operação de comparação com tipo indefinido.");
+              $$ = NULL;
+          } else if (!(
+                ($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
+                ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO)
+          )) {
+              semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
+              $$ = NULL;
+          } else {
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit(">=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
+          }
+      }
 
     /* --- Operadores Lógicos --- */
     | expression OP_LOGICAL_AND unary_expression
-      { $$ = evaluate_binary_expression($1, OP_LOGICAL_AND, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão lógica inválida.");
+              $$ = NULL;
+          } else if ($1->type != TYPE_QUANTUM || $3->type != TYPE_QUANTUM) {
+              semantic_error("Operação lógica só pode ser feita entre quantum.");
+              $$ = NULL;
+          } else {
+              $$ = evaluate_binary_expression($1, OP_LOGICAL_AND, $3);
+          }
+      }
     | expression OP_LOGICAL_OR unary_expression
-      { $$ = evaluate_binary_expression($1, OP_LOGICAL_OR, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão lógica inválida.");
+              $$ = NULL;
+          } else if ($1->type != TYPE_QUANTUM || $3->type != TYPE_QUANTUM) {
+              semantic_error("Operação lógica só pode ser feita entre quantum.");
+              $$ = NULL;
+          } else {
+              $$ = evaluate_binary_expression($1, OP_LOGICAL_OR, $3);
+          }
+      }
     | expression OP_LOGICAL_XOR unary_expression
-      { $$ = evaluate_binary_expression($1, OP_LOGICAL_XOR, $3); }
+      {
+          if (!$1 || !$3) {
+              semantic_error("Expressão lógica inválida.");
+              $$ = NULL;
+          } else if ($1->type != TYPE_QUANTUM || $3->type != TYPE_QUANTUM) {
+              semantic_error("Operação lógica só pode ser feita entre quantum.");
+              $$ = NULL;
+          } else {
+              $$ = evaluate_binary_expression($1, OP_LOGICAL_XOR, $3);
+          }
+      }
 
     /* --- Operadores de Atribuição e Acesso (se forem expressões) --- */
     // Nota: A atribuição como expressão (ex: a = b = 5) é mais complexa.
@@ -560,6 +885,162 @@ expression
         free_expression(val);
         free(dst);
       }
+    | LPAREN type_specifier RPAREN KW_MAGNITUDO
+
+    {
+
+
+        size_t sz = get_size_from_type($2);
+
+
+        int* val = malloc(sizeof(int));
+
+
+        *val = (int)sz;
+
+
+        $$ = create_expression(TYPE_ATOMUS, val, new_temp());
+
+
+        free($2);
+
+
+    }
+
+
+| LPAREN IDENTIFIER RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        Symbol* sym = scope_lookup($2);
+
+
+        if (!sym) {
+
+
+            semantic_error("Identificador não declarado para magnitudo.");
+
+
+            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+
+
+        } else {
+
+
+            size_t sz = get_size_from_type(sym->type);
+
+
+            int* val = malloc(sizeof(int));
+
+
+            *val = (int)sz;
+
+
+            $$ = create_expression(TYPE_ATOMUS, val, new_temp());
+
+
+        }
+
+
+        free($2);
+
+
+    }
+
+
+| LPAREN type_specifier OP_MULTIPLY IDENTIFIER RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        // Exemplo: (atomus * n)magnitudo;
+
+
+        Symbol* sym = scope_lookup($4);
+
+
+        if (!sym) {
+
+
+            semantic_error("Identificador não declarado para magnitudo.");
+
+
+            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+
+
+        } else {
+
+
+            size_t sz = get_size_from_type($2);
+
+
+            int n = 0;
+
+
+            if (string_to_type(sym->type) == TYPE_ATOMUS && sym->data.value) {
+
+
+                n = *(int*)sym->data.value;
+
+
+            } else {
+
+
+                semantic_error("Multiplicador de magnitudo deve ser inteiro (atomus).");
+
+
+            }
+
+
+            int* val = malloc(sizeof(int));
+
+
+            *val = (int)(sz * n);
+
+
+            $$ = create_expression(TYPE_ATOMUS, val, new_temp());
+
+
+        }
+
+
+        free($2);
+
+
+        free($4);
+
+
+    }
+
+
+| LPAREN type_specifier OP_MULTIPLY LIT_INT RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        // Exemplo: (atomus * 10)magnitudo;
+
+
+        size_t sz = get_size_from_type($2);
+
+
+        int* val = malloc(sizeof(int));
+
+
+        *val = (int)(sz * $4);
+
+
+        $$ = create_expression(TYPE_ATOMUS, val, new_temp());
+
+
+        free($2);
+
+
+    }
     ;
 
 constant
@@ -625,6 +1106,11 @@ assing_value
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON
       {
+        if (scope_lookup_current($1)) {
+              char err[128];
+              snprintf(err, sizeof(err), "Variável '%s' já declarada neste escopo", $1);
+              semantic_error(err);
+          } else {
           char* var_name = $1;
           char* var_type = $2;
 
@@ -698,8 +1184,9 @@ declaration_statement
                   }
               }
           }
-
-          free(var_name);
+        free(var_name);
+      }
+       // free($1);
       }
 
     | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
@@ -729,8 +1216,9 @@ declaration_statement
                   // 3. GERENCIAMENTO DE MEMÓRIA
                   // Impedimos que a memória do valor seja liberada junto com o "invólucro" da expressão,
                   // pois ela agora pertence à tabela de símbolos.
-                  initial_value_expr->value = NULL;
+                  emit("=", initial_value_expr->tac_name, "", var_name);
                   free_expression(initial_value_expr);
+                  $$ = NULL;
               }
           }
           free(var_name);
@@ -762,7 +1250,15 @@ type_specifier
     | KW_TYPE_SCRIPTUM             { $$ = strdup("scriptum"); }
     | KW_TYPE_SYMBOLUM             { $$ = strdup("symbolum"); }
     | KW_TYPE_VACUUM               { $$ = strdup("vacuum"); }
-    | IDENTIFIER                   { $$ = strdup($1); }
+    | IDENTIFIER {           
+        Symbol *type_sym = scope_lookup($1);
+          if (!type_sym || type_sym->kind != SYM_TYPE) {
+              char err[128];
+              snprintf(err, sizeof(err), "Tipo '%s' não declarado", $1);
+              semantic_error(err);
+          }
+          $$ = strdup($1);
+          free($1);}
     | IDENTIFIER KW_ENUMERARE   { $$ = strdup($1); }
     | OP_DEREF_POINTER type_specifier {}
     
@@ -781,7 +1277,7 @@ function_declaration_statement
       {
         // Insere a função no escopo global
         if (scope_lookup($5) != NULL) {
-          yyerror("Função já declarada!");
+          semantic_error("Função já declarada!");
         } else {
           scope_insert($5, SYM_FUNC, $7, yylineno, NULL);
         }
@@ -805,7 +1301,7 @@ parameter
       {
         /* current_scope → escopo da função, logo insere corretamente */
         if (scope_lookup_current($1) != NULL) {
-          yyerror("Parâmetro já declarado!");
+          semantic_error("Parâmetro já declarado!");
         } else {
           scope_insert($1, SYM_VAR, $2, yylineno, NULL);
         }
@@ -865,7 +1361,7 @@ conditional_statement
         char *L_else = new_label();
         char *L_end  = new_label();
         push_labels(L_else, L_end);
-        emit("ifFalse", "", $2->tac_name, L_else);
+        emit("ifFalse",   $2->tac_name,   "",             L_else);
       }
     block {
         emit("goto",  "", "",       top_label_end());
@@ -880,7 +1376,7 @@ conditional_statement
 
 conditional_non_statement
     : {$$ = NULL; }
-    | KW_NON block {  scope_push(BLOCK_CONDITIONAL); $$ = NULL; }
+    | KW_NON {  scope_push(BLOCK_CONDITIONAL);} block { $$ = NULL; }
     | KW_NON conditional_statement {$$ = NULL; }
     ;
 
@@ -891,7 +1387,32 @@ causal_statement
 
     
 iteration_statement
-    : LPAREN expression RPAREN KW_PERSISTO { scope_push(BLOCK_LOOP); } block
+    : LPAREN {scope_push(BLOCK_LOOP);
+        char *L_begin = new_label();
+        char *L_end   = new_label();
+        push_labels(L_begin, L_end);
+
+        /* marca início */
+        emit("label", "", "", L_begin);} expression RPAREN KW_PERSISTO {
+        
+
+        /* testa condição */
+        char *cond = $3->tac_name;
+        if (cond[0] != 't') {
+          char *tmp = new_temp();
+          emit("=", cond, "", tmp);
+          cond = tmp;
+        }
+        emit("ifFalse", cond, "", L_end);
+      } block {
+        /* volta pro início após o corpo */
+        emit("goto", "", "", top_label_else());
+
+        /* marca saída */
+        emit("label", "", "", top_label_end());
+        pop_labels();
+        scope_pop();
+      }
 
     | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
 
@@ -918,7 +1439,218 @@ function_input_output
 
 identifier_langle_list
     : IDENTIFIER LANGLE KW_LECTURA SEMICOLON
+     {
+          Symbol* sym = scope_lookup($1);
+
+
+          if (!sym) {
+
+
+              semantic_error("Variável não declarada para lectura.");
+
+
+          } else {
+
+
+              DataType type = string_to_type(sym->type);
+
+
+              if (type == TYPE_ATOMUS) {
+
+
+                  int val;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%d", &val);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
+
+
+                  *(int*)sym->data.value = val;
+
+
+              } else if (type == TYPE_FRACTIO) {
+
+
+                  double val;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%lf", &val);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
+
+
+                  *(double*)sym->data.value = val;
+
+
+              } else if (type == TYPE_SCRIPTUM) {
+
+
+                  char buffer[256];
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%255s", buffer);
+
+
+                  if (sym->data.value) free(sym->data.value);
+
+
+                  sym->data.value = strdup(buffer);
+
+
+              } else if (type == TYPE_SYMBOLUM) {
+
+
+                  char c;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf(" %c", &c);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
+
+
+                  *(char*)sym->data.value = c;
+
+
+              } else {
+
+
+                  semantic_error("Tipo não suportado para lectura.");
+
+
+              }
+
+
+          }
+
+
+          free($1);
+
+
+      }
     | IDENTIFIER LANGLE identifier_langle_list
+    {
+          Symbol* sym = scope_lookup($1);
+
+
+          if (!sym) {
+
+
+              semantic_error("Variável não declarada para lectura.");
+
+
+          } else {
+
+
+              DataType type = string_to_type(sym->type);
+
+
+              if (type == TYPE_ATOMUS) {
+
+
+                  int val;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%d", &val);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
+
+
+                  *(int*)sym->data.value = val;
+
+
+              } else if (type == TYPE_FRACTIO) {
+
+
+                  double val;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%lf", &val);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
+
+
+                  *(double*)sym->data.value = val;
+
+
+              } else if (type == TYPE_SCRIPTUM) {
+
+
+                  char buffer[256];
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf("%255s", buffer);
+
+
+                  if (sym->data.value) free(sym->data.value);
+
+
+                  sym->data.value = strdup(buffer);
+
+
+              } else if (type == TYPE_SYMBOLUM) {
+
+
+                  char c;
+
+
+                  printf("» %s = ", sym->name);
+
+
+                  scanf(" %c", &c);
+
+
+                  if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
+
+
+                  *(char*)sym->data.value = c;
+
+
+              } else {
+
+
+                  semantic_error("Tipo não suportado para lectura.");
+
+
+              }
+
+
+          }
+
+
+          free($1);
+
+
+      }
+
+
+      ;
     ;
 
 identifier_rangle_list
@@ -927,12 +1659,9 @@ identifier_rangle_list
     ;
 
 function_magnitudo
-    : LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON
+    : LPAREN type_specifier RPAREN KW_MAGNITUDO SEMICOLON
     ;
 
-type_expression
-    : type_specifier
-    ;
 
 type_define_statement
     : KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
@@ -998,14 +1727,14 @@ vector_statement
 
           // 1. Validar a expressão de tamanho
           if (!size_expr) {
-              yyerror("Expressão de tamanho do vetor é inválida.");
+              semantic_error("Expressão de tamanho do vetor é inválida.");
           } else if (size_expr->type != TYPE_ATOMUS) {
-              yyerror("Erro de tipo: o tamanho de um vetor deve ser um inteiro (atomus).");
+              semantic_error("Erro de tipo: o tamanho de um vetor deve ser um inteiro (atomus).");
           } else {
               int vector_size = *(int*)(size_expr->value); // Extração correta do valor
 
               if (vector_size <= 0) {
-                  yyerror("O tamanho do vetor deve ser um número positivo.");
+                  semantic_error("O tamanho do vetor deve ser um número positivo.");
               } else {
                   // 2. Inserir o símbolo do vetor na tabela de escopo
                   Symbol* sym = scope_insert(vec_name, SYM_VECTOR, type_name, yylineno, NULL);
@@ -1019,7 +1748,7 @@ vector_statement
                           yyerror("Falha ao alocar memória para o vetor.");
                       }
                   } else {
-                      yyerror("Erro: Símbolo já declarado neste escopo.");
+                      semantic_error("Erro: Símbolo já declarado neste escopo.");
                   }
               }
           }
@@ -1051,7 +1780,7 @@ vector_statement
                   }
                   Expression* current_expr = (Expression*)current->value;
                   if (current_expr->type != element_type) {
-                      yyerror("Erro de tipo na lista de inicialização do vetor.");
+                      semantic_error("Erro de tipo na lista de inicialização do vetor.");
                   } else {
                       void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
                       memcpy(dest_ptr, current_expr->value, element_size);
@@ -1082,9 +1811,9 @@ vector_access
 
           // 1. Validar o símbolo e o índice
           if (!sym || sym->kind != SYM_VECTOR) {
-              yyerror("Erro semântico: identificador não é um vetor declarado.");
+              semantic_error("Erro semântico: identificador não é um vetor declarado.");
           } else if (!index_expr || index_expr->type != TYPE_ATOMUS) {
-              yyerror("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
+              semantic_error("Erro de tipo: o índice de um vetor deve ser um inteiro (atomus).");
           } else {
               int index = *(int*)(index_expr->value);
 
@@ -1092,7 +1821,7 @@ vector_access
               if (index < 0 || index >= sym->data.vector_info.size) {
                   char err_msg[128];
                   sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, vec_name);
-                  yyerror(err_msg);
+                  semantic_error(err_msg);
               } else {
                   // 3. Copiar o valor e criar uma nova Expression
                   DataType element_type = string_to_type(sym->type);
@@ -1129,6 +1858,26 @@ pointer_statement
 pointer_declaration
     : IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
       {
+          // Exemplo: ptrInvalido °atomus;
+          const char* prim_types[] = {
+              "atomus", "fractio", "fragmentum", "magnus", "minimus",
+              "quantum", "scriptum", "symbolum", "vacuum"
+          };
+          int is_primitive = 0;
+          for (int i = 0; i < sizeof(prim_types)/sizeof(prim_types[0]); ++i) {
+              if (strcmp($3, prim_types[i]) == 0) {
+                  is_primitive = 1;
+                  break;
+              }
+          }
+          if (!is_primitive) {
+              Symbol* type_sym = scope_lookup($3);
+              if (!type_sym || type_sym->kind != SYM_TYPE) {
+                  char err[128];
+                  snprintf(err, sizeof(err), "Tipo base '%s' não declarado", $3);
+                  semantic_error(err);
+              }
+          }
           char tipo_ponteiro[MAX_NAME_LEN];
           snprintf(tipo_ponteiro, MAX_NAME_LEN, "%s*", $3);
           scope_insert($1, SYM_VAR, tipo_ponteiro, yylineno, NULL);
@@ -1145,15 +1894,15 @@ pointer_declaration
       }
 
 pointer_assignment
-    : OP_ADDR_OF IDENTIFIER
+    : IDENTIFIER OP_ADDR_OF
       {
           $$ = NULL; // Inicializa como falha
-          Symbol* s = scope_lookup($2);
+          Symbol* s = scope_lookup($1);
 
           if (!s) {
               char err_msg[128];
-              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", $2);
-              yyerror(err_msg);
+              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", $1);
+              semantic_error(err_msg);
           } else {
               // 1. O "valor" desta expressão é o endereço onde o valor de 's' está armazenado.
               //    s->data.value já é um ponteiro para o valor da variável.
@@ -1167,10 +1916,10 @@ pointer_assignment
                   // 3. O resultado é uma expressão do tipo ponteiro.
                   $$ = create_expression(TYPE_POINTER, address_holder, new_temp());
               } else {
-                  yyerror("Falha ao alocar memória para o endereço.");
+                  semantic_error("Falha ao alocar memória para o endereço.");
               }
           }
-          free($2);
+          free($1);
       }
     ;
 
@@ -1184,12 +1933,12 @@ pointer_dereference
           if (!s || strstr(s->type, "*") == NULL) {
               char err_msg[128];
               sprintf(err_msg, "Erro semântico: a variável '%s' não é um ponteiro.", $2);
-              yyerror(err_msg);
+              semantic_error(err_msg);
           } else {
               // 2. Obter o endereço que o ponteiro armazena
               void* address_held_by_pointer = s->data.value;
               if (address_held_by_pointer == NULL) {
-                  yyerror("Erro em tempo de execução: dereferência de ponteiro nulo.");
+                  semantic_error("Erro em tempo de execução: dereferência de ponteiro nulo.");
               } else {
                   // 3. Determinar o tipo e o tamanho do dado que está no endereço
                   char base_type_name[MAX_NAME_LEN];
@@ -1199,7 +1948,7 @@ pointer_dereference
                   size_t value_size = get_size_from_type(base_type_name);   // Função auxiliar
 
                   if (base_type == TYPE_UNDEFINED) {
-                      yyerror("Erro interno: tipo base do ponteiro desconhecido.");
+                      semantic_error("Erro interno: tipo base do ponteiro desconhecido.");
                   } else {
                       // 4. Alocar memória para uma CÓPIA do valor e copiar
                       void* value_copy = malloc(value_size);
@@ -1209,7 +1958,7 @@ pointer_dereference
                           // 5. Criar a Expression com o valor copiado
                           $$ = create_expression(base_type, value_copy, new_temp());
                       } else {
-                          yyerror("Falha ao alocar memória para o valor dereferenciado.");
+                          semantic_error("Falha ao alocar memória para o valor dereferenciado.");
                       }
                   }
               }
@@ -1221,52 +1970,63 @@ pointer_dereference
 member_access_direct
     : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
       {
-          /* $1 = membro (campo), $3 = variável (instância da struct) */
+          /* $1 = membro (campo), $3 = variável (instância da struct ou ponteiro para struct) */
           char* member_name = $1;
           char* var_name    = $3;
 
-          /* DEBUG: início do acesso */
-          printf("[DEBUG] member_access_direct: var='%s', member='%s'\\n",
-                 var_name, member_name);
+          printf("[DEBUG] member_access_direct: var='%s', member='%s'\n", var_name, member_name);
 
           Symbol* var = scope_lookup(var_name);
 
-          /* DEBUG: resultado do lookup da variável */
-          printf("[DEBUG] scope_lookup('%s') returned %p\\n",
-                 var_name, (void*)var);
+          printf("[DEBUG] scope_lookup('%s') returned %p\n", var_name, (void*)var);
 
-          if (!var || !var->instance_fields) {
-              yyerror("Variável de struct não declarada ou não é struct!");
+          if (!var) {
+              semantic_error("Variável de struct não declarada!");
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+            } else if (strstr(var->type, "*")) {
+                // Ponteiro para struct: desreferencie para Symbol* e acesse o campo
+                char base_type[MAX_NAME_LEN];
+                get_base_type_from_pointer(var->type, base_type);
+                Symbol* struct_type = scope_lookup(base_type);
+                if (!struct_type || !struct_type->field_table) {
+                    semantic_error("Tipo base do ponteiro não é struct!");
+                    $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                } else {
+                    Symbol* struct_instance = var->data.value ? *((Symbol**)var->data.value) : NULL;
+                    if (!struct_instance) {
+                        semantic_error("Ponteiro nulo.");
+                        $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                    } else {
+                        Symbol* campo = st_lookup(struct_instance->instance_fields, member_name);
+                        if (!campo) {
+                            semantic_error("Campo não existe na struct.");
+                            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                        } else {
+                            size_t sz = get_size_from_type(campo->type);
+                            void* value_copy = NULL;
+                            if (campo->data.value) {
+                                value_copy = malloc(sz);
+                                memcpy(value_copy, campo->data.value, sz);
+                            }
+                            $$ = create_expression(string_to_type(campo->type), value_copy, new_temp());
+                        }
+                    }
+                }
+            } else if (!var->instance_fields) {
+              semantic_error("Variável não é struct!");
               $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           } else {
-              /* DEBUG: ponteiro para tabela de campos */
-              printf("[DEBUG] var->instance_fields = %p\\n",
-                     (void*)var->instance_fields);
-
-              /* DEBUG: buscando campo na tabela */
-              printf("[DEBUG] st_lookup(instance_fields, '%s')...\\n",
-                     member_name);
+              // Struct direta
               Symbol* campo = st_lookup(var->instance_fields, member_name);
-
-              /* DEBUG: resultado do lookup do campo */
-              printf("[DEBUG] st_lookup returned %p\\n",
-                     (void*)campo);
-
               if (!campo) {
-                  yyerror("Campo não existe na instância da struct!");
+                  semantic_error("Campo não existe na instância da struct!");
                   $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
               } else {
-                  /* DEBUG: detalhes do campo */
-                  printf("[DEBUG] campo->type = '%s', campo->data.value = %p\\n",
-                         campo->type, campo->data.value);
-
                   DataType campo_type = string_to_type(campo->type);
                   size_t campo_size   = get_size_from_type(campo->type);
                   void*  value_copy   = NULL;
 
                   if (campo->data.value) {
-                      /* DEBUG: alocando %zu bytes para cópia do campo */
-                      printf("[DEBUG] malloc(%zu) for value_copy\\n", campo_size);
                       value_copy = malloc(campo_size);
                       memcpy(value_copy, campo->data.value, campo_size);
                   }
@@ -1288,14 +2048,43 @@ member_access_direct
 member_access_dereference
     : LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
       {
-          // Esta forma de acesso é semanticamente idêntica a '->'.
-          // A implementação seria a mesma de 'member_access_pointer',
-          // usando $3 como o nome da variável ponteiro e $6 como o nome do membro.
-          
-          // (Aqui entraria a mesma lógica de 'member_access_pointer' com os devidos ajustes de índice)
-          
-          printf("AVISO: Lógica de acesso a membro '(*p).' ainda não totalmente implementada.\n");
-          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+          // Exemplo: (°a).nome;
+          Symbol* ptr = scope_lookup($3);
+          char* member = $6;
+
+          if (!ptr || !strstr(ptr->type, "*")) {
+              semantic_error("Variável não é ponteiro.");
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+          } else {
+              char base_type[MAX_NAME_LEN];
+              get_base_type_from_pointer(ptr->type, base_type);
+              Symbol* struct_type = scope_lookup(base_type);
+              if (!struct_type || !struct_type->field_table) {
+                  semantic_error("Tipo base do ponteiro não é struct.");
+                  $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+              } else {
+                  Symbol* member_sym = st_lookup(&struct_type->field_table->fields, member);
+                  if (!member_sym) {
+                      semantic_error("Campo não existe na struct.");
+                      $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                  } else {
+                      void* struct_ptr = ptr->data.value ? *((void**)ptr->data.value) : NULL;
+                      if (!struct_ptr) {
+                          semantic_error("Ponteiro nulo.");
+                          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                      } else {
+                          // Aqui, supondo que os campos estão em ordem e sem padding
+                            size_t sz = get_size_from_type(member_sym->type);
+                            void* value_copy = malloc(sz);
+                            if (member_sym->data.value)
+                                memcpy(value_copy, member_sym->data.value, sz);
+                            else
+                                memset(value_copy, 0, sz);
+                            $$ = create_expression(string_to_type(member_sym->type), value_copy, new_temp());
+                      }
+                  }
+              }
+          }
           free($3);
           free($6);
       }
@@ -1304,41 +2093,44 @@ member_access_dereference
 member_access_pointer
     : IDENTIFIER OP_ACCESS_POINTER IDENTIFIER
       {
-          $$ = NULL;
-          char* pointer_var_name = $1;
-          char* member_name = $3;
-          
-          // 1. Buscar a variável ponteiro na tabela de símbolos.
-          Symbol* pointer_sym = scope_lookup(pointer_var_name);
+          // Exemplo: a->nome;
+          Symbol* ptr = scope_lookup($1);
+          char* member = $3;
 
-          // 2. Validar se é um ponteiro para uma struct.
-          if (!pointer_sym || strstr(pointer_sym->type, "*") == NULL) {
-              yyerror("Erro: Acesso '->' em uma variável que não é um ponteiro.");
-          } else {
-              // --- Lógica a ser implementada ---
-
-              // TODO 1: Obter a definição do tipo da struct.
-              // char base_type_name[MAX_NAME_LEN];
-              // get_base_type_from_pointer(pointer_sym->type, base_type_name);
-              // Symbol* struct_type_def = scope_lookup(base_type_name);
-              // if (!struct_type_def || !struct_type_def->field_table) { ... }
-              
-              // TODO 2: Buscar o membro na 'field_table' da DEFINIÇÃO do tipo.
-              // Symbol* member_sym = st_lookup(&struct_type_def->field_table->fields, member_name);
-              
-              // TODO 3: Obter o endereço da struct para a qual o ponteiro aponta.
-              // void* struct_data_ptr = pointer_sym->data.value;
-
-              // TODO 4: Calcular o endereço do membro e copiar seu valor.
-              // void* member_data_ptr = (char*)struct_data_ptr + member_sym->offset;
-              // ... (lógica de cópia e criação de Expression, como no acesso direto) ...
-
-              printf("AVISO: Lógica de acesso a membro '->' ainda não totalmente implementada.\n");
+          if (!ptr || !strstr(ptr->type, "*")) {
+              semantic_error("Acesso '->' em variável que não é ponteiro.");
               $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+          } else {
+              char base_type[MAX_NAME_LEN];
+              get_base_type_from_pointer(ptr->type, base_type);
+              Symbol* struct_type = scope_lookup(base_type);
+              if (!struct_type || !struct_type->field_table) {
+                  semantic_error("Tipo base do ponteiro não é struct.");
+                  $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+              } else {
+                  Symbol* member_sym = st_lookup(&struct_type->field_table->fields, member);
+                  if (!member_sym) {
+                      semantic_error("Campo não existe na struct.");
+                      $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                  } else {
+                      void* struct_ptr = ptr->data.value ? *((void**)ptr->data.value) : NULL;
+                      if (!struct_ptr) {
+                          semantic_error("Ponteiro nulo.");
+                          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
+                      } else {
+                            size_t sz = get_size_from_type(member_sym->type);
+                            void* value_copy = malloc(sz);
+                            if (member_sym->data.value)
+                                memcpy(value_copy, member_sym->data.value, sz);
+                            else
+                                memset(value_copy, 0, sz);
+                            $$ = create_expression(string_to_type(member_sym->type), value_copy, new_temp());
+                      }
+                  }
+              }
           }
-          
-          free(pointer_var_name);
-          free(member_name);
+          free($1);
+          free($3);
       }
     ;
 

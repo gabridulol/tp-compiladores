@@ -1,0 +1,14 @@
+main() Alchemia {
+    a atomus;
+    b fractio;
+    c scriptum;
+
+    a << b << c << lectura;
+
+    (atomus)magnitudo;
+    (a)magnitudo;
+    (fractio)magnitudo;
+    (b)magnitudo;
+    (scriptum)magnitudo;
+    (c)magnitudo;
+}
