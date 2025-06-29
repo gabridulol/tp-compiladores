@@ -183,8 +183,8 @@ block
       RBRACE
       {
           $$ = NULL; // OU ponteiro real para o bloco
+          scope_pop(); // remoção do escopo pode ser feita em cada produção individual
       }
-      // { scope_pop(); }      / remoção do escopo pode ser feita em cada produção individual
     ;
 
 alchemia_statement
@@ -679,7 +679,7 @@ function_declaration_statement
       LBRACE
         statement_list
       RBRACE
-        { scope_pop(); }
+        {  }
     ;
 
 parameter_list
@@ -746,13 +746,13 @@ jump_statement
     ;
 
 conditional_statement
-    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE { scope_pop(); }
-    | LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE { scope_pop(); } conditional_non_statement
+    : LPAREN expression RPAREN KW_SI block
+    | LPAREN expression RPAREN KW_SI block conditional_non_statement
     | LPAREN expression RPAREN KW_VERTERE LBRACE { scope_push(); } causal_statement RBRACE { scope_pop(); }
     ;
 
 conditional_non_statement
-    : KW_NON block { scope_pop(); }
+    : KW_NON block {  }
     | KW_NON conditional_statement
     ;
 
@@ -770,13 +770,13 @@ iteration_statement
         Expression* cond = $2;
         if (cond == NULL) {
             yyerror("Expressão condicional do 'persisto' não pode ser nula.");
-            scope_pop();
+            
             YYERROR;  // Para abortar o parsing
         }
         if (cond->type != TYPE_QUANTUM) {
             yyerror("Expressão condicional do 'persisto' precisa ser do tipo 'quantum'.");
             free_expression(cond);
-            scope_pop();
+            
             YYERROR;
         }
 
@@ -785,7 +785,7 @@ iteration_statement
         // execute_iterare(cond, NULL, iter_block_wrapper);
         free_expression(cond);
 
-        scope_pop();
+        
       }
 
     | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE block
@@ -799,19 +799,19 @@ iteration_statement
 
         if ($3 == NULL) {
             yyerror("Expressão de condição no for não pode ser nula.");
-            scope_pop();
+            
             YYERROR;
         }
         if ($3->type != TYPE_QUANTUM) {
             yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
             free_expression($3);
-            scope_pop();
+            
             YYERROR;
         }
 
         // execute_iterare($3, $4, iter_block_wrapper);
 
-        scope_pop();
+        
       }
 
     | LPAREN expression_statement expression_statement RPAREN KW_ITERARE block
@@ -825,19 +825,19 @@ iteration_statement
 
         if ($3 == NULL) {
             yyerror("Expressão de condição no for não pode ser nula.");
-            scope_pop();
+            
             YYERROR;
         }
         if ($3->type != TYPE_QUANTUM) {
             yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
             free_expression($3);
-            scope_pop();
+            
             YYERROR;
         }
 
         // execute_iterare($3, NULL, iter_block_wrapper);
 
-        scope_pop();
+        
       }
 
     | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE block
@@ -859,19 +859,19 @@ iteration_statement
 
         if ($3 == NULL) {
             yyerror("Expressão de condição no for não pode ser nula.");
-            scope_pop();
+            
             YYERROR;
         }
         if ($3->type != TYPE_QUANTUM) {
             yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
             free_expression($3);
-            scope_pop();
+            
             YYERROR;
         }
 
         // execute_iterare($3, $4, iter_block_wrapper);
 
-        scope_pop();
+        
       }
 
     | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE block
@@ -885,19 +885,19 @@ iteration_statement
 
         if ($3 == NULL) {
             yyerror("Expressão de condição no for não pode ser nula.");
-            scope_pop();
+            
             YYERROR;
         }
         if ($3->type != TYPE_QUANTUM) {
             yyerror("Expressão condicional do for precisa ser do tipo 'quantum'.");
             free_expression($3);
-            scope_pop();
+            
             YYERROR;
         }
 
         // execute_iterare($3, NULL, iter_block_wrapper);
 
-        scope_pop();
+        
       }
     ;
 

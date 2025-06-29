@@ -4,10 +4,5 @@ main() Alchemia{
 
     (x == 0) si {
         4 --> y atomus;
-        3 redire;
     }
-    1 --> x atomus;
-
-    
-    
 }

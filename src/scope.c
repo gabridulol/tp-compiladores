@@ -1,7 +1,7 @@
 #include "scope.h"
 
 Scope *scope_stack = NULL;
-Scope *scope_menor = NULL;
+Scope *scope_atual = NULL;
 
 void scope_init() {
     scope_stack = malloc(sizeof(Scope));
@@ -10,7 +10,7 @@ void scope_init() {
         exit(EXIT_FAILURE);
     }
     st_init(&scope_stack->table);
-    scope_menor->table.table[0] = NULL; 
+    scope_atual = scope_stack;
     scope_stack->prev = NULL;
 }
 
@@ -21,31 +21,30 @@ void scope_push() {
         exit(EXIT_FAILURE);
     }
     st_init(&new_scope->table);
-    new_scope->prev = scope_stack;
-    scope_stack = new_scope;
+    new_scope->prev = scope_atual;
+    scope_atual = new_scope;
 }
 
 void scope_pop() {
-    if (scope_stack) {
-        Scope *old = scope_stack;
-        scope_stack = scope_stack->prev;
-        st_free(&old->table);
-        free(old);
+    if (scope_atual) {
+        Scope *old = scope_atual;
+        scope_atual = scope_atual->prev;
     } else {
         fprintf(stderr, "[Aviso] Tentativa de desempilhar escopo inexistente.\n");
+        exit(EXIT_FAILURE);
     }
 }
 
 Symbol* scope_insert(const char *name, SymbolKind kind, const char *type, int line, void *value) {
-    if (!scope_stack) {
+    if (!scope_atual) {
         fprintf(stderr, "Erro: escopo atual não inicializado.\n");
         return NULL;
     }
-    return st_insert(&scope_stack->table, name, kind, type, line, value);
+    return st_insert(&scope_atual->table, name, kind, type, line, value);
 }
 
 Symbol* scope_lookup(const char *name) {
-    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
+    for (Scope *s = scope_atual; s != NULL; s = s->prev) {
         Symbol *found = st_lookup(&s->table, name);
         if (found) return found;
     }
@@ -53,8 +52,8 @@ Symbol* scope_lookup(const char *name) {
 }
 
 Symbol* scope_lookup_current(const char *name) {
-    if (!scope_stack) return NULL;
-    return st_lookup(&scope_stack->table, name);
+    if (!scope_atual) return NULL;
+    return st_lookup(&scope_atual->table, name);
 }
 
 void scope_cleanup() {
