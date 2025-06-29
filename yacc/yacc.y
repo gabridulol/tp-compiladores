@@ -148,6 +148,7 @@ void yyerror(const char *s);
 %type <arg_list> argument_list
 
 %type <ptr> block
+%type <ptr> struct_member_lvalue
 %type <ptr> declaration_statement
 
 
@@ -212,8 +213,52 @@ statement
 
 //
 
+struct_member_lvalue
+    : IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
+      {
+          // $1 = membro, $3 = variável struct
+          char* member_name = $1;
+          char* var_name = $3;
+          Symbol* var = scope_lookup(var_name);
+
+          if (!var || !var->instance_fields) {
+              yyerror("Variável de struct não declarada ou não é struct!");
+              $$ = NULL;
+          } else {
+              Symbol* campo = st_lookup(var->instance_fields, member_name);
+              if (!campo) {
+                  yyerror("Campo não existe na instância da struct!");
+                  $$ = NULL;
+              } else {
+                  $$ = campo;
+              }
+          }
+          free(member_name);
+          free(var_name);
+      }
+    ;
+
 assignment_statement
-    : expression OP_ASSIGN assing_value SEMICOLON // Atribuição a uma variável simples
+    :  expression OP_ASSIGN struct_member_lvalue SEMICOLON
+      {
+          Expression* value_expr = $1;
+          Symbol* campo = $3;
+          if (!campo) {
+              yyerror("Campo de struct não encontrado!");
+          } else {
+              DataType campo_type = string_to_type(campo->type);
+              if (campo_type != value_expr->type) {
+                  yyerror("Tipo incompatível na atribuição ao campo da struct!");
+              } else {
+                  if (campo->data.value) free(campo->data.value);
+                  size_t campo_size = get_size_from_type(campo->type);
+                  campo->data.value = malloc(campo_size);
+                  memcpy(campo->data.value, value_expr->value, campo_size);
+              }
+          }
+          free_expression(value_expr);
+      }
+    | expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
       {
           Expression* value_expr = $1;
           char* var_name = $3;
@@ -287,6 +332,7 @@ assignment_statement
           free_expression(index_expr);
           free(vec_name);
       }
+    
     ;
 
 import_statement
@@ -351,10 +397,10 @@ primary_expression
       {
         $$ = $1;
       }
-    | member_access_direct
+    /* | member_access_direct
       {
           $$ = $1;
-      }
+      } */
     | pointer_statement
       {
           $$ = $1;
@@ -476,11 +522,12 @@ assing_value
     : IDENTIFIER 
     | vector_access
     | pointer_statement
+    | struct_member_lvalue 
     ;
 
 declaration_statement
     : IDENTIFIER type_specifier opcional_constant SEMICOLON
-      {
+      {assing
           char* var_name = $1;
           char* var_type = $2;
 
@@ -703,7 +750,8 @@ argument_list
       }
     ;
 
-/* ```
+/* 
+
 Declarações de salto: continuum, ruptio e redire */
 jump_statement
     : KW_CONTINUUM SEMICOLON
