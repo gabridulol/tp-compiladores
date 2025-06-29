@@ -315,6 +315,7 @@ assignment_statement
           Symbol* sym = scope_lookup(var_name);
           DataType declared = string_to_type(sym->type);
           DataType given    = val->type;
+        
 
         if (!sym) {
             char err_msg[128];

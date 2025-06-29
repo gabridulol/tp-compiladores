@@ -1,5 +1,13 @@
 main() Alchemia {
-    5 --> x atomus;
-    5 + x --> x; 
-    5 + x;
+    3 --> tam atomus;
+    1 + 5 -->  x atomus;
+    3.2 --> a fractio;
+    1.22 --> b fragmentum;
+    "cuzi" --> c scriptum;
+    'a' --> d symbolum;
+    Factum --> e quantum;
+    198391839189 --> f magnus;
+    1 --> g minimus;
+    void vacuum;
+    
 }
