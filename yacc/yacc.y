@@ -148,8 +148,8 @@ void yyerror(const char *s);
 /* %type <expr> conditional_statement
 %type <expr> conditional_non_statement */
 %type <expr> assignment_statement
-//%type <expr> import_statement
-//%type <expr> alchemia_statement
+/* %type <expr> import_statement
+%type <expr> alchemia_statement */
 
 
 %type <arg_list> argument_list
@@ -810,58 +810,161 @@ expression
           // precisará ser mais inteligente.
       }
     | LPAREN type_specifier RPAREN KW_MAGNITUDO
-      {
-          size_t sz = get_size_from_type($2);
-          int* val = malloc(sizeof(int));
-          *val = (int)sz;
-          $$ = create_expression(TYPE_ATOMUS, val);
-          free($2);
-      }
-    | LPAREN IDENTIFIER RPAREN KW_MAGNITUDO
-      {
-          Symbol* sym = scope_lookup($2);
-          if (!sym) {
-              semantic_error("Identificador não declarado para magnitudo.");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
-          } else {
-              size_t sz = get_size_from_type(sym->type);
-              int* val = malloc(sizeof(int));
-              *val = (int)sz;
-              $$ = create_expression(TYPE_ATOMUS, val);
-          }
-          free($2);
-      }
-    | LPAREN type_specifier OP_MULTIPLY IDENTIFIER RPAREN KW_MAGNITUDO
-      {
-          // Exemplo: (atomus * n)magnitudo;
-          Symbol* sym = scope_lookup($4);
-          if (!sym) {
-              semantic_error("Identificador não declarado para magnitudo.");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
-          } else {
-              size_t sz = get_size_from_type($2);
-              int n = 0;
-              if (string_to_type(sym->type) == TYPE_ATOMUS && sym->data.value) {
-                  n = *(int*)sym->data.value;
-              } else {
-                  semantic_error("Multiplicador de magnitudo deve ser inteiro (atomus).");
-              }
-              int* val = malloc(sizeof(int));
-              *val = (int)(sz * n);
-              $$ = create_expression(TYPE_ATOMUS, val);
-          }
-          free($2);
-          free($4);
-      }
-    | LPAREN type_specifier OP_MULTIPLY LIT_INT RPAREN KW_MAGNITUDO
-      {
-          // Exemplo: (atomus * 10)magnitudo;
-          size_t sz = get_size_from_type($2);
-          int* val = malloc(sizeof(int));
-          *val = (int)(sz * $4);
-          $$ = create_expression(TYPE_ATOMUS, val);
-          free($2);
-      }
+
+    {
+
+
+        size_t sz = get_size_from_type($2);
+
+
+        int* val = malloc(sizeof(int));
+
+
+        *val = (int)sz;
+
+
+        $$ = create_expression(TYPE_ATOMUS, val);
+
+
+        free($2);
+
+
+    }
+
+
+| LPAREN IDENTIFIER RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        Symbol* sym = scope_lookup($2);
+
+
+        if (!sym) {
+
+
+            semantic_error("Identificador não declarado para magnitudo.");
+
+
+            $$ = create_expression(TYPE_UNDEFINED, NULL);
+
+
+        } else {
+
+
+            size_t sz = get_size_from_type(sym->type);
+
+
+            int* val = malloc(sizeof(int));
+
+
+            *val = (int)sz;
+
+
+            $$ = create_expression(TYPE_ATOMUS, val);
+
+
+        }
+
+
+        free($2);
+
+
+    }
+
+
+| LPAREN type_specifier OP_MULTIPLY IDENTIFIER RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        // Exemplo: (atomus * n)magnitudo;
+
+
+        Symbol* sym = scope_lookup($4);
+
+
+        if (!sym) {
+
+
+            semantic_error("Identificador não declarado para magnitudo.");
+
+
+            $$ = create_expression(TYPE_UNDEFINED, NULL);
+
+
+        } else {
+
+
+            size_t sz = get_size_from_type($2);
+
+
+            int n = 0;
+
+
+            if (string_to_type(sym->type) == TYPE_ATOMUS && sym->data.value) {
+
+
+                n = *(int*)sym->data.value;
+
+
+            } else {
+
+
+                semantic_error("Multiplicador de magnitudo deve ser inteiro (atomus).");
+
+
+            }
+
+
+            int* val = malloc(sizeof(int));
+
+
+            *val = (int)(sz * n);
+
+
+            $$ = create_expression(TYPE_ATOMUS, val);
+
+
+        }
+
+
+        free($2);
+
+
+        free($4);
+
+
+    }
+
+
+| LPAREN type_specifier OP_MULTIPLY LIT_INT RPAREN KW_MAGNITUDO
+
+
+    {
+
+
+        // Exemplo: (atomus * 10)magnitudo;
+
+
+        size_t sz = get_size_from_type($2);
+
+
+        int* val = malloc(sizeof(int));
+
+
+        *val = (int)(sz * $4);
+
+
+        $$ = create_expression(TYPE_ATOMUS, val);
+
+
+        free($2);
+
+
+    }
     ;
 
 constant
@@ -1124,43 +1227,8 @@ parameter
 //
 
 function_call_statement
-    : LPAREN RPAREN IDENTIFIER SEMICOLON
-      {
-          Symbol* func = scope_lookup($3);
-          if (!func || func->kind != SYM_FUNC) {
-              char err[128];
-              snprintf(err, sizeof(err), "Função '%s' não declarada.", $3);
-              semantic_error(err);
-          } else if (func->num_params != 0) {
-              char err[128];
-              snprintf(err, sizeof(err), "Função '%s' espera %d argumentos, mas nenhum foi fornecido.", $3, func->num_params);
-              semantic_error(err);
-          }
-          free($3);
-      }
-    | LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
-      {
-          Symbol* func = scope_lookup($4);
-          int given_args = count_arg_list($2); // Implemente esta função para contar argumentos
-          if (!func || func->kind != SYM_FUNC) {
-              char err[128];
-              snprintf(err, sizeof(err), "Função '%s' não declarada.", $4);
-              semantic_error(err);
-          } else if (func->num_params != given_args) {
-              char err[128];
-              snprintf(err, sizeof(err), "Função '%s' espera %d argumentos, mas %d foram fornecidos.", $4, func->num_params, given_args);
-              semantic_error(err);
-          }
-          // Libere a lista de argumentos se necessário
-          ArgNode* current = $2;
-          while (current) {
-              ArgNode* next = current->next;
-              free_expression((Expression*)current->value);
-              free(current);
-              current = next;
-          }
-          free($4);
-      }
+   : LPAREN RPAREN IDENTIFIER SEMICOLON        /* zero argumentos */
+   | LPAREN argument_list RPAREN IDENTIFIER SEMICOLON  /* um ou mais args */
 
 // Um único item na lista: cria o primeiro nó.
 argument_list
@@ -1204,13 +1272,8 @@ jump_statement
 
 conditional_statement
     : LPAREN expression RPAREN KW_SI
-      {
-          if ($2 && $2->type != TYPE_QUANTUM) {
-              semantic_error("Expressão condicional do 'si' deve ser do tipo quantum (booleano).");
-          }
-      }
-      { scope_push(BLOCK_CONDITIONAL); }
-      block conditional_non_statement
+    { scope_push(BLOCK_CONDITIONAL); } 
+    block conditional_non_statement
     | LPAREN expression RPAREN KW_VERTERE LBRACE { scope_push(BLOCK_CONDITIONAL); } causal_statement RBRACE { scope_pop(); }
     ;
 
@@ -1227,17 +1290,14 @@ causal_statement
 
     
 iteration_statement
-    : LPAREN expression RPAREN KW_PERSISTO
-      {
-          if ($2 && $2->type != TYPE_QUANTUM) {
-              semantic_error("Expressão condicional do 'persisto' deve ser do tipo quantum (booleano).");
-          }
-          scope_push(BLOCK_LOOP);
-      }
-      block
+    : LPAREN expression RPAREN KW_PERSISTO { scope_push(BLOCK_LOOP); } block
+
     | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
+
     | LPAREN expression_statement expression_statement RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
+
     | LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
+
     | LPAREN declaration_statement expression_statement RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
     ;
 
@@ -1257,80 +1317,219 @@ function_input_output
 
 identifier_langle_list
     : IDENTIFIER LANGLE KW_LECTURA SEMICOLON
-      {
+     {
           Symbol* sym = scope_lookup($1);
+
+
           if (!sym) {
+
+
               semantic_error("Variável não declarada para lectura.");
+
+
           } else {
+
+
               DataType type = string_to_type(sym->type);
+
+
               if (type == TYPE_ATOMUS) {
+
+
                   int val;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%d", &val);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
+
+
                   *(int*)sym->data.value = val;
+
+
               } else if (type == TYPE_FRACTIO) {
+
+
                   double val;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%lf", &val);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
+
+
                   *(double*)sym->data.value = val;
+
+
               } else if (type == TYPE_SCRIPTUM) {
+
+
                   char buffer[256];
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%255s", buffer);
+
+
                   if (sym->data.value) free(sym->data.value);
+
+
                   sym->data.value = strdup(buffer);
+
+
               } else if (type == TYPE_SYMBOLUM) {
+
+
                   char c;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf(" %c", &c);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
+
+
                   *(char*)sym->data.value = c;
+
+
               } else {
+
+
                   semantic_error("Tipo não suportado para lectura.");
+
+
               }
+
+
           }
+
+
           free($1);
+
+
       }
     | IDENTIFIER LANGLE identifier_langle_list
-      {
+    {
           Symbol* sym = scope_lookup($1);
+
+
           if (!sym) {
+
+
               semantic_error("Variável não declarada para lectura.");
+
+
           } else {
+
+
               DataType type = string_to_type(sym->type);
+
+
               if (type == TYPE_ATOMUS) {
+
+
                   int val;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%d", &val);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
+
+
                   *(int*)sym->data.value = val;
+
+
               } else if (type == TYPE_FRACTIO) {
+
+
                   double val;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%lf", &val);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
+
+
                   *(double*)sym->data.value = val;
+
+
               } else if (type == TYPE_SCRIPTUM) {
+
+
                   char buffer[256];
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf("%255s", buffer);
+
+
                   if (sym->data.value) free(sym->data.value);
+
+
                   sym->data.value = strdup(buffer);
+
+
               } else if (type == TYPE_SYMBOLUM) {
+
+
                   char c;
+
+
                   printf("» %s = ", sym->name);
+
+
                   scanf(" %c", &c);
+
+
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
+
+
                   *(char*)sym->data.value = c;
+
+
               } else {
+
+
                   semantic_error("Tipo não suportado para lectura.");
+
+
               }
+
+
           }
+
+
           free($1);
+
+
       }
+
+
       ;
+    ;
 
 identifier_rangle_list
     : IDENTIFIER RANGLE KW_REVELARE SEMICOLON
