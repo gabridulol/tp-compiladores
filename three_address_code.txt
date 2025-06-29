@@ -1,0 +1,8 @@
+main:
+t0 = 1 + 2
+a = t0
+t1 = 3 + 2
+t2 =  intToFloat t1
+b = t2
+t3 = 6 + 3.1
+b = t3

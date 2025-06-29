@@ -7,6 +7,7 @@
 #include "../src/source_printer.h"
 #include "../src/expression.h"
 #include "../src/loops.h"
+#include "../src/three_address_code.h"
 
 extern int yylineno;
 
@@ -123,7 +124,10 @@ void yyerror(const char *s);
 %left OP_EQUAL OP_NOT_EQUAL OP_LESS_THAN OP_GREATER_THAN OP_LESS_EQUAL OP_GREATER_EQUAL
 %left OP_LOGICAL_AND OP_LOGICAL_OR OP_LOGICAL_XOR
 
+
+
 %left OP_ASSIGN
+%left SEMICOLON
 %left OP_ACCESS_MEMBER
 
 
@@ -188,7 +192,7 @@ block
     ;
 
 alchemia_statement
-    : IDENTIFIER LPAREN RPAREN KW_MAIN block 
+    : IDENTIFIER LPAREN RPAREN KW_MAIN {init_tac_generator(); emit("label", "", "", "main");} block {finish_tac_generator();}
     ;
 
 statement_list
@@ -254,31 +258,37 @@ assignment_statement
               } 
           }
           free_expression(value_expr);
+          emit("=", get_temp_name($1), "", $3);
       }
     | expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
       {
-          Expression* value_expr = $1;
-          char* var_name = $3;
-          Symbol* sym = scope_lookup(var_name);
+        Expression* val = $1;
+        char* var_name = $3;
+        Symbol* sym = scope_lookup(var_name);
+        DataType declared = string_to_type(sym->type);
+        DataType given    = val->type;
 
-          // 1. Validar se a variável existe
-          if (sym == NULL) {
-              char err_msg[128];
-              sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", var_name);
-              yyerror(err_msg);
-          } else {
-              // 2. Checar se os tipos são compatíveis
-              DataType declared_type = string_to_type(sym->type);
-              if (value_expr->type != declared_type) {
-                  char err_msg[256];
-                  sprintf(err_msg, "Erro de tipo: impossível atribuir valor à variável '%s'.", var_name);
-                  yyerror(err_msg);
-              } 
-          }
+        if (!sym) {
+            yyerror("Variável não declarada.");
+        }
+        else if (given == declared) {
+            // caso normal
+            emit("=", val->tac_name, "", var_name);
+        }
+        else if (given == TYPE_ATOMUS && declared == TYPE_FRACTIO) {
+            // promoção int → float
+            char* tcast = new_temp();
+            // gera um TAC que converte int pra float
+            emit("intToFloat", "", val->tac_name, tcast);
+            // depois atribui ao destino
+            emit("=", tcast, "", var_name);
+        }
+        else {
+            yyerror("Erro de tipo: impossível atribuir a variável.");
+        }
 
-          // 4. Limpeza da memória
-          free_expression(value_expr); // Libera o "invólucro" da Expression
-          free(var_name);
+        free_expression(val);
+        free(var_name);
       }
     | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
       {
@@ -362,7 +372,7 @@ primary_expression
                   free(value_copy);
                   value_copy = NULL;
               }
-              $$ = create_expression(type, value_copy);
+              $$ = create_expression(type, value_copy, strdup($1));
           }
           free($1);
       }
@@ -408,7 +418,13 @@ expression
 
     /* --- Operadores Aritméticos --- */
     | expression OP_ADD unary_expression
-      { $$ = evaluate_binary_expression($1, OP_ADD, $3); }
+      {
+        Expression *L = $1, *R = $3;
+        char *t = new_temp();
+        emit("+", L->tac_name, R->tac_name, t);
+        $$ = create_expression(L->type, NULL, t);
+        free(L); free(R);
+        $$->tac_name = t;}
     | expression OP_SUBTRACT unary_expression
       { $$ = evaluate_binary_expression($1, OP_SUBTRACT, $3); }
     | expression OP_MULTIPLY unary_expression
@@ -448,56 +464,83 @@ expression
     // Nota: A atribuição como expressão (ex: a = b = 5) é mais complexa.
     // A regra abaixo funciona se 'evaluate_binary_expression' for adaptada
     // para modificar o símbolo e retornar o valor.
-    | expression OP_ASSIGN assing_value
+    | expression OP_ASSIGN IDENTIFIER  %prec OP_ASSIGN
       {
-          // O tratamento para atribuição como expressão precisa de uma lógica
-          // especial. Por simplicidade, é comum tratar atribuição apenas
-          // como um statement (instrução), não como uma expressão que retorna valor.
-          // Se precisar que 'a = 5' retorne '5', a função de avaliação
-          // precisará ser mais inteligente.
+        Expression *val = $1;
+        char *dst = $3;
+        Symbol *sym = scope_lookup(dst);
+        DataType decl = sym ? string_to_type(sym->type) : TYPE_UNDEFINED;
+
+        if (!sym) {
+          yyerror("Variável não declarada.");
+        } else if (val->type == decl
+                || (val->type == TYPE_ATOMUS && decl == TYPE_FRACTIO)) {
+          if (val->type == TYPE_ATOMUS && decl == TYPE_FRACTIO) {
+            char *tc = new_temp();
+            emit("intToFloat", "", val->tac_name, tc);
+            emit("=", tc, "", dst);
+          } else {
+            emit("=", val->tac_name, "", dst);
+          }
+        } else {
+          yyerror("Erro de tipo na atribuição como expressão.");
+        }
+
+        /* devolve um expr “dummy” cujo tac_name é o dst */
+        $$ = create_expression(decl, NULL, strdup(dst));
+        free_expression(val);
+        free(dst);
       }
     ;
 
 constant
     : LIT_INT
-      {
-          int *val = malloc(sizeof(int));
-          *val = $1;
-          // CORREÇÃO: Usar o nome do ENUM
-          $$ = create_expression(TYPE_ATOMUS, val); 
-      }
+       {
+            int *v = malloc(sizeof(int));
+            *v = $1;
+            char buf[32];
+        snprintf(buf, sizeof(buf), "%d", *v);
+
+            $$ = create_expression(TYPE_ATOMUS, v, strdup(buf));
+        }
     | LIT_FLOAT
       {
-          double *val = malloc(sizeof(double));
-          *val = $1;
+        double *val = malloc(sizeof(double));
+        *val = $1;
           // CORREÇÃO: Usar o nome do ENUM (este já estava certo)
-          $$ = create_expression(TYPE_FRACTIO, val); 
+        char buf[64];
+        snprintf(buf, sizeof(buf), "%g", *val);
+        $$ = create_expression(TYPE_FRACTIO, val, strdup(buf));
       }
     | LIT_FACTUM
       {
           int *val = malloc(sizeof(int));
           *val = 1; // 1 para verdadeiro
           // CORREÇÃO: Usar o nome do ENUM
-          $$ = create_expression(TYPE_QUANTUM, val);
+        char buf[64];
+        snprintf(buf, sizeof(buf), "%f", *val);
+        $$ = create_expression(TYPE_QUANTUM, val, buf);
       }
     | LIT_FICTUM
       {
           int *val = malloc(sizeof(int));
           *val = 0; // 0 para falso
           // CORREÇÃO: Usar o nome do ENUM
-          $$ = create_expression(TYPE_QUANTUM, val);
+          char buf[12];
+        sprintf(buf, "%d", *val);
+          $$ = create_expression(TYPE_QUANTUM, val, buf);
       }
     | LIT_CHAR
       {
           // CORREÇÃO: Usar o nome do ENUM
-          $$ = create_expression(TYPE_SYMBOLUM, strdup($1)); 
+          $$ = create_expression(TYPE_SYMBOLUM, strdup($1), strdup($1)); 
       }
     ;
 
 string
     : LIT_STRING
       {
-        $$ = create_expression(KW_TYPE_SCRIPTUM, strdup($1));
+        $$ = create_expression(KW_TYPE_SCRIPTUM, strdup($1), strdup($1));
       }
     ;
 
@@ -1114,7 +1157,7 @@ vector_access
                   if(value_copy) {
                       memcpy(value_copy, element_ptr, element_size);
                       // Cria a nova Expression com a cópia do valor
-                      $$ = create_expression(element_type, value_copy);
+                      $$ = create_expression(element_type, value_copy, new_temp());
                   } else {
                       yyerror("Falha ao alocar memória para o valor do acesso ao vetor.");
                   }
@@ -1175,7 +1218,7 @@ pointer_assignment
                   *address_holder = address_of_variable;
                   
                   // 3. O resultado é uma expressão do tipo ponteiro.
-                  $$ = create_expression(TYPE_POINTER, address_holder);
+                  $$ = create_expression(TYPE_POINTER, address_holder, new_temp());
               } else {
                   yyerror("Falha ao alocar memória para o endereço.");
               }
@@ -1217,7 +1260,7 @@ pointer_dereference
                           memcpy(value_copy, address_held_by_pointer, value_size);
                           
                           // 5. Criar a Expression com o valor copiado
-                          $$ = create_expression(base_type, value_copy);
+                          $$ = create_expression(base_type, value_copy, new_temp());
                       } else {
                           yyerror("Falha ao alocar memória para o valor dereferenciado.");
                       }
@@ -1247,7 +1290,7 @@ member_access_direct
 
           if (!var || !var->instance_fields) {
               yyerror("Variável de struct não declarada ou não é struct!");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           } else {
               /* DEBUG: ponteiro para tabela de campos */
               printf("[DEBUG] var->instance_fields = %p\\n",
@@ -1264,7 +1307,7 @@ member_access_direct
 
               if (!campo) {
                   yyerror("Campo não existe na instância da struct!");
-                  $$ = create_expression(TYPE_UNDEFINED, NULL);
+                  $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
               } else {
                   /* DEBUG: detalhes do campo */
                   printf("[DEBUG] campo->type = '%s', campo->data.value = %p\\n",
@@ -1281,7 +1324,7 @@ member_access_direct
                       memcpy(value_copy, campo->data.value, campo_size);
                   }
 
-                  $$ = create_expression(campo_type, value_copy);
+                  $$ = create_expression(campo_type, value_copy, new_temp());
 
                   /* DEBUG: expressão criada */
                   printf("[DEBUG] create_expression returned %p\\n", (void*)$$);
@@ -1305,7 +1348,7 @@ member_access_dereference
           // (Aqui entraria a mesma lógica de 'member_access_pointer' com os devidos ajustes de índice)
           
           printf("AVISO: Lógica de acesso a membro '(*p).' ainda não totalmente implementada.\n");
-          $$ = create_expression(TYPE_UNDEFINED, NULL);
+          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           free($3);
           free($6);
       }
@@ -1344,7 +1387,7 @@ member_access_pointer
               // ... (lógica de cópia e criação de Expression, como no acesso direto) ...
 
               printf("AVISO: Lógica de acesso a membro '->' ainda não totalmente implementada.\n");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           }
           
           free(pointer_var_name);
