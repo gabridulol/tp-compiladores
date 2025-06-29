@@ -1,0 +1,20 @@
+main() Alchemia {
+    5 --> a atomus;
+    4 --> a;
+
+    (5 < a) si {
+        a + 1 --> a;
+    } 
+    
+    non (5 == a) si {
+        a + 2 --> a;
+    } 
+    
+    non {
+        a + 3 --> a;
+    }
+    
+    (a < 100) persisto {
+        a + 1 --> a;
+    }
+}

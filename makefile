@@ -20,6 +20,7 @@ SCOPE_SRC = $(SRC_DIR)/scope.c
 EXPRESSION_SRC = $(SRC_DIR)/expression.c
 LOOPS_SRC = $(SRC_DIR)/loops.c
 AST_SRC = $(SRC_DIR)/ast.c
+THREE_ADDR_SRC = $(SRC_DIR)/three_address_code.c
 
 # Gerados
 LEX_GEN = $(LEX_DIR)/lex.yy.c
@@ -36,6 +37,7 @@ SCOPE_OBJ = $(OBJ_DIR)/scope.o
 EXPRESSION_OBJ = $(OBJ_DIR)/expression.o
 LOOPS_OBJ = $(OBJ_DIR)/loops.o
 AST_SRC = $(SRC_DIR)/ast.h
+THREE_ADDR_OBJ = $(OBJ_DIR)/three_address_code.o
 
 # Executáveis
 COMPILER_EXEC = $(BIN_DIR)/compiler.out
@@ -83,8 +85,11 @@ $(LOOPS_OBJ): $(LOOPS_SRC) | $(OBJ_DIR)
 $(AST_OBJ): $(AST_SRC) | $(OBJ_DIR)
 	$(CC) -c $(AST_SRC) -o $@ -I$(SRC_DIR)
 
+$(THREE_ADDR_OBJ): $(THREE_ADDR_SRC) | $(OBJ_DIR)
+	$(CC) -c $(THREE_ADDR_SRC) -o $@ -I$(SRC_DIR)
+
 # Compilação do compilador completo
-$(COMPILER_EXEC): $(MAIN_OBJ) $(LEX_OBJ) $(YACC_OBJ) $(SYMBOL_TABLE_OBJ) $(SOURCE_PRINTER_OBJ) $(SCOPE_OBJ) $(EXPRESSION_OBJ) $(LOOPS_OBJ) $(AST_OBJ) | $(BIN_DIR)
+$(COMPILER_EXEC): $(MAIN_OBJ) $(LEX_OBJ) $(YACC_OBJ) $(SYMBOL_TABLE_OBJ) $(SOURCE_PRINTER_OBJ) $(SCOPE_OBJ) $(EXPRESSION_OBJ) $(LOOPS_OBJ) $(AST_OBJ) $(THREE_ADDR_OBJ) | $(BIN_DIR)
 	$(CC) $^ -lm -o $@
 
 # Execução do compilador (entrada padrão ou redirecionada com <)

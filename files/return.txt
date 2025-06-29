@@ -1,5 +1,5 @@
 formula () saudacao --> atomus {
-    x atomus;
+    x symbolum;
     x redire;
 }
 

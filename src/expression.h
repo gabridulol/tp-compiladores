@@ -25,13 +25,15 @@ typedef struct {
 typedef struct Expression {
     DataType type;  // O tipo do resultado (ex: TYPE_ATOMUS)
     void* value;    // Ponteiro para o valor real (ex: um int*)
+    char* tac_name;
 } Expression;
 
 const char* get_type_name(int type);
 const char* get_op_name(int op);
+char* get_temp_name(Expression* expr);
 
 // Cria uma expressão a partir de um tipo e um valor
-Expression* create_expression(DataType type, void* value);
+Expression* create_expression(DataType type, void* value, char* tac_name);
 
 // Libera a memória de uma expressão
 void free_expression(Expression* expr);

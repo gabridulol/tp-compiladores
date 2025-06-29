@@ -1,6 +1,7 @@
 #include "expression.h"
 #include "../yacc/yacc.tab.h"
 #include "symbol_table.h"
+#include "three_address_code.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,10 +41,11 @@ const char* get_op_name(int op) {
 }
 
 
-Expression* create_expression(DataType type, void* value) {
+Expression* create_expression(DataType type, void* value, char* tac_name) {
     Expression* expr = (Expression*)malloc(sizeof(Expression));
     expr->type = type;
     expr->value = value;
+    expr->tac_name = tac_name;  // <-- insira isso
     return expr;
 }
 
@@ -52,6 +54,10 @@ void free_expression(Expression* expr) {
         free(expr->value); // Libera o valor interno
         free(expr);        // Libera a própria estrutura
     }
+}
+
+char* get_temp_name(Expression* expr) {
+    return expr && expr->tac_name ? expr->tac_name : "null";
 }
 
 // Converte a string de tipo do seu YACC para o nosso enum
@@ -207,9 +213,9 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
     }
 
     // --- 3. Criar e retornar a nova Expression com o resultado ---
-    // printf("[DEBUG: evaluate_binary] Result Type: %s (%d)\n",
-    //    get_type_name(result_type), result_type);
-    return create_expression(result_type, result_value);
+    printf("[DEBUG: evaluate_binary] Result Type: %s (%d)\n",
+       get_type_name(result_type), result_type);
+    return create_expression(result_type, result_value, new_temp());
 }
 
 void get_base_type_from_pointer(const char* pointer_type, char* base_type_buffer) {
