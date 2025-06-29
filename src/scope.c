@@ -19,26 +19,23 @@ void scope_init(void) {
     if (!scope_queue) { perror("malloc scope_queue"); exit(EXIT_FAILURE); }
     queue_top = -1;
     // Cria escopo global
-    scope_push();
+    scope_push(BLOCK_GLOBAL);
 }
 
-void scope_push(void) {
+void scope_push(BlockType block_type) {
     if (!scope_queue) scope_init();
-    // Cria novo escopo
-    Scope *s = malloc(sizeof(Scope));
-    if (!s) { perror("malloc Scope"); exit(EXIT_FAILURE); }
-    st_init(&s->table);
-    // Define parent para árvore de escopos
-    s->prev = scope_atual;
-    // Atualiza escopo atual
-    scope_atual = s;
-    // Registra no histórico
     if (queue_top + 1 >= capacity) {
         capacity *= 2;
         scope_queue = realloc(scope_queue, sizeof(Scope*) * capacity);
         if (!scope_queue) { perror("realloc scope_queue"); exit(EXIT_FAILURE); }
     }
-    s->index = queue_top + 1;
+    Scope *s = malloc(sizeof(Scope));
+    if (!s) { perror("malloc Scope"); exit(EXIT_FAILURE); }
+    st_init(&s->table);
+    s->prev       = scope_atual;
+    s->index      = queue_top + 1;
+    s->block_type = block_type;
+    scope_atual   = s;
     scope_queue[++queue_top] = s;
 }
 
@@ -48,12 +45,14 @@ void scope_pop(void) {
         return;
     }
     // Apenas desfaz o escopo atual, sem liberar, para uso posterior em print
+    fprintf(stderr, "[DEBUG] Desempilhando escopo %d do tipo %s\n",
+           scope_atual->index, BlockTypeNames[scope_atual->block_type]);
     scope_atual = scope_atual->prev;
 }
 
 Symbol* scope_insert(const char *name, SymbolKind kind,
                      const char *type, int line, void *value) {
-    if (!scope_atual) scope_push();
+    if (!scope_atual) scope_push(BLOCK_NONE);
     return st_insert(&scope_atual->table, name, kind, type, line, value);
 }
 
@@ -85,11 +84,42 @@ void scope_cleanup(void) {
 }
 
 void scope_print_all(void) {
-    // Imprime todos os escopos na ordem de criação
+    const int LINE_WIDTH = 60;
+
+    // Cabeçalho geral
+    printf("\n=================================================================\n");
+    printf("%*s%s%*s\n",
+           (LINE_WIDTH - (int)strlen(" Escopos Registrados "))/2, "",
+           " Escopos Registrados ",
+           (LINE_WIDTH - (int)strlen(" Escopos Registrados "))/2, "");
+    printf("=================================================================\n");
+
+    // Itera sobre cada escopo armazenado
     for (int i = 0; i <= queue_top; ++i) {
-        printf("\n================== Escopo %d (Pai = %d) ==================\n",
-               i, scope_queue[i]->prev ? scope_queue[i]->prev->index : -1);
-        st_print(&scope_queue[i]->table);
+        Scope *s = scope_queue[i];
+        const char *blockName = BlockTypeNames[s->block_type];
+        int parentIdx = s->prev ? s->prev->index : -1;
+
+        // Título do escopo centralizado
+        char title[100];
+        snprintf(title, sizeof(title), " Escopo %d | %s | Pai: %d ",
+                 i, blockName, parentIdx);
+        int len = strlen(title);
+        int pad = (LINE_WIDTH - len) / 2;
+        printf("\n\n----------------------------------------------------------------");
         printf("\n");
+        for (int j = 0; j < pad; ++j) putchar(' ');
+        printf("%s", title);
+        printf("\n-----------------------------------------------------------------");
+        for (int j = 0; j < LINE_WIDTH - len - pad; ++j) putchar(' ');
+        printf("\n");
+
+        // Conteúdo da tabela de símbolos
+        st_print(&s->table);
     }
+
+    // Rodapé geral
+    printf("\n=================================================================\n");
 }
+
+

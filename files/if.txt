@@ -2,13 +2,20 @@
 main() Alchemia{
     1 --> x atomus;
 
+    (0 --> i atomus; i < 10; i + 1 --> i) iterare {
+        (i == 10) si {
+            w atomus;
+        }
+    }
+
+    1 --> y atomus;
+    
     (x == 0) si {
         4 --> y atomus;
         3 redire;
     }
-    1 --> x atomus;
 
-    (x == 0) si {
+    non {
         3 --> y;
         (x < 0) si {
             "Negativo" redire;
@@ -21,6 +28,10 @@ main() Alchemia{
         non {
         "Zero" redire;
         }
+    }
+
+    (x > 0) persisto {
+        x - 1 --> u atomus;
     }
 
     (x < 0) si {

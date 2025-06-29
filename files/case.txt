@@ -1,0 +1,13 @@
+main() Alchemia {
+    5 --> x atomus;
+    result atomus;
+
+    (x) vertere {
+        casus 1 -> 1 --> t atomus; ruptio;
+        casus 2 -> 2 --> x; ruptio;
+        casus 3 -> 3 --> result; ruptio;
+        casus 4 -> 4 --> result; ruptio;
+        casus 5 -> 5 --> result; ruptio;
+        axiom -> 0 --> result; ruptio;
+    }
+}

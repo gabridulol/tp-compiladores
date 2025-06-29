@@ -2,4 +2,8 @@ main() Alchemia {
     5 + 3;      
     10 * 2;     
     20 - 15;    
+    10 + 3 * 2 --> x atomus;
+    x --> y atomus;
+    "ad" --> z scriptum;
+    'a' --> g symbolum;
 }

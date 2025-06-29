@@ -54,35 +54,51 @@ Symbol* st_lookup(SymbolTable *table, const char *name) {
 }
 
 void st_print(SymbolTable *table) {
-    printf("Nome                Tipo      Classe  Linha  Valor/Info\n");
+    // Cabeçalho da tabela
+    printf(" %-20s | %-10s | %-7s | %-5s | %s\n",
+           "Nome", "Tipo", "Classe", "Linha", "Valor/Info");
+    printf("-%-20s-+-%-10s-+-%-7s-+-%-5s-+-%s\n",
+           "--------------------", "----------", "-------", "-----", "----------");
+
+    // Itera sobre cada bucket do hash
     for (int i = 0; i < HASH_SIZE; i++) {
         for (Symbol *c = table->table[i]; c; c = c->next) {
+            // Mapeia a classe para string
             const char *cls;
             switch (c->kind) {
-                case SYM_VAR: cls = "VAR"; break;
-                case SYM_FUNC: cls = "FUNC"; break;
-                case SYM_TYPE: cls = "TYPE"; break;
-                case SYM_ENUM: cls = "ENUM"; break;
+                case SYM_VAR:    cls = "VAR";    break;
+                case SYM_FUNC:   cls = "FUNC";   break;
+                case SYM_TYPE:   cls = "TYPE";   break;
+                case SYM_ENUM:   cls = "ENUM";   break;
                 case SYM_VECTOR: cls = "VECTOR"; break;
-                default: cls = "OUTRO";
+                default:         cls = "OUTRO";  break;
             }
+
+            // Formata o campo de informação (valor ou tamanho)
             char info[128] = "";
             if (c->kind == SYM_VECTOR) {
-                sprintf(info, "[%zu]", c->data.vector_info.size);
+                snprintf(info, sizeof(info), "[tam: %zu]", c->data.vector_info.size);
             } else if (c->data.value) {
-                if (strcmp(c->type, "atomus") == 0)
-                    sprintf(info, "%d", *(int*)c->data.value);
-                else if (strcmp(c->type, "fractio") == 0)
-                    sprintf(info, "%f", *(double*)c->data.value);
-                else if (strcmp(c->type, "symbolum") == 0)
-                    sprintf(info, "'%c'", *(char*)c->data.value);
+                if (strcmp(c->type, "atomus") == 0) {
+                    snprintf(info, sizeof(info), "%d", *(int*)c->data.value);
+                } else if (strcmp(c->type, "fractio") == 0) {
+                    snprintf(info, sizeof(info), "%.2f", *(double*)c->data.value);
+                } else if (strcmp(c->type, "symbolum") == 0) {
+                    snprintf(info, sizeof(info), "'%c'", *(char*)c->data.value);
+                }
             }
-            printf("%-20s %-8s %-7s %-6d %s\n",
-                   c->name, c->type, cls,
-                   c->line_declared, info);
+
+            // Linha formatada
+            printf(" %-20s | %-10s | %-7s | %-5d | %s\n",
+                   c->name,
+                   c->type,
+                   cls,
+                   c->line_declared,
+                   info);
         }
     }
 }
+
 
 void st_free(SymbolTable *table) {
     for (int i = 0; i < HASH_SIZE; i++) {
