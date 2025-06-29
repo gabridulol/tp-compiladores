@@ -11,5 +11,4 @@ main () Alchemia{
 30 --> idade.p;
 "Alan" --> nome.p;
 1.75 --> altura.p;
-x --> idade.p;
 }
