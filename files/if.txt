@@ -1,0 +1,28 @@
+1 --> x atomus;
+
+
+(x > 0) si {
+    3 redire;
+} 
+
+non {
+    (x < 0) si {
+        "Negativo" redire;
+    } 
+
+    (x < 0) si {
+        "Negativo" redire;
+    } 
+
+    non {
+    "Zero" redire;
+    }
+}
+
+(x < 0) si {
+    "Negativo" redire;
+} 
+
+non (x == 0) si {
+    "Nulo" redire;
+}
