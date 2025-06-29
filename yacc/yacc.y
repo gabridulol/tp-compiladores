@@ -22,6 +22,17 @@ static char *top_label_else() { return label_else_stack[label_stack_top-1]; }
 static char *top_label_end()  { return label_end_stack[label_stack_top-1];  }
 static void pop_labels()      { label_stack_top--; }
 
+  #define MAX_REL_STACK 1024
+  static char *rel_label_stack[MAX_REL_STACK];
+  static int   rel_label_top = 0;
+  static void  push_rel_label(char *L) { rel_label_stack[rel_label_top++] = L; }
+  static char* top_rel_label()        { return rel_label_stack[rel_label_top-1]; }
+  static char* pop_rel_label()        { return rel_label_stack[--rel_label_top]; }
+
+  extern int yylineno;
+  int yylex(void);
+  void yyerror(const char *s);
+
 extern int yylineno;
 
 typedef struct ArgNode {
@@ -35,6 +46,13 @@ FieldTable *current_struct_fields = NULL;
 int yylex(void);
 
 void yyerror(const char *s);
+
+static bool in_loop_cond = false;
+
+static void emit_rel(const char *op, const char *l, const char *r, const char *t) {
+  if (!in_loop_cond)      // só emite no parsing normal
+    emit(op, l, r, t);
+}
 %}
 
 %debug
@@ -712,7 +730,11 @@ expression
           } else {
               Expression *L = $1, *R = $3;
                 char *t = new_temp();
-                emit("==", L->tac_name, R->tac_name, t);
+
+                char *Lcmp = new_label();
+                emit("label", "", "", Lcmp);
+                push_rel_label(Lcmp);
+                emit_rel("==", L->tac_name, R->tac_name, t);
                 $$ = create_expression(L->type, NULL, t);
                 free(L); free(R);
                 $$->tac_name = t;
@@ -732,7 +754,11 @@ expression
           } else {
               Expression *L = $1, *R = $3;
             char *t = new_temp();
-            emit("!=", L->tac_name, R->tac_name, t);
+
+            char *Lcmp = new_label();
+            emit("label", "", "", Lcmp);
+            push_rel_label(Lcmp);
+            emit_rel("!=", L->tac_name, R->tac_name, t);
             $$ = create_expression(L->type, NULL, t);
             free(L); free(R);
             $$->tac_name = t;
@@ -752,15 +778,18 @@ expression
           )) {
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
-          } else {
-              Expression *L = $1, *R = $3;
+          } else { Expression *L = $1, *R = $3;
             char *t = new_temp();
+
+            char *Lcmp = new_label();
+            emit("label", "", "", Lcmp);
+            push_rel_label(Lcmp);
+
             emit("<", L->tac_name, R->tac_name, t);
             $$ = create_expression(L->type, NULL, t);
             free(L); free(R);
             $$->tac_name = t;
-          }
-      }
+      }}
     | expression OP_GREATER_THAN unary_expression
       {
           if (!$1 || !$3) {
@@ -776,8 +805,13 @@ expression
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              Expression *L = $1, *R = $3;
+            Expression *L = $1, *R = $3;
             char *t = new_temp();
+
+            char *Lcmp = new_label();
+            emit("label", "", "", Lcmp);
+            push_rel_label(Lcmp);
+
             emit(">", L->tac_name, R->tac_name, t);
             $$ = create_expression(L->type, NULL, t);
             free(L); free(R);
@@ -801,7 +835,12 @@ expression
           } else {
               Expression *L = $1, *R = $3;
             char *t = new_temp();
-            emit("<=", L->tac_name, R->tac_name, t);
+
+            char *Lcmp = new_label();
+            emit("label", "", "", Lcmp);
+            push_rel_label(Lcmp);
+
+            emit_rel("<=", L->tac_name, R->tac_name, t);
             $$ = create_expression(L->type, NULL, t);
             free(L); free(R);
             $$->tac_name = t;
@@ -824,7 +863,11 @@ expression
           } else {
               Expression *L = $1, *R = $3;
             char *t = new_temp();
-            emit(">=", L->tac_name, R->tac_name, t);
+
+            char *Lcmp = new_label();
+            emit("label", "", "", Lcmp);
+            push_rel_label(Lcmp);
+            emit_rel(">=", L->tac_name, R->tac_name, t);
             $$ = create_expression(L->type, NULL, t);
             free(L); free(R);
             $$->tac_name = t;
@@ -882,8 +925,7 @@ expression
 
         if (!sym) {
           yyerror("Variável não declarada.");
-        } else if (val->type == decl
-                || (val->type == TYPE_ATOMUS && decl == TYPE_FRACTIO)) {
+        } else if (val->type == decl) {
           if (val->type == TYPE_ATOMUS && decl == TYPE_FRACTIO) {
             char *tc = new_temp();
             emit("intToFloat", "", val->tac_name, tc);
@@ -1236,6 +1278,22 @@ declaration_statement
                   $$ = NULL;
               }
           }
+          if (initial_value_expr->type == declared_type) {
+              /* tipos iguais */
+              scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value);
+              emit("=", initial_value_expr->tac_name, "", var_name);
+          }
+          else if (initial_value_expr->type == TYPE_ATOMUS && declared_type == TYPE_FRACTIO) {
+              /* promoção int → float */
+              char* tmp = new_temp();
+              emit("intToFloat", "", initial_value_expr->tac_name, tmp);
+              scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value);
+              emit("=", tmp, "", var_name);
+          }
+          else {
+              semantic_error("Erro de tipo: impossível atribuir à variável.");
+          }
+          $$ = NULL;
           free(var_name);
           // free(type_name); // Descomente se type_specifier alocar memória.
       }
@@ -1432,28 +1490,32 @@ causal_statement
 
     
 iteration_statement
-    : LPAREN {scope_push(BLOCK_LOOP);
+    : LPAREN expression RPAREN KW_PERSISTO {
+        /* 1) entra no escopo de loop */
+        scope_push(BLOCK_LOOP);
+
+        /* 2) cria labels e empilha */
         char *L_begin = new_label();
         char *L_end   = new_label();
         push_labels(L_begin, L_end);
 
-        /* marca início */
-        emit("label", "", "", L_begin);} expression RPAREN KW_PERSISTO {
-        
+        /* 3) marca início do loop */
+        emit("label", "", "", L_begin);
 
-        /* testa condição */
-        char *cond = $3->tac_name;
+        char *cond = $2->tac_name;
         if (cond[0] != 't') {
           char *tmp = new_temp();
           emit("=", cond, "", tmp);
           cond = tmp;
         }
-        // emit("ifFalse", cond, "", L_end);
-      } block {
-        /* volta pro início após o corpo */
-        emit("goto", "", "", top_label_else());
 
-        /* marca saída */
+        emit("ifFalse", cond, "", L_end);
+        
+      } block {
+
+        emit("goto", "", "", top_rel_label());
+        pop_rel_label();
+
         emit("label", "", "", top_label_end());
         pop_labels();
         scope_pop();
