@@ -249,12 +249,7 @@ assignment_statement
               DataType campo_type = string_to_type(campo->type);
               if (campo_type != value_expr->type) {
                   yyerror("Tipo incompatível na atribuição ao campo da struct!");
-              } else {
-                  if (campo->data.value) free(campo->data.value);
-                  size_t campo_size = get_size_from_type(campo->type);
-                  campo->data.value = malloc(campo_size);
-                  memcpy(campo->data.value, value_expr->value, campo_size);
-              }
+              } 
           }
           free_expression(value_expr);
       }
@@ -276,14 +271,7 @@ assignment_statement
                   char err_msg[256];
                   sprintf(err_msg, "Erro de tipo: impossível atribuir valor à variável '%s'.", var_name);
                   yyerror(err_msg);
-              } else {
-                  // 3. Atribuir o novo valor, liberando o antigo se existir
-                  if (sym->data.value) {
-                      free(sym->data.value);
-                  }
-                  sym->data.value = value_expr->value; // Transfere o ponteiro do valor
-                  value_expr->value = NULL;            // Evita o duplo free
-              }
+              } 
           }
 
           // 4. Limpeza da memória
@@ -318,12 +306,7 @@ assignment_statement
                       char err_msg[128];
                       sprintf(err_msg, "Erro: Índice '%d' fora dos limites do vetor '%s'.", index, vec_name);
                       yyerror(err_msg);
-                  } else {
-                      // Se tudo estiver certo, copia o valor
-                      size_t element_size = get_size_from_type(sym->type);
-                      void* dest_ptr = (char*)sym->data.vector_info.data_ptr + (index * element_size);
-                      memcpy(dest_ptr, value_expr->value, element_size);
-                  }
+                  } 
               }
           }
 
