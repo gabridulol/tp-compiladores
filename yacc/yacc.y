@@ -8,6 +8,19 @@
 #include "../src/expression.h"
 #include "../src/loops.h"
 #include "../src/three_address_code.h"
+#define MAX_LABEL_STACK 1024
+static char *label_else_stack[MAX_LABEL_STACK];
+static char *label_end_stack[MAX_LABEL_STACK];
+static int  label_stack_top = 0;
+
+static void push_labels(char *l_else, char *l_end) {
+    label_else_stack[label_stack_top] = l_else;
+    label_end_stack[label_stack_top] = l_end;
+    label_stack_top++;
+}
+static char *top_label_else() { return label_else_stack[label_stack_top-1]; }
+static char *top_label_end()  { return label_end_stack[label_stack_top-1];  }
+static void pop_labels()      { label_stack_top--; }
 
 extern int yylineno;
 
@@ -573,7 +586,7 @@ constant
           *val = 1; // 1 para verdadeiro
           // CORREÇÃO: Usar o nome do ENUM
         char buf[64];
-        snprintf(buf, sizeof(buf), "%f", *val);
+        snprintf(buf, sizeof(buf), "%d", *val);
         $$ = create_expression(TYPE_QUANTUM, val, buf);
       }
     | LIT_FICTUM
@@ -595,7 +608,7 @@ constant
 string
     : LIT_STRING
       {
-        $$ = create_expression(KW_TYPE_SCRIPTUM, strdup($1), strdup($1));
+        $$ = create_expression(TYPE_SCRIPTUM, strdup($1), strdup($1));
       }
     ;
 
@@ -847,15 +860,27 @@ jump_statement
 
 conditional_statement
     : LPAREN expression RPAREN KW_SI
-    { scope_push(BLOCK_CONDITIONAL); } 
-    block conditional_non_statement
+    { scope_push(BLOCK_CONDITIONAL);
+        char *L_else = new_label();
+        char *L_end  = new_label();
+        push_labels(L_else, L_end);
+        emit("ifFalse", "", $2->tac_name, L_else);
+      }
+    block {
+        emit("goto",  "", "",       top_label_end());
+        emit("label", "", "",       top_label_else());
+      } conditional_non_statement {
+        emit("label", "", "",       top_label_end());
+        pop_labels();
+        $$ = NULL;
+      }
     | LPAREN expression RPAREN KW_VERTERE LBRACE { scope_push(BLOCK_CONDITIONAL); } causal_statement RBRACE { scope_pop(); }
     ;
 
 conditional_non_statement
     : // vazio
-    | KW_NON {  scope_push(BLOCK_CONDITIONAL); } block
-    | KW_NON conditional_statement
+    | KW_NON {  scope_push(BLOCK_CONDITIONAL); $$ = NULL; } block
+    | KW_NON conditional_statement {$$ = NULL; }
     ;
 
 causal_statement
