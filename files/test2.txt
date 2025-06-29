@@ -1,26 +1,14 @@
-§§ Código de teste para a funcionalidade de vetores
-
 main() Alchemia {
+    a atomus;
+    b fractio;
+    c scriptum;
 
-    §§ 1. Declara um vetor chamado 'caldeirao' do tipo 'atomus' com 5 posições.
-    caldeirao atomus << 5 >>;
+    a << b << c << lectura;
 
-    §§ 2. Declara duas variáveis 'atomus' para nos ajudar.
-    valor_lido atomus;
-    indice atomus;
-
-    §§ 3. Preenche o vetor com alguns valores.
-    §§ Atribui 10 à posição 0, 20 à posição 1, etc.
-    10 --> caldeirao << 0 >>;
-    20 --> caldeirao << 1 >>;
-    30 --> caldeirao << 2 >>;
-    40 --> caldeirao << 3 >>;
-    50 --> caldeirao << 4 >>;
-    
-    §§ 4. Testa a leitura de um valor do vetor.
-    §§ Vamos ler o valor da posição 3 e guardar em 'valor_lido'.
-    caldeirao << 3 >> --> valor_lido;
-
-
-
+    (atomus)magnitudo;
+    (a)magnitudo;
+    (fractio)magnitudo;
+    (b)magnitudo;
+    (scriptum)magnitudo;
+    (c)magnitudo;
 }
