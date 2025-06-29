@@ -1147,58 +1147,132 @@ declaration_statement
       }
        // free($1);
       }
+| expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
+  {
+      Expression* initial_value_expr = $1;
+      char* var_name = $3;
+      char* type_name = $4;
 
-    | expression OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
-      {
-          // Esta é a regra atualizada para declaração com inicialização.
-          Expression* initial_value_expr = $1;
-          char* var_name = $3;
-          char* type_name = $4;
+      DataType declared_type = string_to_type(type_name);
+      DataType expr_type = initial_value_expr->type;
 
-          // 1. VERIFICAÇÃO DE TIPO
-          DataType declared_type = string_to_type(type_name);
-          if (initial_value_expr->type != declared_type && declared_type != TYPE_UNDEFINED) {
-              semantic_error("Erro de tipo: O valor da expressão é incompatível com o tipo da variável declarada.");
+      // Permite conversão entre tipos numéricos compatíveis e aceita literais para todos os tipos primitivos
+      int tipos_compat = 0;
+      if (declared_type == expr_type) {
+          tipos_compat = 1;
+      } else if (
+          // Numéricos: permite int/float <-> magnus/minimus/fragmentum/fractio/atomus
+          (declared_type == TYPE_MAGNUS && (expr_type == TYPE_ATOMUS || expr_type == TYPE_FRACTIO)) ||
+          (declared_type == TYPE_MINIMUS && (expr_type == TYPE_ATOMUS || expr_type == TYPE_FRACTIO)) ||
+          (declared_type == TYPE_FRAGMENTUM && (expr_type == TYPE_ATOMUS || expr_type == TYPE_FRACTIO)) ||
+          (declared_type == TYPE_FRACTIO && (expr_type == TYPE_ATOMUS || expr_type == TYPE_FRAGMENTUM || expr_type == TYPE_MAGNUS || expr_type == TYPE_MINIMUS)) ||
+          (declared_type == TYPE_ATOMUS && (expr_type == TYPE_MAGNUS || expr_type == TYPE_MINIMUS || expr_type == TYPE_FRAGMENTUM || expr_type == TYPE_FRACTIO))
+      ) {
+          tipos_compat = 1;
+      } else if (
+          // Permite atribuição de int para quantum (Factum/Fictum)
+          (declared_type == TYPE_QUANTUM && expr_type == TYPE_ATOMUS)
+      ) {
+          tipos_compat = 1;
+      }
+
+      if (!tipos_compat && declared_type != TYPE_UNDEFINED) {
+          semantic_error("Erro de tipo: O valor da expressão é incompatível com o tipo da variável declarada.");
+          free_expression(initial_value_expr);
+      } else {
+          Symbol* existing_sym = scope_lookup_current(var_name);
+          if (existing_sym != NULL) {
+              semantic_error("Erro: Variável já declarada neste escopo.");
               free_expression(initial_value_expr);
           } else {
-              // A lógica original permitia "redeclaração" para atualizar um valor,
-              // o que é incomum. Uma abordagem mais estrita é recomendada.
-              Symbol* existing_sym = scope_lookup_current(var_name);
-              if (existing_sym != NULL) {
-                  semantic_error("Erro: Variável já declarada neste escopo.");
-                  free_expression(initial_value_expr);
-              } else {
-                  // 2. EXTRAÇÃO DO VALOR E INSERÇÃO NO ESCOPO
-                  // A tabela de símbolos agora recebe o ponteiro para o valor.
-                  scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value); 
-
-                  // 3. GERENCIAMENTO DE MEMÓRIA
-                  // Impedimos que a memória do valor seja liberada junto com o "invólucro" da expressão,
-                  // pois ela agora pertence à tabela de símbolos.
-                  emit("=", initial_value_expr->tac_name, "", var_name);
-                  free_expression(initial_value_expr);
-                  $$ = NULL;
+              void* value_ptr = NULL;
+              if (initial_value_expr->value) {
+                  switch (declared_type) {
+                      case TYPE_ATOMUS:
+                          value_ptr = malloc(sizeof(int));
+                          if (expr_type == TYPE_ATOMUS)
+                              *(int*)value_ptr = *(int*)initial_value_expr->value;
+                          else if (expr_type == TYPE_MAGNUS)
+                              *(int*)value_ptr = (int)(*(long long*)initial_value_expr->value);
+                          else if (expr_type == TYPE_MINIMUS)
+                              *(int*)value_ptr = (int)(*(short*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRACTIO)
+                              *(int*)value_ptr = (int)(*(double*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRAGMENTUM)
+                              *(int*)value_ptr = (int)(*(float*)initial_value_expr->value);
+                          break;
+                      case TYPE_FRACTIO:
+                          value_ptr = malloc(sizeof(double));
+                          if (expr_type == TYPE_FRACTIO)
+                              *(double*)value_ptr = *(double*)initial_value_expr->value;
+                          else if (expr_type == TYPE_ATOMUS)
+                              *(double*)value_ptr = (double)(*(int*)initial_value_expr->value);
+                          else if (expr_type == TYPE_MAGNUS)
+                              *(double*)value_ptr = (double)(*(long long*)initial_value_expr->value);
+                          else if (expr_type == TYPE_MINIMUS)
+                              *(double*)value_ptr = (double)(*(short*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRAGMENTUM)
+                              *(double*)value_ptr = (double)(*(float*)initial_value_expr->value);
+                          break;
+                      case TYPE_FRAGMENTUM:
+                          value_ptr = malloc(sizeof(float));
+                          if (expr_type == TYPE_FRAGMENTUM)
+                              *(float*)value_ptr = *(float*)initial_value_expr->value;
+                          else if (expr_type == TYPE_ATOMUS)
+                              *(float*)value_ptr = (float)(*(int*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRACTIO)
+                              *(float*)value_ptr = (float)(*(double*)initial_value_expr->value);
+                          break;
+                      case TYPE_MAGNUS:
+                          value_ptr = malloc(sizeof(long long));
+                          if (expr_type == TYPE_MAGNUS)
+                              *(long long*)value_ptr = *(long long*)initial_value_expr->value;
+                          else if (expr_type == TYPE_ATOMUS)
+                              *(long long*)value_ptr = (long long)(*(int*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRACTIO)
+                              *(long long*)value_ptr = (long long)(*(double*)initial_value_expr->value);
+                          break;
+                      case TYPE_MINIMUS:
+                          value_ptr = malloc(sizeof(short));
+                          if (expr_type == TYPE_MINIMUS)
+                              *(short*)value_ptr = *(short*)initial_value_expr->value;
+                          else if (expr_type == TYPE_ATOMUS)
+                              *(short*)value_ptr = (short)(*(int*)initial_value_expr->value);
+                          else if (expr_type == TYPE_FRACTIO)
+                              *(short*)value_ptr = (short)(*(double*)initial_value_expr->value);
+                          break;
+                      case TYPE_QUANTUM:
+                          value_ptr = malloc(sizeof(int));
+                          if (expr_type == TYPE_QUANTUM)
+                              *(int*)value_ptr = *(int*)initial_value_expr->value;
+                          else if (expr_type == TYPE_ATOMUS)
+                              *(int*)value_ptr = (*(int*)initial_value_expr->value) ? 1 : 0;
+                          break;
+                      case TYPE_SCRIPTUM:
+                          value_ptr = strdup((char*)initial_value_expr->value);
+                          break;
+                      case TYPE_SYMBOLUM:
+                          value_ptr = malloc(sizeof(char));
+                          *(char*)value_ptr = *(char*)initial_value_expr->value;
+                          break;
+                      case TYPE_VACUUM:
+                          value_ptr = NULL;
+                          break;
+                      default:
+                          value_ptr = NULL;
+                          break;
+                  }
               }
-          }
-          if (initial_value_expr->type == declared_type) {
-              /* tipos iguais */
-              scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value);
+              scope_insert(var_name, SYM_VAR, type_name, yylineno, value_ptr);
               emit("=", initial_value_expr->tac_name, "", var_name);
+              initial_value_expr->value = NULL;
+              free_expression(initial_value_expr);
           }
-          else if (initial_value_expr->type == TYPE_ATOMUS && declared_type == TYPE_FRACTIO) {
-              /* promoção int → float */
-              char* tmp = new_temp();
-              emit("intToFloat", "", initial_value_expr->tac_name, tmp);
-              scope_insert(var_name, SYM_VAR, type_name, yylineno, initial_value_expr->value);
-              emit("=", tmp, "", var_name);
-          }
-          else {
-              semantic_error("Erro de tipo: impossível atribuir à variável.");
-          }
-          $$ = NULL;
-          free(var_name);
-          // free(type_name); // Descomente se type_specifier alocar memória.
       }
+      free(var_name);
+      free(type_name);
+  }
+    
     | pointer_declaration
       {
           // Esta regra precisará de ajustes similares se envolver inicialização.
