@@ -164,6 +164,8 @@ void yyerror(const char *s);
 %type <expr> pointer_dereference
 %type <expr> conditional_statement
 %type <expr> conditional_non_statement
+%type <expr> conditional_statement
+%type <expr> conditional_non_statement
 %type <expr> assignment_statement
 /* %type <expr> import_statement
 %type <expr> alchemia_statement */
@@ -289,7 +291,6 @@ assignment_statement
                   semantic_error("Tipo incompatível na atribuição ao campo da struct!");
               }
           }
-          free_expression($1);
           emit("=", get_temp_name($1), "", $3);
       }
     | expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
@@ -304,6 +305,8 @@ assignment_statement
             char err_msg[128];
             sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", var_name);
             semantic_error(err_msg);
+        if (!sym) {
+            yyerror("Variável não declarada.");
         }
         else if (given == declared) {
             // caso normal
@@ -322,9 +325,6 @@ assignment_statement
             sprintf(err_msg, "Erro de tipo: impossível atribuir valor à variável '%s'.", var_name);
             semantic_error(err_msg);
         }
-
-        free_expression(val);
-        free(var_name);
         $$ = NULL;
       }
     | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
@@ -567,20 +567,6 @@ expression
 
     | expression OP_ADD unary_expression
       {
-        if (!$1 || !$3) {
-              semantic_error("Expressão inválida.");
-              $$ = NULL;
-          } else if ($1->type == TYPE_UNDEFINED || $3->type == TYPE_UNDEFINED) {
-              semantic_error("Operação com tipo indefinido.");
-              $$ = NULL;
-          } else if (!(($1->type == TYPE_ATOMUS && $3->type == TYPE_ATOMUS) ||
-                       ($1->type == TYPE_FRACTIO && $3->type == TYPE_FRACTIO))) {
-              semantic_error("Soma só pode ser feita entre atomus ou fractio.");
-              $$ = NULL;
-          } else {
-              $$ = evaluate_binary_expression($1, OP_ADD, $3);
-          }
-
         Expression *L = $1, *R = $3;
         char *t = new_temp();
         emit("+", L->tac_name, R->tac_name, t);
@@ -600,9 +586,13 @@ expression
               semantic_error("Subtração só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_SUBTRACT, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("-", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;}
           }
-      }
     | expression OP_MULTIPLY unary_expression
       {
           if (!$1 || !$3) {
@@ -616,9 +606,13 @@ expression
               semantic_error("Multiplicação só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_MULTIPLY, $3);
-          }
-      }
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("*", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;}
+        }
     | expression OP_DIVIDE unary_expression
       {
           if (!$1 || !$3) {
@@ -638,7 +632,12 @@ expression
               semantic_error("Divisão por zero.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_DIVIDE, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("/", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_MODULUS unary_expression
@@ -656,7 +655,12 @@ expression
               semantic_error("Módulo por zero.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_MODULUS, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("%", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_EXP unary_expression
@@ -708,7 +712,12 @@ expression
               semantic_error("Comparação só pode ser feita entre tipos iguais.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_EQUAL, $3);
+              Expression *L = $1, *R = $3;
+                char *t = new_temp();
+                emit("==", L->tac_name, R->tac_name, t);
+                $$ = create_expression(L->type, NULL, t);
+                free(L); free(R);
+                $$->tac_name = t;
           }
       }
     | expression OP_NOT_EQUAL unary_expression
@@ -723,7 +732,12 @@ expression
               semantic_error("Comparação só pode ser feita entre tipos iguais.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_NOT_EQUAL, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("!=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_LESS_THAN unary_expression
@@ -741,7 +755,12 @@ expression
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_LESS_THAN, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("<", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_GREATER_THAN unary_expression
@@ -759,7 +778,12 @@ expression
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_GREATER_THAN, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit(">", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_LESS_EQUAL unary_expression
@@ -777,7 +801,12 @@ expression
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_LESS_EQUAL, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit("<=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
     | expression OP_GREATER_EQUAL unary_expression
@@ -795,7 +824,12 @@ expression
               semantic_error("Comparação relacional só pode ser feita entre atomus ou fractio.");
               $$ = NULL;
           } else {
-              $$ = evaluate_binary_expression($1, OP_GREATER_EQUAL, $3);
+              Expression *L = $1, *R = $3;
+            char *t = new_temp();
+            emit(">=", L->tac_name, R->tac_name, t);
+            $$ = create_expression(L->type, NULL, t);
+            free(L); free(R);
+            $$->tac_name = t;
           }
       }
 
@@ -882,7 +916,7 @@ expression
         *val = (int)sz;
 
 
-        $$ = create_expression(TYPE_ATOMUS, val);
+        $$ = create_expression(TYPE_ATOMUS, val, new_temp());
 
 
         free($2);
@@ -906,7 +940,7 @@ expression
             semantic_error("Identificador não declarado para magnitudo.");
 
 
-            $$ = create_expression(TYPE_UNDEFINED, NULL);
+            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
 
 
         } else {
@@ -921,7 +955,7 @@ expression
             *val = (int)sz;
 
 
-            $$ = create_expression(TYPE_ATOMUS, val);
+            $$ = create_expression(TYPE_ATOMUS, val, new_temp());
 
 
         }
@@ -951,7 +985,7 @@ expression
             semantic_error("Identificador não declarado para magnitudo.");
 
 
-            $$ = create_expression(TYPE_UNDEFINED, NULL);
+            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
 
 
         } else {
@@ -984,7 +1018,7 @@ expression
             *val = (int)(sz * n);
 
 
-            $$ = create_expression(TYPE_ATOMUS, val);
+            $$ = create_expression(TYPE_ATOMUS, val, new_temp());
 
 
         }
@@ -1017,7 +1051,7 @@ expression
         *val = (int)(sz * $4);
 
 
-        $$ = create_expression(TYPE_ATOMUS, val);
+        $$ = create_expression(TYPE_ATOMUS, val, new_temp());
 
 
         free($2);
@@ -1199,8 +1233,9 @@ declaration_statement
                   // 3. GERENCIAMENTO DE MEMÓRIA
                   // Impedimos que a memória do valor seja liberada junto com o "invólucro" da expressão,
                   // pois ela agora pertence à tabela de símbolos.
-                  initial_value_expr->value = NULL;
+                  emit("=", initial_value_expr->tac_name, "", var_name);
                   free_expression(initial_value_expr);
+                  $$ = NULL;
               }
           }
           free(var_name);
@@ -1373,7 +1408,7 @@ conditional_statement
         char *L_else = new_label();
         char *L_end  = new_label();
         push_labels(L_else, L_end);
-        emit("ifFalse", "", $2->tac_name, L_else);
+        emit("ifFalse",   $2->tac_name,   "",             L_else);
       }
     block {
         emit("goto",  "", "",       top_label_end());
@@ -1399,7 +1434,32 @@ causal_statement
 
     
 iteration_statement
-    : LPAREN expression RPAREN KW_PERSISTO { scope_push(BLOCK_LOOP); } block
+    : LPAREN {scope_push(BLOCK_LOOP);
+        char *L_begin = new_label();
+        char *L_end   = new_label();
+        push_labels(L_begin, L_end);
+
+        /* marca início */
+        emit("label", "", "", L_begin);} expression RPAREN KW_PERSISTO {
+        
+
+        /* testa condição */
+        char *cond = $3->tac_name;
+        if (cond[0] != 't') {
+          char *tmp = new_temp();
+          emit("=", cond, "", tmp);
+          cond = tmp;
+        }
+        emit("ifFalse", cond, "", L_end);
+      } block {
+        /* volta pro início após o corpo */
+        emit("goto", "", "", top_label_else());
+
+        /* marca saída */
+        emit("label", "", "", top_label_end());
+        pop_labels();
+        scope_pop();
+      }
 
     | LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE { scope_push(BLOCK_LOOP); } block
 
@@ -1831,7 +1891,7 @@ member_access_direct
 
           if (!var) {
               semantic_error("Variável de struct não declarada!");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
             } else if (strstr(var->type, "*")) {
                 // Ponteiro para struct: desreferencie para Symbol* e acesse o campo
                 char base_type[MAX_NAME_LEN];
@@ -1844,12 +1904,12 @@ member_access_direct
                     Symbol* struct_instance = var->data.value ? *((Symbol**)var->data.value) : NULL;
                     if (!struct_instance) {
                         semantic_error("Ponteiro nulo.");
-                        $$ = create_expression(TYPE_UNDEFINED, NULL);
+                        $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                     } else {
                         Symbol* campo = st_lookup(struct_instance->instance_fields, member_name);
                         if (!campo) {
                             semantic_error("Campo não existe na struct.");
-                            $$ = create_expression(TYPE_UNDEFINED, NULL);
+                            $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                         } else {
                             size_t sz = get_size_from_type(campo->type);
                             void* value_copy = NULL;
@@ -1857,13 +1917,13 @@ member_access_direct
                                 value_copy = malloc(sz);
                                 memcpy(value_copy, campo->data.value, sz);
                             }
-                            $$ = create_expression(string_to_type(campo->type), value_copy);
+                            $$ = create_expression(string_to_type(campo->type), value_copy, new_temp());
                         }
                     }
                 }
             } else if (!var->instance_fields) {
               semantic_error("Variável não é struct!");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           } else {
               // Struct direta
               Symbol* campo = st_lookup(var->instance_fields, member_name);
@@ -1881,6 +1941,9 @@ member_access_direct
                   }
 
                   $$ = create_expression(campo_type, value_copy, new_temp());
+
+                  /* DEBUG: expressão criada */
+                  printf("[DEBUG] create_expression returned %p\\n", (void*)$$);
               }
           }
 
@@ -1907,17 +1970,17 @@ member_access_dereference
               Symbol* struct_type = scope_lookup(base_type);
               if (!struct_type || !struct_type->field_table) {
                   semantic_error("Tipo base do ponteiro não é struct.");
-                  $$ = create_expression(TYPE_UNDEFINED, NULL);
+                  $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
               } else {
                   Symbol* member_sym = st_lookup(&struct_type->field_table->fields, member);
                   if (!member_sym) {
                       semantic_error("Campo não existe na struct.");
-                      $$ = create_expression(TYPE_UNDEFINED, NULL);
+                      $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                   } else {
                       void* struct_ptr = ptr->data.value ? *((void**)ptr->data.value) : NULL;
                       if (!struct_ptr) {
                           semantic_error("Ponteiro nulo.");
-                          $$ = create_expression(TYPE_UNDEFINED, NULL);
+                          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                       } else {
                           // Aqui, supondo que os campos estão em ordem e sem padding
                             size_t sz = get_size_from_type(member_sym->type);
@@ -1926,7 +1989,7 @@ member_access_dereference
                                 memcpy(value_copy, member_sym->data.value, sz);
                             else
                                 memset(value_copy, 0, sz);
-                            $$ = create_expression(string_to_type(member_sym->type), value_copy);
+                            $$ = create_expression(string_to_type(member_sym->type), value_copy, new_temp());
                       }
                   }
               }
@@ -1945,7 +2008,7 @@ member_access_pointer
 
           if (!ptr || !strstr(ptr->type, "*")) {
               semantic_error("Acesso '->' em variável que não é ponteiro.");
-              $$ = create_expression(TYPE_UNDEFINED, NULL);
+              $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
           } else {
               char base_type[MAX_NAME_LEN];
               get_base_type_from_pointer(ptr->type, base_type);
@@ -1957,12 +2020,12 @@ member_access_pointer
                   Symbol* member_sym = st_lookup(&struct_type->field_table->fields, member);
                   if (!member_sym) {
                       semantic_error("Campo não existe na struct.");
-                      $$ = create_expression(TYPE_UNDEFINED, NULL);
+                      $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                   } else {
                       void* struct_ptr = ptr->data.value ? *((void**)ptr->data.value) : NULL;
                       if (!struct_ptr) {
                           semantic_error("Ponteiro nulo.");
-                          $$ = create_expression(TYPE_UNDEFINED, NULL);
+                          $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
                       } else {
                             size_t sz = get_size_from_type(member_sym->type);
                             void* value_copy = malloc(sz);
@@ -1970,7 +2033,7 @@ member_access_pointer
                                 memcpy(value_copy, member_sym->data.value, sz);
                             else
                                 memset(value_copy, 0, sz);
-                            $$ = create_expression(string_to_type(member_sym->type), value_copy);
+                            $$ = create_expression(string_to_type(member_sym->type), value_copy, new_temp());
                       }
                   }
               }
