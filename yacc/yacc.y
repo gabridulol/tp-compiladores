@@ -164,8 +164,6 @@ void yyerror(const char *s);
 %type <expr> pointer_dereference
 %type <expr> conditional_statement
 %type <expr> conditional_non_statement
-%type <expr> conditional_statement
-%type <expr> conditional_non_statement
 %type <expr> assignment_statement
 /* %type <expr> import_statement
 %type <expr> alchemia_statement */
@@ -293,18 +291,18 @@ assignment_statement
           }
           emit("=", get_temp_name($1), "", $3);
       }
-    | expression OP_ASSIGN IDENTIFIER SEMICOLON // Atribuição a uma variável simples
-      {
-        Expression* val = $1;
-        char* var_name = $3;
-        Symbol* sym = scope_lookup(var_name);
-        DataType declared = string_to_type(sym->type);
-        DataType given    = val->type;
+    | expression OP_ASSIGN IDENTIFIER SEMICOLON {
+          Expression* val = $1;
+          char* var_name = $3;
+          Symbol* sym = scope_lookup(var_name);
+          DataType declared = string_to_type(sym->type);
+          DataType given    = val->type;
 
         if (!sym) {
             char err_msg[128];
             sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", var_name);
             semantic_error(err_msg);
+        }
         if (!sym) {
             yyerror("Variável não declarada.");
         }
