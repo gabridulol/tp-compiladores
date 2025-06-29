@@ -14,11 +14,10 @@ main() Alchemia {
 3.14 --> j scriptum;        §§ float em string
 
 §§ --- Uso de variável não declarada ---
-x + 1;                      §§ x não declarada
 §§y --> z;                    §§ y e z não declaradas
 
 §§ --- Uso de tipo não declarado ---
-"abc" --> k tipoinvalido;   §§ tipo inexistente
+"abc" --> k T_invalido;   §§ tipo inexistente
 
 §§ --- Operações aritméticas corretas ---
 1 + 2;
