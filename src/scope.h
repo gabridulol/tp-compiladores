@@ -8,7 +8,6 @@ typedef struct Scope {
     struct Scope *prev;  // Escopo pai (escopo anterior na pilha)
 } Scope;
 
-extern Scope *scope_stack;
 
 // Inicializa escopo global
 void scope_init();
