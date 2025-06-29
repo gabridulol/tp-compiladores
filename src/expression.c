@@ -11,13 +11,13 @@
 const char* get_type_name(int type) {
     switch (type) {
         case TYPE_UNDEFINED: return "UNDEFINED";
-        case TYPE_VACUUM:    return "VACUUM";     // tipo vazio (sem valor)
-        case TYPE_ATOMUS:    return "ATOMUS";     // inteiro
-        case TYPE_FRACTIO:   return "FRACTIO";    // float/double
-        case TYPE_FRAGMENTUM: return "FRAGMENTUM"; // tipo fragmento (pode ser usado para estruturas complexas)
-        case TYPE_QUANTUM:   return "QUANTUM";    // booleano
-        case TYPE_MAGNUS:    return "MAGNUS";     // tipo grande
-        case TYPE_MINIMUS:   return "MINIMUS";    // tipo pequeno
+        case TYPE_VACUUM:    return "VACUUM";     // void
+        case TYPE_ATOMUS:    return "ATOMUS";     // int
+        case TYPE_FRACTIO:   return "FRACTIO";    // float
+        case TYPE_FRAGMENTUM: return "FRAGMENTUM"; // double
+        case TYPE_QUANTUM:   return "QUANTUM";    // bool
+        case TYPE_MAGNUS:    return "MAGNUS";     // long long int
+        case TYPE_MINIMUS:   return "MINIMUS";    // sort int
         case TYPE_SYMBOLUM:  return "SYMBOLUM";   // char
         case TYPE_SCRIPTUM:  return "SCRIPTUM";   // string
         case TYPE_POINTER:   return "POINTER";    // ponteiro
