@@ -1,0 +1,13 @@
+formula () saudacao --> atomus {
+    x atomus;
+    x redire;
+}
+
+
+main() Alchemia{
+
+    (0 --> i atomus; i < 10; i + 1 --> i) iterare {
+        ruptio;
+    }
+
+}

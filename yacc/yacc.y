@@ -199,7 +199,10 @@ block
 
 alchemia_statement
     : IDENTIFIER LPAREN RPAREN KW_MAIN
-        { scope_push(BLOCK_FUNCTION); }
+        {   
+            scope_insert($1, SYM_FUNC, "void", yylineno, NULL);
+            scope_push_formula(BLOCK_FUNCTION, "void"); 
+        }
       block
         
     ;
@@ -728,11 +731,12 @@ function_declaration_statement
         // Insere a função no escopo global
         if (scope_lookup($5) != NULL) {
           yyerror("Função já declarada!");
-        } else {
+        } 
+        else {
           scope_insert($5, SYM_FUNC, $7, yylineno, NULL);
+          scope_push_formula(BLOCK_FUNCTION, $7);
         }
         free($5);
-        scope_push(BLOCK_FUNCTION); // Cria escopo da função após inserir a função
       }
       LBRACE
         statement_list
@@ -798,11 +802,30 @@ argument_list
 
 Declarações de salto: continuum, ruptio e redire */
 jump_statement
-    : KW_CONTINUUM SEMICOLON
-    | KW_RUPTIO SEMICOLON
-    | KW_REDIRE SEMICOLON
-    | expression KW_REDIRE SEMICOLON
-    ;
+    : KW_CONTINUUM SEMICOLON  /* break */
+      {
+          BlockType allowed[] = { BLOCK_LOOP, BLOCK_CONDITIONAL };
+          if (!scope_allowed(allowed, 2, "void")) semantic_error("Construção não permitida para o escopo atual.");
+      }
+    | KW_RUPTIO SEMICOLON     /* continue */
+      {
+          BlockType allowed[] = { BLOCK_LOOP, BLOCK_CONDITIONAL };
+          if (!scope_allowed(allowed, 2, "void")) semantic_error("Construção não permitida para o escopo atual.");
+      }
+    | KW_REDIRE SEMICOLON     /* return */
+      {
+          BlockType allowed[] = { BLOCK_FUNCTION };
+          if (!scope_allowed(allowed, 1, "void")) semantic_error("Construção não permitida para o escopo atual.");
+      }
+    | expression KW_REDIRE SEMICOLON  /* return com valor */
+      {
+        BlockType allowed[] = { BLOCK_FUNCTION };
+    
+    
+
+        if (!scope_allowed(allowed, 1, $1)) semantic_error("Construção não permitida para o escopo atual.");
+      }
+;
 
 
 conditional_statement

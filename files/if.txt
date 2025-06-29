@@ -1,6 +1,11 @@
 
 main() Alchemia{
+    x atomus;
     1 --> x atomus;
+
+    (5 < x) si {
+        x + 1 --> x;
+    }
 
     (0 --> i atomus; i < 10; i + 1 --> i) iterare {
         (i == 10) si {
@@ -9,7 +14,7 @@ main() Alchemia{
     }
 
     1 --> y atomus;
-    
+
     (x == 0) si {
         4 --> y atomus;
         3 redire;

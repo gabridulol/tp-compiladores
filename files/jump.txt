@@ -1,0 +1,16 @@
+
+main() Alchemia{
+
+    (0 --> i atomus; i < 10; i + 1 --> i) iterare {
+        ruptio;
+    }
+
+    (0 --> x atomus; x < 10; x + 1 --> x) iterare {
+        redire;
+    }
+
+    (0 --> y atomus; y < 10; y + 1 --> y) iterare {
+        continuum;
+    }
+
+}

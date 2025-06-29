@@ -13,7 +13,7 @@ typedef enum {
     SYM_FUNC,
     SYM_TYPE,
     SYM_ENUM,
-    SYM_VECTOR
+    SYM_VECTOR,
     // Adicione outros tipos conforme necessário
 } SymbolKind;
 
