@@ -943,160 +943,61 @@ expression
         free(dst);
       }
     | LPAREN type_specifier RPAREN KW_MAGNITUDO
-
     {
-
-
         size_t sz = get_size_from_type($2);
-
-
         int* val = malloc(sizeof(int));
-
-
         *val = (int)sz;
-
-
         $$ = create_expression(TYPE_ATOMUS, val, new_temp());
-
-
         free($2);
-
-
     }
-
 
 | LPAREN IDENTIFIER RPAREN KW_MAGNITUDO
-
-
     {
-
-
         Symbol* sym = scope_lookup($2);
-
-
         if (!sym) {
-
-
             semantic_error("Identificador não declarado para magnitudo.");
-
-
             $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
-
-
         } else {
-
-
             size_t sz = get_size_from_type(sym->type);
-
-
             int* val = malloc(sizeof(int));
-
-
             *val = (int)sz;
-
-
             $$ = create_expression(TYPE_ATOMUS, val, new_temp());
-
-
         }
-
-
         free($2);
-
-
     }
 
-
 | LPAREN type_specifier OP_MULTIPLY IDENTIFIER RPAREN KW_MAGNITUDO
-
-
     {
-
-
         // Exemplo: (atomus * n)magnitudo;
-
-
         Symbol* sym = scope_lookup($4);
-
-
         if (!sym) {
-
-
             semantic_error("Identificador não declarado para magnitudo.");
-
-
             $$ = create_expression(TYPE_UNDEFINED, NULL, new_temp());
-
-
         } else {
-
-
             size_t sz = get_size_from_type($2);
-
-
             int n = 0;
-
-
             if (string_to_type(sym->type) == TYPE_ATOMUS && sym->data.value) {
-
-
                 n = *(int*)sym->data.value;
-
-
             } else {
-
-
                 semantic_error("Multiplicador de magnitudo deve ser inteiro (atomus).");
-
-
             }
-
-
             int* val = malloc(sizeof(int));
-
-
             *val = (int)(sz * n);
-
-
             $$ = create_expression(TYPE_ATOMUS, val, new_temp());
-
-
         }
-
-
         free($2);
-
-
         free($4);
-
-
     }
 
 
 | LPAREN type_specifier OP_MULTIPLY LIT_INT RPAREN KW_MAGNITUDO
-
-
     {
-
-
         // Exemplo: (atomus * 10)magnitudo;
-
-
         size_t sz = get_size_from_type($2);
-
-
         int* val = malloc(sizeof(int));
-
-
         *val = (int)(sz * $4);
-
-
         $$ = create_expression(TYPE_ATOMUS, val, new_temp());
-
-
         free($2);
-
-
     }
     ;
 
