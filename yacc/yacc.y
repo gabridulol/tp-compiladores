@@ -144,6 +144,8 @@ void yyerror(const char *s);
 %type <expr> pointer_statement
 %type <expr> pointer_assignment
 %type <expr> pointer_dereference
+%type <expr> conditional_statement
+
 
 %type <arg_list> argument_list
 
@@ -197,18 +199,18 @@ statement_list
 //
 
 statement
-    : expression_statement
-    | iteration_statement
+    : conditional_statement 
+    | expression_statement 
+    | iteration_statement 
     | io_functions 
-    | declaration_statement
-    | function_call_statement
-    | conditional_statement
+    | declaration_statement 
+    | function_call_statement 
     | type_define_statement
-    | vector_statement
-    | jump_statement
-    | causal_statement
-    | enum_assignment
-    | assignment_statement
+    | vector_statement 
+    | jump_statement 
+    | causal_statement 
+    | enum_assignment 
+    | assignment_statement 
     ;
 
 //
@@ -744,8 +746,8 @@ jump_statement
     ;
 
 conditional_statement
-    : LPAREN expression RPAREN KW_SI block { scope_pop(); }
-    | LPAREN expression RPAREN KW_SI block { scope_pop(); } conditional_non_statement
+    : LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE { scope_pop(); }
+    | LPAREN expression RPAREN KW_SI LBRACE statement_list RBRACE { scope_pop(); } conditional_non_statement
     | LPAREN expression RPAREN KW_VERTERE LBRACE { scope_push(); } causal_statement RBRACE { scope_pop(); }
     ;
 

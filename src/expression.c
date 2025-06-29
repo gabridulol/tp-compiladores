@@ -21,19 +21,20 @@ const char* get_type_name(int type) {
 }
 
 const char* get_op_name(int op) {
+    // Mapeia os códigos de operação para seus nomes
     switch (op) {
-        case 305: return "+";   // soma
-        case 304: return "*";   // multiplicação
-        case 312: return "<";   // menor que
-        case 306: return "-";   // subtração
-        case 307: return "/";   // divisão
-        case 308: return "%";   // módulo
-        case 309: return "^";   // exponenciação
-        case 310: return "==";  // igualdade
-        case 311: return "!=";  // diferente
-        case 313: return ">";   // maior que
-        case 314: return ">=";  // maior ou igual
-        case 315: return "<=";  // menor ou igual
+        case OP_ADD: return "+";   // soma
+        case OP_MULTIPLY: return "*";   // multiplicação
+        case OP_SUBTRACT: return "-";   // subtração
+        case OP_DIVIDE: return "/";   // divisão
+        case OP_MODULUS: return "%";   // módulo
+        case OP_EXP: return "^";   // exponenciação
+        case OP_EQUAL: return "==";  // igualdade
+        case OP_NOT_EQUAL: return "!=";  // diferente
+        case OP_LESS_THAN: return "<";   // menor que
+        case OP_GREATER_THAN: return ">";   // maior que
+        case OP_GREATER_EQUAL: return ">=";  // maior ou igual
+        case OP_LESS_EQUAL: return "<=";  // menor ou igual
         default:  return "UNKNOWN_OP";
     }
 }

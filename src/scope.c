@@ -1,6 +1,7 @@
 #include "scope.h"
 
 Scope *scope_stack = NULL;
+Scope *scope_menor = NULL;
 
 void scope_init() {
     scope_stack = malloc(sizeof(Scope));
@@ -9,6 +10,7 @@ void scope_init() {
         exit(EXIT_FAILURE);
     }
     st_init(&scope_stack->table);
+    scope_menor->table.table[0] = NULL; 
     scope_stack->prev = NULL;
 }
 
