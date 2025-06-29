@@ -5,6 +5,7 @@
 
 typedef struct Scope {
     SymbolTable table;
+    int index;
     struct Scope *prev;  // Escopo pai (escopo anterior na pilha)
 } Scope;
 

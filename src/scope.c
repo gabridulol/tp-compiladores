@@ -38,6 +38,7 @@ void scope_push(void) {
         scope_queue = realloc(scope_queue, sizeof(Scope*) * capacity);
         if (!scope_queue) { perror("realloc scope_queue"); exit(EXIT_FAILURE); }
     }
+    s->index = queue_top + 1;
     scope_queue[++queue_top] = s;
 }
 
@@ -86,8 +87,9 @@ void scope_cleanup(void) {
 void scope_print_all(void) {
     // Imprime todos os escopos na ordem de criação
     for (int i = 0; i <= queue_top; ++i) {
-        printf("==== Escopo %d (parent=%p) ====\n",
-               i, (void*)scope_queue[i]->prev);
+        printf("\n================== Escopo %d (Pai = %d) ==================\n",
+               i, scope_queue[i]->prev ? scope_queue[i]->prev->index : -1);
         st_print(&scope_queue[i]->table);
+        printf("\n");
     }
 }

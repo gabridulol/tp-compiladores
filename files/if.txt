@@ -4,5 +4,35 @@ main() Alchemia{
 
     (x == 0) si {
         4 --> y atomus;
+        3 redire;
     }
+    1 --> x atomus;
+
+    (x == 0) si {
+        3 --> y;
+        (x < 0) si {
+            "Negativo" redire;
+        } 
+
+        (x < 0) si {
+            "Negativo" redire;
+        } 
+
+        non {
+        "Zero" redire;
+        }
+    }
+
+    (x < 0) si {
+        "Negativo" redire;
+    } 
+
+    non (x == 0) si {
+        "Nulo" redire;
+    }
+
+    (x < 0) si {
+        "Negativo" redire;
+    } 
+    
 }
