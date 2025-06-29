@@ -56,7 +56,7 @@ void yyerror(const char *s);
 %token KW_LECTURA
 %token KW_MAGNITUDO
 %token KW_MOL
-%token KW_NON_SI // Deprecated, NON SI is token KW_NON and KW_SI
+/* %token KW_NON_SI // Deprecated, NON SI is token KW_NON and KW_SI */
 %token KW_NON
 %token KW_PERSISTO
 %token KW_REDIRE

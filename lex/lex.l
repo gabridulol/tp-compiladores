@@ -47,7 +47,6 @@ STRING          \"([^\\\"\n]|\\.)*\"
 "magnitudo"         { token_printer(COLOR_KEYWORD, yytext); return KW_MAGNITUDO; }
 "mol"               { token_printer(COLOR_KEYWORD, yytext); return KW_MOL; }
 "ne"                { token_printer(COLOR_KEYWORD, yytext); return OP_LOGICAL_NOT; }
-"non si"            { token_printer(COLOR_KEYWORD, yytext); return KW_NON_SI; }
 "non"               { token_printer(COLOR_KEYWORD, yytext); return KW_NON; }
 "persisto"          { token_printer(COLOR_KEYWORD, yytext); return KW_PERSISTO; }
 "redire"            { token_printer(COLOR_KEYWORD, yytext); return KW_REDIRE; }
