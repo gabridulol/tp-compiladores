@@ -3,8 +3,27 @@
 
 #include "symbol_table.h"
 
+
+typedef enum {
+    BLOCK_NONE,
+    BLOCK_GLOBAL,
+    BLOCK_FUNCTION,
+    BLOCK_LOOP,
+    BLOCK_CONDITIONAL,
+} BlockType;
+
+static const char *BlockTypeNames[] = {
+    [BLOCK_NONE]        = "Nenhum",
+    [BLOCK_GLOBAL]      = "Global",
+    [BLOCK_FUNCTION]    = "Função",
+    [BLOCK_LOOP]        = "Loop",
+    [BLOCK_CONDITIONAL] = "Condicional",
+};
+
+
 typedef struct Scope {
     SymbolTable table;
+    BlockType block_type;
     int index;
     struct Scope *prev;  // Escopo pai (escopo anterior na pilha)
 } Scope;
@@ -14,7 +33,7 @@ typedef struct Scope {
 void scope_init();
 
 // Cria um novo escopo (empilha)
-void scope_push();
+void scope_push(BlockType block_type);
 
 // Remove escopo atual (desempilha)
 void scope_pop();
