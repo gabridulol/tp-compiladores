@@ -1,8 +1,11 @@
 main() Alchemia {
     5 --> a atomus;
     4 --> a;
+
+    5 + 4 --> b atomus;
     
     (a < 100) persisto {
         a + 1 --> a;
     }
+
 }
