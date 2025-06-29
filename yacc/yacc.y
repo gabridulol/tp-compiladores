@@ -1006,7 +1006,7 @@ constant
 string
     : LIT_STRING
       {
-        $$ = create_expression(KW_TYPE_SCRIPTUM, strdup($1));
+        $$ = create_expression(TYPE_SCRIPTUM, strdup($1));
       }
     ;
 
