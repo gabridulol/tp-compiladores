@@ -1,11 +1,4 @@
 main() Alchemia {
     a atomus;
     5 --> a;
-    (5 < a) si {
-        a + 1 --> a;
-    } non (5 == a) si {
-        a + 2 --> a;
-    } non {
-        a + 3 --> a;
-    }
 }

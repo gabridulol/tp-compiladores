@@ -313,6 +313,7 @@ assignment_statement
 
         free_expression(val);
         free(var_name);
+        $$ = NULL;
       }
     | expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON // Atribuição a um elemento de um vetor
       {
@@ -878,8 +879,8 @@ conditional_statement
     ;
 
 conditional_non_statement
-    : // vazio
-    | KW_NON {  scope_push(BLOCK_CONDITIONAL); $$ = NULL; } block
+    : {$$ = NULL; }
+    | KW_NON block {  scope_push(BLOCK_CONDITIONAL); $$ = NULL; }
     | KW_NON conditional_statement {$$ = NULL; }
     ;
 

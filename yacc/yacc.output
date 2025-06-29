@@ -170,17 +170,16 @@ Grammar
 
   100 $@3: ε
 
-  101 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block conditional_non_statement
+  101 $@4: ε
 
-  102 $@4: ε
+  102 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block $@4 conditional_non_statement
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  103 $@5: ε
 
-  104 conditional_non_statement: ε
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
 
-  105 $@5: ε
-
-  106 conditional_non_statement: KW_NON $@5 block
+  105 conditional_non_statement: ε
+  106                          | KW_NON block
   107                          | KW_NON conditional_statement
 
   108 causal_statement: KW_CASUS expression COLON statement_list
@@ -273,7 +272,7 @@ Terminals, with rules where they appear
     KW_AXIOM (260) 109
     KW_CONTINUUM (261) 96
     KW_RUPTIO (262) 97
-    KW_VERTERE (263) 103
+    KW_VERTERE (263) 104
     KW_DESIGNARE (264) 130 134
     KW_ENUMERARE (265) 84 135
     KW_EVOCARE (266) 29
@@ -287,7 +286,7 @@ Terminals, with rules where they appear
     KW_PERSISTO (274) 111
     KW_REDIRE (275) 98 99
     KW_REVELARE (276) 30 126
-    KW_SI (277) 101
+    KW_SI (277) 102
     KW_TYPE_ATOMUS (278) 74
     KW_TYPE_FRACTIO (279) 75
     KW_TYPE_FRAGMENTUM (280) 76
@@ -328,12 +327,12 @@ Terminals, with rules where they appear
     LANGLE (315) 28 124 125 142 144
     RANGLE (316) 28 126 127 142 144
     COLON (317) 108 109
-    LPAREN (318) 10 30 35 87 92 93 101 103 111 113 115 117 119 128 155
-    RPAREN (319) 10 30 35 87 92 93 101 103 111 113 115 117 119 128 155
+    LPAREN (318) 10 30 35 87 92 93 102 104 111 113 115 117 119 128 155
+    RPAREN (319) 10 30 35 87 92 93 102 104 111 113 115 117 119 128 155
     LBRACKET (320) 143
     RBRACKET (321) 143
-    LBRACE (322) 8 87 103 134 135
-    RBRACE (323) 8 87 103 134 135
+    LBRACE (322) 8 87 104 134 135
+    RBRACE (323) 8 87 104 134 135
     PIPE (324) 90 95 139 140 141
     SEMICOLON (325) 26 27 28 29 30 31 67 68 92 93 96 97 98 99 124 126 128 130 134 135 142 143 150 151
     IDENTIFIER <str> (326) 10 25 27 28 29 30 32 60 67 68 83 84 87 91 92 93 124 125 126 127 130 134 135 136 137 138 139 140 141 142 143 144 150 151 152 153 154 155 156
@@ -355,7 +354,7 @@ Nonterminals, with rules where they appear
         on right: 3
     block <ptr> (77)
         on left: 8
-        on right: 10 101 106 111 113 115 117 119
+        on right: 10 102 106 111 113 115 117 119
     alchemia_statement <expr> (78)
         on left: 10
         on right: 1
@@ -391,7 +390,7 @@ Nonterminals, with rules where they appear
         on right: 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59
     expression <expr> (89)
         on left: 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60
-        on right: 26 27 28 31 35 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 68 94 95 99 101 103 108 111 113 117 142 144 151
+        on right: 26 27 28 31 35 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 68 94 95 99 102 104 108 111 113 117 142 144 151
     constant <expr> (90)
         on left: 61 62 63 64 65
         on right: 33
@@ -432,23 +431,23 @@ Nonterminals, with rules where they appear
         on left: 96 97 98 99
         on right: 21
     conditional_statement <expr> (103)
-        on left: 101 103
+        on left: 102 104
         on right: 13 107
     $@3 (104)
         on left: 100
-        on right: 101
+        on right: 102
     $@4 (105)
-        on left: 102
-        on right: 103
-    conditional_non_statement <expr> (106)
-        on left: 104 106 107
-        on right: 101
-    $@5 (107)
-        on left: 105
-        on right: 106
+        on left: 101
+        on right: 102
+    $@5 (106)
+        on left: 103
+        on right: 104
+    conditional_non_statement <expr> (107)
+        on left: 105 106 107
+        on right: 102
     causal_statement (108)
         on left: 108 109
-        on right: 22 103
+        on right: 22 104
     iteration_statement (109)
         on left: 111 113 115 117 119
         on right: 15
@@ -2950,8 +2949,8 @@ State 176
    35 primary_expression: LPAREN • expression RPAREN
    92 function_call_statement: LPAREN • RPAREN IDENTIFIER SEMICOLON
    93                        | LPAREN • argument_list RPAREN IDENTIFIER SEMICOLON
-  101 conditional_statement: LPAREN • expression RPAREN KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN • expression RPAREN KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
   111 iteration_statement: LPAREN • expression RPAREN KW_PERSISTO $@6 block
   113                    | LPAREN • expression_statement expression_statement expression RPAREN KW_ITERARE $@7 block
   115                    | LPAREN • expression_statement expression_statement RPAREN KW_ITERARE $@8 block
@@ -3473,8 +3472,8 @@ State 209
    60           | expression • OP_ASSIGN IDENTIFIER
    68 declaration_statement: expression • OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
    94 argument_list: expression •
-  101 conditional_statement: LPAREN expression • RPAREN KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN expression • RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN expression • RPAREN KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN expression • RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
   111 iteration_statement: LPAREN expression • RPAREN KW_PERSISTO $@6 block
   151 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
@@ -4042,8 +4041,8 @@ State 230
 State 231
 
    35 primary_expression: LPAREN expression RPAREN •
-  101 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@5 causal_statement RBRACE
   111 iteration_statement: LPAREN expression RPAREN • KW_PERSISTO $@6 block
 
     KW_VERTERE   shift, and go to state 254
@@ -4476,7 +4475,7 @@ State 253
 
 State 254
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE • LBRACE $@4 causal_statement RBRACE
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE • LBRACE $@5 causal_statement RBRACE
 
     LBRACE  shift, and go to state 273
 
@@ -4492,7 +4491,7 @@ State 255
 
 State 256
 
-  101 conditional_statement: LPAREN expression RPAREN KW_SI • $@3 block conditional_non_statement
+  102 conditional_statement: LPAREN expression RPAREN KW_SI • $@3 block $@4 conditional_non_statement
 
     $default  reduce using rule 100 ($@3)
 
@@ -4742,11 +4741,11 @@ State 272
 
 State 273
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE • $@4 causal_statement RBRACE
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE • $@5 causal_statement RBRACE
 
-    $default  reduce using rule 102 ($@4)
+    $default  reduce using rule 103 ($@5)
 
-    $@4  go to state 286
+    $@5  go to state 286
 
 
 State 274
@@ -4760,7 +4759,7 @@ State 274
 
 State 275
 
-  101 conditional_statement: LPAREN expression RPAREN KW_SI $@3 • block conditional_non_statement
+  102 conditional_statement: LPAREN expression RPAREN KW_SI $@3 • block $@4 conditional_non_statement
 
     LBRACE  shift, and go to state 157
 
@@ -4879,7 +4878,7 @@ State 285
 
 State 286
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@4 • causal_statement RBRACE
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@5 • causal_statement RBRACE
 
     KW_CASUS  shift, and go to state 170
     KW_AXIOM  shift, and go to state 171
@@ -4896,13 +4895,11 @@ State 287
 
 State 288
 
-  101 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block • conditional_non_statement
+  102 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block • $@4 conditional_non_statement
 
-    KW_NON  shift, and go to state 297
+    $default  reduce using rule 101 ($@4)
 
-    $default  reduce using rule 104 (conditional_non_statement)
-
-    conditional_non_statement  go to state 298
+    $@4  go to state 297
 
 
 State 289
@@ -4911,7 +4908,7 @@ State 289
 
     LBRACE  shift, and go to state 157
 
-    block  go to state 299
+    block  go to state 298
 
 
 State 290
@@ -4920,7 +4917,7 @@ State 290
 
     $default  reduce using rule 116 ($@9)
 
-    $@9  go to state 300
+    $@9  go to state 299
 
 
 State 291
@@ -4941,7 +4938,7 @@ State 293
 
    28 assignment_statement: expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE • SEMICOLON
 
-    SEMICOLON  shift, and go to state 301
+    SEMICOLON  shift, and go to state 300
 
 
 State 294
@@ -4957,77 +4954,94 @@ State 295
 
     LBRACE  shift, and go to state 157
 
-    block  go to state 302
+    block  go to state 301
 
 
 State 296
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@4 causal_statement • RBRACE
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@5 causal_statement • RBRACE
 
-    RBRACE  shift, and go to state 303
+    RBRACE  shift, and go to state 302
 
 
 State 297
 
-  106 conditional_non_statement: KW_NON • $@5 block
-  107                          | KW_NON • conditional_statement
+  102 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block $@4 • conditional_non_statement
 
-    LPAREN  shift, and go to state 304
+    KW_NON  shift, and go to state 303
 
-    $default  reduce using rule 105 ($@5)
+    $default  reduce using rule 105 (conditional_non_statement)
 
-    conditional_statement  go to state 305
-    $@5                    go to state 306
+    conditional_non_statement  go to state 304
 
 
 State 298
-
-  101 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block conditional_non_statement •
-
-    $default  reduce using rule 101 (conditional_statement)
-
-
-State 299
 
   119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@10 block •
 
     $default  reduce using rule 119 (iteration_statement)
 
 
-State 300
+State 299
 
   117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 • block
 
     LBRACE  shift, and go to state 157
 
-    block  go to state 307
+    block  go to state 305
 
 
-State 301
+State 300
 
    28 assignment_statement: expression OP_ASSIGN IDENTIFIER LANGLE expression RANGLE SEMICOLON •
 
     $default  reduce using rule 28 (assignment_statement)
 
 
-State 302
+State 301
 
   113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@7 block •
 
     $default  reduce using rule 113 (iteration_statement)
 
 
+State 302
+
+  104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE •
+
+    $default  reduce using rule 104 (conditional_statement)
+
+
 State 303
 
-  103 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE •
+  106 conditional_non_statement: KW_NON • block
+  107                          | KW_NON • conditional_statement
 
-    $default  reduce using rule 103 (conditional_statement)
+    LPAREN  shift, and go to state 306
+    LBRACE  shift, and go to state 157
+
+    block                  go to state 307
+    conditional_statement  go to state 308
 
 
 State 304
 
-  101 conditional_statement: LPAREN • expression RPAREN KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN expression RPAREN KW_SI $@3 block $@4 conditional_non_statement •
+
+    $default  reduce using rule 102 (conditional_statement)
+
+
+State 305
+
+  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 block •
+
+    $default  reduce using rule 117 (iteration_statement)
+
+
+State 306
+
+  102 conditional_statement: LPAREN • expression RPAREN KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -5044,7 +5058,7 @@ State 304
 
     primary_expression         go to state 21
     unary_expression           go to state 22
-    expression                 go to state 308
+    expression                 go to state 309
     constant                   go to state 24
     string                     go to state 25
     vector_access              go to state 31
@@ -5056,30 +5070,21 @@ State 304
     member_access_pointer      go to state 38
 
 
-State 305
+State 307
+
+  106 conditional_non_statement: KW_NON block •
+
+    $default  reduce using rule 106 (conditional_non_statement)
+
+
+State 308
 
   107 conditional_non_statement: KW_NON conditional_statement •
 
     $default  reduce using rule 107 (conditional_non_statement)
 
 
-State 306
-
-  106 conditional_non_statement: KW_NON $@5 • block
-
-    LBRACE  shift, and go to state 157
-
-    block  go to state 309
-
-
-State 307
-
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 block •
-
-    $default  reduce using rule 117 (iteration_statement)
-
-
-State 308
+State 309
 
    44 expression: expression • OP_ADD unary_expression
    45           | expression • OP_SUBTRACT unary_expression
@@ -5098,8 +5103,8 @@ State 308
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  101 conditional_statement: LPAREN expression • RPAREN KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN expression • RPAREN KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN expression • RPAREN KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN expression • RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -5121,17 +5126,10 @@ State 308
     RPAREN             shift, and go to state 310
 
 
-State 309
-
-  106 conditional_non_statement: KW_NON $@5 block •
-
-    $default  reduce using rule 106 (conditional_non_statement)
-
-
 State 310
 
-  101 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block conditional_non_statement
-  103                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@4 causal_statement RBRACE
+  102 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@5 causal_statement RBRACE
 
     KW_VERTERE  shift, and go to state 254
     KW_SI       shift, and go to state 256
