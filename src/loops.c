@@ -30,6 +30,12 @@ static void print_expression(const Expression* expr) {
     }
     fprintf(stderr, "Expression(Type: %s, Value: ", get_type_name(expr->type));
     switch (expr->type) {
+        case TYPE_UNDEFINED:
+            fprintf(stderr, "undefined");
+            break;
+        case TYPE_VACUUM:
+            fprintf(stderr, " ");
+            break;
         case TYPE_ATOMUS:
         case TYPE_QUANTUM:
             fprintf(stderr, "%d", *(int*)expr->value);
@@ -37,11 +43,28 @@ static void print_expression(const Expression* expr) {
         case TYPE_FRACTIO:
             fprintf(stderr, "%.2f", *(double*)expr->value);
             break;
+        case TYPE_FRAGMENTUM:
+            fprintf(stderr, "%.2lf", *(double*)expr->value);
+            break;
+        case TYPE_MAGNUS:
+            fprintf(stderr, "%lld", *(long long int*)expr->value);
+            break;
+        case TYPE_MINIMUS:
+            fprintf(stderr, "%d", *(short*)expr->value);
+            break;
         case TYPE_SYMBOLUM:
             fprintf(stderr, "'%c'", *(char*)expr->value);
             break;
         case TYPE_SCRIPTUM:
             fprintf(stderr, "\"%s\"", (char*)expr->value);
+            break;
+        case TYPE_POINTER:
+            if (expr->value) {
+                fprintf(stderr, "%p", *(void**)expr->value);
+            }
+            else {
+                fprintf(stderr, "NULL");
+            }
             break;
         default:
             fprintf(stderr, "???:%p", expr->value);

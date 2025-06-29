@@ -5,14 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 typedef enum {
     TYPE_UNDEFINED,
+    TYPE_VACUUM,     // Tipo vazio (sem valor)
     TYPE_ATOMUS,     // Inteiro
     TYPE_FRACTIO,    // Float/Double
+    TYPE_FRAGMENTUM, // Tipo fragmento (pode ser usado para estruturas complexas)
+    TYPE_QUANTUM,     // Booleano (verdadeiro/falso)
+    TYPE_MAGNUS,     // Tipo grande (pode ser usado para estruturas complexas)
+    TYPE_MINIMUS,    // Tipo pequeno (pode ser usado para estruturas complexas)
     TYPE_SYMBOLUM,   // Char
     TYPE_SCRIPTUM,   // String
-    TYPE_QUANTUM,     // Booleano (verdadeiro/falso)
     TYPE_POINTER     // Tipo ponteiro genérico
 } DataType;
 

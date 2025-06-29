@@ -1448,7 +1448,7 @@ iteration_statement
           emit("=", cond, "", tmp);
           cond = tmp;
         }
-        emit("ifFalse", cond, "", L_end);
+        // emit("ifFalse", cond, "", L_end);
       } block {
         /* volta pro início após o corpo */
         emit("goto", "", "", top_label_else());

@@ -11,11 +11,15 @@
 const char* get_type_name(int type) {
     switch (type) {
         case TYPE_UNDEFINED: return "UNDEFINED";
+        case TYPE_VACUUM:    return "VACUUM";     // tipo vazio (sem valor)
         case TYPE_ATOMUS:    return "ATOMUS";     // inteiro
         case TYPE_FRACTIO:   return "FRACTIO";    // float/double
+        case TYPE_FRAGMENTUM: return "FRAGMENTUM"; // tipo fragmento (pode ser usado para estruturas complexas)
+        case TYPE_QUANTUM:   return "QUANTUM";    // booleano
+        case TYPE_MAGNUS:    return "MAGNUS";     // tipo grande
+        case TYPE_MINIMUS:   return "MINIMUS";    // tipo pequeno
         case TYPE_SYMBOLUM:  return "SYMBOLUM";   // char
         case TYPE_SCRIPTUM:  return "SCRIPTUM";   // string
-        case TYPE_QUANTUM:   return "QUANTUM";    // booleano
         case TYPE_POINTER:   return "POINTER";    // ponteiro
         default:             return "UNKNOWN_TYPE";
     }
@@ -63,11 +67,16 @@ char* get_temp_name(Expression* expr) {
 // Converte a string de tipo do seu YACC para o nosso enum
 DataType string_to_type(const char* type_str) {
     static const TypeMapEntry map[] = {
+        {"undefined", TYPE_UNDEFINED},
+        {"vacuum", TYPE_VACUUM},
         {"atomus", TYPE_ATOMUS},
         {"fractio", TYPE_FRACTIO},
+        {"fragmentum", TYPE_FRAGMENTUM},
+        {"quantum", TYPE_QUANTUM},
+        {"magnus", TYPE_MAGNUS},
+        {"minimus", TYPE_MINIMUS},
         {"symbolum", TYPE_SYMBOLUM},
         {"scriptum", TYPE_SCRIPTUM},
-        {"quantum", TYPE_QUANTUM},
         {"pointer", TYPE_POINTER},
         {NULL, TYPE_UNDEFINED}
     };

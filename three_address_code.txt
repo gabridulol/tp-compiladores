@@ -1,18 +1,5 @@
 main:
-a = 4
-ifFalse  goto L0
-t1 = a + 1
-a = t1
-goto L1
-L0:
-ifFalse  goto L2
-t3 = a + 2
-a = t3
-goto L3
-L2:
-t4 = a + 3
-a = t4
-L3:
-L1:
-t6 = a + 1
-a = t6
+x = 5
+t0 = 5 + x
+x = t0
+t1 = 5 + x

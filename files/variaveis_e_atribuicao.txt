@@ -1,6 +1,5 @@
 main() Alchemia {
     5 --> x atomus;
-    10 --> x;
     5 + x --> x; 
     5 + x;
 }
