@@ -115,6 +115,7 @@ void yyerror(const char *s);
 %token PIPE
 %token SEMICOLON
 
+
 %token <str> IDENTIFIER
 
 %token LEX_ERROR // Lexical error token, not used in grammar
@@ -222,8 +223,8 @@ statement
     | vector_statement 
     | jump_statement 
     | causal_statement 
-    | enum_assignment 
     | assignment_statement 
+    | print_statement 
     ;
 
 //
@@ -338,6 +339,50 @@ import_statement
    ;
 
 //
+
+print_statement
+  : KW_REVELARE LPAREN IDENTIFIER RPAREN SEMICOLON
+    {
+        Symbol* s = scope_lookup($3);
+        if (s) {
+            // Checa se o ponteiro para o dado existe, indicando inicialização
+            if (s->data.value) {
+                // Converte o tipo do símbolo de string para um enum para o switch
+                DataType type = string_to_type(s->type);
+
+                switch(type) {
+                    case TYPE_ATOMUS:
+                        printf("» %s = %d\n", s->name, *(int*)s->data.value);
+                        break;
+                    case TYPE_FRACTIO:
+                        printf("» %s = %f\n", s->name, *(double*)s->data.value);
+                        break;
+                    case TYPE_SCRIPTUM:
+                        printf("» %s = \"%s\"\n", s->name, (char*)s->data.value);
+                        break;
+                    case TYPE_SYMBOLUM:
+                        printf("» %s = '%c'\n", s->name, *(char*)s->data.value);
+                        break;
+                    case TYPE_QUANTUM:
+                        // Imprime 'factum' para verdadeiro (1) e 'fictum' para falso (0)
+                        printf("» %s = %s\n", s->name, *(int*)s->data.value ? "factum" : "fictum");
+                        break;
+                    default:
+                        printf("» '%s' é de um tipo não imprimível.\n", s->name);
+                        break;
+                }
+            } else {
+                printf("» variavel '%s' nao inicializada\n", $3);
+            }
+        } else {
+            char err_msg[128];
+            sprintf(err_msg, "Erro semântico: variável '%s' não declarada.", $3);
+            yyerror(err_msg);
+        }
+        free($3); // Libera a string do identificador
+    }
+  ;
+
 
 expression_statement
     : expression SEMICOLON
@@ -717,7 +762,8 @@ parameter
 //
 
 function_call_statement
-    : LPAREN argument_list RPAREN IDENTIFIER SEMICOLON
+   : LPAREN RPAREN IDENTIFIER SEMICOLON        /* zero argumentos */
+   | LPAREN argument_list RPAREN IDENTIFIER SEMICOLON  /* um ou mais args */
 
 // Um único item na lista: cria o primeiro nó.
 argument_list
@@ -860,17 +906,6 @@ type_define_enum
     : IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
     ;
 
-enum_assignment
-    : IDENTIFIER OP_ASSIGN IDENTIFIER IDENTIFIER KW_ENUMERARE SEMICOLON
-      {
-           if (scope_lookup($1) != NULL) {
-                semantic_error("Enumeração já declarada!");
-            }else{
-                scope_insert($1, SYM_ENUM, $4, yylineno, NULL);
-            }
-            free($1);
-      }
-    ;
 
 // Enumerações   COMUM    |   COMUM --> 1   |    COMUM --> 'b'
 enum_list
