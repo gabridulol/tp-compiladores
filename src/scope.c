@@ -1,83 +1,125 @@
 #include "scope.h"
+#include "symbol_table.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-Scope *scope_stack = NULL;
+#define INITIAL_CAPACITY 8
 
-void scope_init() {
-    scope_stack = malloc(sizeof(Scope));
-    if (!scope_stack) {
-        fprintf(stderr, "Erro ao alocar escopo global.\n");
-        exit(EXIT_FAILURE);
-    }
-    st_init(&scope_stack->table);
-    scope_stack->prev = NULL;
+// Fila de escopos: histórico de criação (para print final)
+static Scope **scope_queue = NULL;
+static int      capacity    = 0;
+static int      queue_top   = -1;
+
+// Ponteiro para o escopo atual (inserções e chain parent)
+static Scope *scope_atual = NULL;
+
+void scope_init(void) {
+    capacity    = INITIAL_CAPACITY;
+    scope_queue = malloc(sizeof(Scope*) * capacity);
+    if (!scope_queue) { perror("malloc scope_queue"); exit(EXIT_FAILURE); }
+    queue_top = -1;
+    // Cria escopo global
+    scope_push(BLOCK_GLOBAL);
 }
 
-void scope_push() {
-    Scope *new_scope = malloc(sizeof(Scope));
-    if (!new_scope) {
-        fprintf(stderr, "Erro ao alocar novo escopo.\n");
-        exit(EXIT_FAILURE);
+void scope_push(BlockType block_type) {
+    if (!scope_queue) scope_init();
+    if (queue_top + 1 >= capacity) {
+        capacity *= 2;
+        scope_queue = realloc(scope_queue, sizeof(Scope*) * capacity);
+        if (!scope_queue) { perror("realloc scope_queue"); exit(EXIT_FAILURE); }
     }
-    st_init(&new_scope->table);
-    new_scope->prev = scope_stack;
-    scope_stack = new_scope;
+    Scope *s = malloc(sizeof(Scope));
+    if (!s) { perror("malloc Scope"); exit(EXIT_FAILURE); }
+    st_init(&s->table);
+    s->prev       = scope_atual;
+    s->index      = queue_top + 1;
+    s->block_type = block_type;
+    scope_atual   = s;
+    scope_queue[++queue_top] = s;
 }
 
-void scope_pop() {
-    if (scope_stack) {
-        Scope *old = scope_stack;
-        scope_stack = scope_stack->prev;
-        st_free(&old->table);
-        free(old);
-    } else {
-        fprintf(stderr, "[Aviso] Tentativa de desempilhar escopo inexistente.\n");
+void scope_pop(void) {
+    if (!scope_atual) {
+        fprintf(stderr, "[Aviso] Nenhum escopo para desempilhar.\n");
+        return;
     }
+    // Apenas desfaz o escopo atual, sem liberar, para uso posterior em print
+    fprintf(stderr, "[DEBUG] Desempilhando escopo %d do tipo %s\n",
+           scope_atual->index, BlockTypeNames[scope_atual->block_type]);
+    scope_atual = scope_atual->prev;
 }
 
-Symbol* scope_insert(const char *name, SymbolKind kind, const char *type, int line, void *value) {
-    if (!scope_stack) {
-        fprintf(stderr, "Erro: escopo atual não inicializado.\n");
-        return NULL;
-    }
-    return st_insert(&scope_stack->table, name, kind, type, line, value);
+Symbol* scope_insert(const char *name, SymbolKind kind,
+                     const char *type, int line, void *value) {
+    if (!scope_atual) scope_push(BLOCK_NONE);
+    return st_insert(&scope_atual->table, name, kind, type, line, value);
 }
 
 Symbol* scope_lookup(const char *name) {
-    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
-        Symbol *found = st_lookup(&s->table, name);
-        if (found) return found;
+    for (Scope *s = scope_atual; s; s = s->prev) {
+        Symbol* sym = st_lookup(&s->table, name);
+        if (sym) return sym;
     }
     return NULL;
 }
 
 Symbol* scope_lookup_current(const char *name) {
-    if (!scope_stack) return NULL;
-    return st_lookup(&scope_stack->table, name);
+    if (!scope_atual) return NULL;
+    return st_lookup(&scope_atual->table, name);
 }
 
-void scope_cleanup() {
-    while (scope_stack) {
-        scope_pop();
+void scope_cleanup(void) {
+    // Libera todos os escopos do histórico
+    for (int i = 0; i <= queue_top; ++i) {
+        Scope *s = scope_queue[i];
+        st_free(&s->table);
+        free(s);
     }
+    free(scope_queue);
+    scope_queue = NULL;
+    capacity    = 0;
+    queue_top   = -1;
+    scope_atual = NULL;
 }
 
-void scope_print_all() {
-    int count = 0;
-    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
-        count++;
+void scope_print_all(void) {
+    const int LINE_WIDTH = 60;
+
+    // Cabeçalho geral
+    printf("\n=================================================================\n");
+    printf("%*s%s%*s\n",
+           (LINE_WIDTH - (int)strlen(" Escopos Registrados "))/2, "",
+           " Escopos Registrados ",
+           (LINE_WIDTH - (int)strlen(" Escopos Registrados "))/2, "");
+    printf("=================================================================\n");
+
+    // Itera sobre cada escopo armazenado
+    for (int i = 0; i <= queue_top; ++i) {
+        Scope *s = scope_queue[i];
+        const char *blockName = BlockTypeNames[s->block_type];
+        int parentIdx = s->prev ? s->prev->index : -1;
+
+        // Título do escopo centralizado
+        char title[100];
+        snprintf(title, sizeof(title), " Escopo %d | %s | Pai: %d ",
+                 i, blockName, parentIdx);
+        int len = strlen(title);
+        int pad = (LINE_WIDTH - len) / 2;
+        printf("\n\n----------------------------------------------------------------");
+        printf("\n");
+        for (int j = 0; j < pad; ++j) putchar(' ');
+        printf("%s", title);
+        printf("\n-----------------------------------------------------------------");
+        for (int j = 0; j < LINE_WIDTH - len - pad; ++j) putchar(' ');
+        printf("\n");
+
+        // Conteúdo da tabela de símbolos
+        st_print(&s->table);
     }
 
-    Scope **scopes = malloc(sizeof(Scope*) * count);
-    int i = count - 1;
-    for (Scope *s = scope_stack; s != NULL; s = s->prev) {
-        scopes[i--] = s;
-    }
-
-    for (int j = 0; j < count; j++) {
-        printf("==== Escopo %d ====\n", j);
-        st_print(&scopes[j]->table);
-    }
-
-    free(scopes);
+    // Rodapé geral
+    printf("\n=================================================================\n");
 }
+
 

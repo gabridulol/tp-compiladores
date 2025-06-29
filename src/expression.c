@@ -21,19 +21,20 @@ const char* get_type_name(int type) {
 }
 
 const char* get_op_name(int op) {
+    // Mapeia os códigos de operação para seus nomes
     switch (op) {
-        case 305: return "+";   // soma
-        case 304: return "*";   // multiplicação
-        case 312: return "<";   // menor que
-        case 306: return "-";   // subtração
-        case 307: return "/";   // divisão
-        case 308: return "%";   // módulo
-        case 309: return "^";   // exponenciação
-        case 310: return "==";  // igualdade
-        case 311: return "!=";  // diferente
-        case 313: return ">";   // maior que
-        case 314: return ">=";  // maior ou igual
-        case 315: return "<=";  // menor ou igual
+        case OP_ADD: return "+";   // soma
+        case OP_MULTIPLY: return "*";   // multiplicação
+        case OP_SUBTRACT: return "-";   // subtração
+        case OP_DIVIDE: return "/";   // divisão
+        case OP_MODULUS: return "%";   // módulo
+        case OP_EXP: return "^";   // exponenciação
+        case OP_EQUAL: return "==";  // igualdade
+        case OP_NOT_EQUAL: return "!=";  // diferente
+        case OP_LESS_THAN: return "<";   // menor que
+        case OP_GREATER_THAN: return ">";   // maior que
+        case OP_GREATER_EQUAL: return ">=";  // maior ou igual
+        case OP_LESS_EQUAL: return "<=";  // menor ou igual
         default:  return "UNKNOWN_OP";
     }
 }
@@ -67,12 +68,12 @@ DataType string_to_type(const char* type_str) {
 
     for (int i = 0; map[i].key != NULL; i++) {
         if (strcmp(type_str, map[i].key) == 0) {
-            fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d\n", type_str, map[i].value);
+            // fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d\n", type_str, map[i].value);
             return map[i].value;
         }
     }
 
-    fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d (undefined)\n", type_str, TYPE_UNDEFINED);
+    // fprintf(stderr, "[DEBUG] string_to_type: '%s' => %d (undefined)\n", type_str, TYPE_UNDEFINED);
     return TYPE_UNDEFINED;
 }
 
@@ -85,10 +86,10 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
     }
 
     // --- Print de Depuração Inicial ---
-    printf("[DEBUG: evaluate_binary] Operação: %d, Tipo da Esquerda: %s (%d), Tipo da Direita: %s (%d)\n",
-       op,
-       get_type_name(left->type), left->type,
-       get_type_name(right->type), right->type);
+    // printf("[DEBUG: evaluate_binary] Operação: %d, Tipo da Esquerda: %s (%d), Tipo da Direita: %s (%d)\n",
+    //    op,
+    //    get_type_name(left->type), left->type,
+    //    get_type_name(right->type), right->type);
 
     // --- 1. Verificação de Tipos ---
     // Por enquanto, exigimos que os tipos sejam idênticos.
@@ -108,8 +109,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
         case TYPE_ATOMUS: {
             int lval = *(int*)left->value;
             int rval = *(int*)right->value;
-            printf("[DEBUG: evaluate_atomus] Left: %d, Op: %s (%d), Right: %d\n",
-       lval, get_op_name(op), op, rval);
+            // printf("[DEBUG: evaluate_atomus] Left: %d, Op: %s (%d), Right: %d\n",
+    //    lval, get_op_name(op), op, rval);
 
             int* result = malloc(sizeof(int));
             double* fresult = malloc(sizeof(double));
@@ -151,8 +152,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
         case TYPE_FRACTIO: {
             double lval = *(double*)left->value;
             double rval = *(double*)right->value;
-            printf("[DEBUG: evaluate_fractio] Left: %.6f, Op: %s (%d), Right: %.6f\n",
-       lval, get_op_name(op), op, rval);
+            // printf("[DEBUG: evaluate_fractio] Left: %.6f, Op: %s (%d), Right: %.6f\n",
+    //    lval, get_op_name(op), op, rval);
 
             double* result = malloc(sizeof(double));
             int* bool_result = NULL;
@@ -206,8 +207,8 @@ Expression* evaluate_binary_expression(Expression* left, int op, Expression* rig
     }
 
     // --- 3. Criar e retornar a nova Expression com o resultado ---
-    printf("[DEBUG: evaluate_binary] Result Type: %s (%d)\n",
-       get_type_name(result_type), result_type);
+    // printf("[DEBUG: evaluate_binary] Result Type: %s (%d)\n",
+    //    get_type_name(result_type), result_type);
     return create_expression(result_type, result_value);
 }
 

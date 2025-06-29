@@ -23,6 +23,10 @@ main() Alchemia {
     §§ Vamos ler o valor da posição 3 e guardar em 'valor_lido'.
     caldeirao << 3 >> --> valor_lido;
 
+    5 --> x atomus;
 
+    (x > 0) persisto {
+        x - 1 --> u atomus;
+    }
 
 }
