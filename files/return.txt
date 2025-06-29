@@ -3,6 +3,10 @@ formula () saudacao --> atomus {
     x redire;
 }
 
+formula () funcao --> atomus {
+    x atomus;
+    x redire;
+}
 
 main() Alchemia{
 
