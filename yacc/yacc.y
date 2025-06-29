@@ -1319,215 +1319,77 @@ identifier_langle_list
     : IDENTIFIER LANGLE KW_LECTURA SEMICOLON
      {
           Symbol* sym = scope_lookup($1);
-
-
           if (!sym) {
-
-
               semantic_error("Variável não declarada para lectura.");
-
-
           } else {
-
-
               DataType type = string_to_type(sym->type);
-
-
               if (type == TYPE_ATOMUS) {
-
-
                   int val;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%d", &val);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
-
-
                   *(int*)sym->data.value = val;
-
-
               } else if (type == TYPE_FRACTIO) {
-
-
                   double val;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%lf", &val);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
-
-
                   *(double*)sym->data.value = val;
-
-
               } else if (type == TYPE_SCRIPTUM) {
-
-
                   char buffer[256];
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%255s", buffer);
-
-
                   if (sym->data.value) free(sym->data.value);
-
-
                   sym->data.value = strdup(buffer);
-
-
               } else if (type == TYPE_SYMBOLUM) {
-
-
                   char c;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf(" %c", &c);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
-
-
                   *(char*)sym->data.value = c;
-
-
               } else {
-
-
                   semantic_error("Tipo não suportado para lectura.");
-
-
               }
-
-
           }
-
-
           free($1);
-
-
       }
     | IDENTIFIER LANGLE identifier_langle_list
     {
           Symbol* sym = scope_lookup($1);
-
-
           if (!sym) {
-
-
               semantic_error("Variável não declarada para lectura.");
-
-
           } else {
-
-
               DataType type = string_to_type(sym->type);
-
-
               if (type == TYPE_ATOMUS) {
-
-
                   int val;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%d", &val);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(int));
-
-
                   *(int*)sym->data.value = val;
-
-
               } else if (type == TYPE_FRACTIO) {
-
-
                   double val;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%lf", &val);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(double));
-
-
                   *(double*)sym->data.value = val;
-
-
               } else if (type == TYPE_SCRIPTUM) {
-
-
                   char buffer[256];
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf("%255s", buffer);
-
-
                   if (sym->data.value) free(sym->data.value);
-
-
                   sym->data.value = strdup(buffer);
-
-
               } else if (type == TYPE_SYMBOLUM) {
-
-
                   char c;
-
-
                   printf("» %s = ", sym->name);
-
-
                   scanf(" %c", &c);
-
-
                   if (sym->data.value == NULL) sym->data.value = malloc(sizeof(char));
-
-
                   *(char*)sym->data.value = c;
-
-
               } else {
-
-
                   semantic_error("Tipo não suportado para lectura.");
-
-
               }
-
-
           }
-
-
           free($1);
-
-
       }
-
-
       ;
     ;
 
