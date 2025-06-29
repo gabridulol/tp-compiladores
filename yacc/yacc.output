@@ -10,17 +10,17 @@ Terminals unused in grammar
 
 Rules useless in grammar
 
-  157 assing_value: IDENTIFIER
-  158             | vector_access
-  159             | pointer_statement
-  160             | struct_member_lvalue
+  158 assing_value: IDENTIFIER
+  159             | vector_access
+  160             | pointer_statement
+  161             | struct_member_lvalue
 
 
 Rules useless in parser due to conflicts
 
-  152 pointer_assignment: OP_ADDR_OF IDENTIFIER
+  153 pointer_assignment: OP_ADDR_OF IDENTIFIER
 
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER
 
 
 State 55 conflicts: 24 reduce/reduce
@@ -179,88 +179,91 @@ Grammar
   104 conditional_statement: LPAREN expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
 
   105 conditional_non_statement: ε
-  106                          | KW_NON block
-  107                          | KW_NON conditional_statement
 
-  108 causal_statement: KW_CASUS expression COLON statement_list
-  109                 | KW_AXIOM COLON statement_list
+  106 $@6: ε
 
-  110 $@6: ε
+  107 conditional_non_statement: KW_NON $@6 block
+  108                          | KW_NON conditional_statement
 
-  111 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@6 block
+  109 causal_statement: KW_CASUS expression COLON statement_list
+  110                 | KW_AXIOM COLON statement_list
 
-  112 $@7: ε
+  111 $@7: ε
 
-  113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@7 block
+  112 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@7 block
 
-  114 $@8: ε
+  113 $@8: ε
 
-  115 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@8 block
+  114 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@8 block
 
-  116 $@9: ε
+  115 $@9: ε
 
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 block
+  116 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@9 block
 
-  118 $@10: ε
+  117 $@10: ε
 
-  119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@10 block
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@10 block
 
-  120 io_functions: function_input_output
-  121             | function_magnitudo
+  119 $@11: ε
 
-  122 function_input_output: identifier_langle_list
-  123                      | identifier_rangle_list
+  120 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@11 block
 
-  124 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA SEMICOLON
-  125                       | IDENTIFIER LANGLE identifier_langle_list
+  121 io_functions: function_input_output
+  122             | function_magnitudo
 
-  126 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE SEMICOLON
-  127                       | IDENTIFIER RANGLE identifier_rangle_list
+  123 function_input_output: identifier_langle_list
+  124                      | identifier_rangle_list
 
-  128 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON
+  125 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA SEMICOLON
+  126                       | IDENTIFIER LANGLE identifier_langle_list
 
-  129 type_expression: type_specifier
+  127 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE SEMICOLON
+  128                       | IDENTIFIER RANGLE identifier_rangle_list
 
-  130 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
-  131                      | type_define_struct
-  132                      | type_define_enum
+  129 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON
 
-  133 $@11: ε
+  130 type_expression: type_specifier
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
+  131 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON
+  132                      | type_define_struct
+  133                      | type_define_enum
 
-  135 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
+  134 $@12: ε
 
-  136 enum_list: IDENTIFIER
-  137          | IDENTIFIER OP_ASSIGN LIT_INT
-  138          | IDENTIFIER OP_ASSIGN LIT_CHAR
-  139          | enum_list PIPE IDENTIFIER
-  140          | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_INT
-  141          | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
 
-  142 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
-  143                 | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
+  136 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
 
-  144 vector_access: IDENTIFIER LANGLE expression RANGLE
+  137 enum_list: IDENTIFIER
+  138          | IDENTIFIER OP_ASSIGN LIT_INT
+  139          | IDENTIFIER OP_ASSIGN LIT_CHAR
+  140          | enum_list PIPE IDENTIFIER
+  141          | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_INT
+  142          | enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
 
-  145 pointer_statement: pointer_assignment
-  146                  | pointer_dereference
-  147                  | member_access_direct
-  148                  | member_access_dereference
-  149                  | member_access_pointer
+  143 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON
+  144                 | LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
 
-  150 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
-  151                    | expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  145 vector_access: IDENTIFIER LANGLE expression RANGLE
 
-  152 pointer_assignment: OP_ADDR_OF IDENTIFIER
+  146 pointer_statement: pointer_assignment
+  147                  | pointer_dereference
+  148                  | member_access_direct
+  149                  | member_access_dereference
+  150                  | member_access_pointer
 
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER
+  151 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  152                    | expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
-  154 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
+  153 pointer_assignment: OP_ADDR_OF IDENTIFIER
 
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER
 
-  156 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER IDENTIFIER
+  155 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER
+
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+
+  157 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER IDENTIFIER
 
 
 Terminals, with rules where they appear
@@ -268,24 +271,24 @@ Terminals, with rules where they appear
     $end (0) 0
     error (256)
     KW_MAIN (258) 10
-    KW_CASUS (259) 108
-    KW_AXIOM (260) 109
+    KW_CASUS (259) 109
+    KW_AXIOM (260) 110
     KW_CONTINUUM (261) 96
     KW_RUPTIO (262) 97
     KW_VERTERE (263) 104
-    KW_DESIGNARE (264) 130 134
-    KW_ENUMERARE (265) 84 135
+    KW_DESIGNARE (264) 131 135
+    KW_ENUMERARE (265) 84 136
     KW_EVOCARE (266) 29
     KW_FORMULA (267) 87
-    KW_HOMUNCULUS (268) 134
-    KW_ITERARE (269) 113 115 117 119
-    KW_LECTURA (270) 124
-    KW_MAGNITUDO (271) 128
+    KW_HOMUNCULUS (268) 135
+    KW_ITERARE (269) 114 116 118 120
+    KW_LECTURA (270) 125
+    KW_MAGNITUDO (271) 129
     KW_MOL (272) 70
-    KW_NON (273) 106 107
-    KW_PERSISTO (274) 111
+    KW_NON (273) 107 108
+    KW_PERSISTO (274) 112
     KW_REDIRE (275) 98 99
-    KW_REVELARE (276) 30 126
+    KW_REVELARE (276) 30 127
     KW_SI (277) 102
     KW_TYPE_ATOMUS (278) 74
     KW_TYPE_FRACTIO (279) 75
@@ -299,11 +302,11 @@ Terminals, with rules where they appear
     LIT_FACTUM (287) 63
     LIT_FICTUM (288) 64
     LIT_FLOAT <val_float> (289) 62
-    LIT_INT <val_int> (290) 61 137 140
-    LIT_CHAR <str> (291) 65 138 141
+    LIT_INT <val_int> (290) 61 138 141
+    LIT_CHAR <str> (291) 65 139 142
     LIT_STRING <str> (292) 66
-    OP_ACCESS_POINTER (293) 156
-    OP_ASSIGN (294) 26 27 28 60 68 87 137 138 140 141 143 151
+    OP_ACCESS_POINTER (293) 157
+    OP_ASSIGN (294) 26 27 28 60 68 87 138 139 141 142 144 152
     OP_GREATER_EQUAL (295) 56
     OP_LESS_EQUAL (296) 55
     OP_EQUAL (297) 51
@@ -317,25 +320,25 @@ Terminals, with rules where they appear
     OP_SUBTRACT (305) 42 45
     OP_DIVIDE (306) 47
     OP_MODULUS (307) 48
-    OP_ACCESS_MEMBER (308) 25 154 155
+    OP_ACCESS_MEMBER (308) 25 155 156
     OP_LOGICAL_NOT (309) 39
     OP_GREATER_THAN (310) 54
     OP_LESS_THAN (311) 53
     OP_LOGICAL_XOR (312) 59
-    OP_ADDR_OF (313) 41 152
-    OP_DEREF_POINTER (314) 40 85 150 151 153 155
-    LANGLE (315) 28 124 125 142 144
-    RANGLE (316) 28 126 127 142 144
-    COLON (317) 108 109
-    LPAREN (318) 10 30 35 87 92 93 102 104 111 113 115 117 119 128 155
-    RPAREN (319) 10 30 35 87 92 93 102 104 111 113 115 117 119 128 155
-    LBRACKET (320) 143
-    RBRACKET (321) 143
-    LBRACE (322) 8 87 104 134 135
-    RBRACE (323) 8 87 104 134 135
-    PIPE (324) 90 95 139 140 141
-    SEMICOLON (325) 26 27 28 29 30 31 67 68 92 93 96 97 98 99 124 126 128 130 134 135 142 143 150 151
-    IDENTIFIER <str> (326) 10 25 27 28 29 30 32 60 67 68 83 84 87 91 92 93 124 125 126 127 130 134 135 136 137 138 139 140 141 142 143 144 150 151 152 153 154 155 156
+    OP_ADDR_OF (313) 41 153
+    OP_DEREF_POINTER (314) 40 85 151 152 154 156
+    LANGLE (315) 28 125 126 143 145
+    RANGLE (316) 28 127 128 143 145
+    COLON (317) 109 110
+    LPAREN (318) 10 30 35 87 92 93 102 104 112 114 116 118 120 129 156
+    RPAREN (319) 10 30 35 87 92 93 102 104 112 114 116 118 120 129 156
+    LBRACKET (320) 144
+    RBRACKET (321) 144
+    LBRACE (322) 8 87 104 135 136
+    RBRACE (323) 8 87 104 135 136
+    PIPE (324) 90 95 140 141 142
+    SEMICOLON (325) 26 27 28 29 30 31 67 68 92 93 96 97 98 99 125 127 129 131 135 136 143 144 151 152
+    IDENTIFIER <str> (326) 10 25 27 28 29 30 32 60 67 68 83 84 87 91 92 93 125 126 127 128 131 135 136 137 138 139 140 141 142 143 144 145 151 152 153 154 155 156 157
     LEX_ERROR (327)
 
 
@@ -354,7 +357,7 @@ Nonterminals, with rules where they appear
         on right: 3
     block <ptr> (77)
         on left: 8
-        on right: 10 102 106 111 113 115 117 119
+        on right: 10 102 107 112 114 116 118 120
     alchemia_statement <expr> (78)
         on left: 10
         on right: 1
@@ -363,7 +366,7 @@ Nonterminals, with rules where they appear
         on right: 10
     statement_list (80)
         on left: 11 12
-        on right: 8 12 87 108 109
+        on right: 8 12 87 109 110
     statement (81)
         on left: 13 14 15 16 17 18 19 20 21 22 23 24
         on right: 12
@@ -381,7 +384,7 @@ Nonterminals, with rules where they appear
         on right: 24
     expression_statement <expr> (86)
         on left: 31
-        on right: 14 113 115 117 119
+        on right: 14 114 116 118 120
     primary_expression <expr> (87)
         on left: 32 33 34 35 36 37
         on right: 38
@@ -390,7 +393,7 @@ Nonterminals, with rules where they appear
         on right: 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59
     expression <expr> (89)
         on left: 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60
-        on right: 26 27 28 31 35 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 68 94 95 99 102 104 108 111 113 117 142 144 151
+        on right: 26 27 28 31 35 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 68 94 95 99 102 104 109 112 114 118 143 145 152
     constant <expr> (90)
         on left: 61 62 63 64 65
         on right: 33
@@ -399,16 +402,16 @@ Nonterminals, with rules where they appear
         on right: 34
     declaration_statement <ptr> (92)
         on left: 67 68 69
-        on right: 5 17 73 117 119
+        on right: 5 17 73 118 120
     opcional_constant (93)
         on left: 70 71
         on right: 67 68
     list_declaration_statement (94)
         on left: 72 73
-        on right: 73 134
+        on right: 73 135
     type_specifier <str> (95)
         on left: 74 75 76 77 78 79 80 81 82 83 84 85
-        on right: 67 68 85 87 91 129 130 142 150 151
+        on right: 67 68 85 87 91 130 131 143 151 152
     function_declaration_statement (96)
         on left: 87
         on right: 6
@@ -426,13 +429,13 @@ Nonterminals, with rules where they appear
         on right: 18
     argument_list <arg_list> (101)
         on left: 94 95
-        on right: 93 95 143
+        on right: 93 95 144
     jump_statement (102)
         on left: 96 97 98 99
         on right: 21
     conditional_statement <expr> (103)
         on left: 102 104
-        on right: 13 107
+        on right: 13 108
     $@3 (104)
         on left: 100
         on right: 102
@@ -443,89 +446,92 @@ Nonterminals, with rules where they appear
         on left: 103
         on right: 104
     conditional_non_statement <expr> (107)
-        on left: 105 106 107
+        on left: 105 107 108
         on right: 102
-    causal_statement (108)
-        on left: 108 109
+    $@6 (108)
+        on left: 106
+        on right: 107
+    causal_statement (109)
+        on left: 109 110
         on right: 22 104
-    iteration_statement (109)
-        on left: 111 113 115 117 119
+    iteration_statement (110)
+        on left: 112 114 116 118 120
         on right: 15
-    $@6 (110)
-        on left: 110
-        on right: 111
     $@7 (111)
-        on left: 112
-        on right: 113
+        on left: 111
+        on right: 112
     $@8 (112)
-        on left: 114
-        on right: 115
+        on left: 113
+        on right: 114
     $@9 (113)
-        on left: 116
-        on right: 117
+        on left: 115
+        on right: 116
     $@10 (114)
-        on left: 118
-        on right: 119
-    io_functions (115)
-        on left: 120 121
-        on right: 16
-    function_input_output (116)
-        on left: 122 123
+        on left: 117
+        on right: 118
+    $@11 (115)
+        on left: 119
         on right: 120
-    identifier_langle_list (117)
-        on left: 124 125
-        on right: 122 125
-    identifier_rangle_list (118)
-        on left: 126 127
-        on right: 123 127
-    function_magnitudo (119)
-        on left: 128
+    io_functions (116)
+        on left: 121 122
+        on right: 16
+    function_input_output (117)
+        on left: 123 124
         on right: 121
-    type_expression (120)
+    identifier_langle_list (118)
+        on left: 125 126
+        on right: 123 126
+    identifier_rangle_list (119)
+        on left: 127 128
+        on right: 124 128
+    function_magnitudo (120)
         on left: 129
-        on right: 128
-    type_define_statement (121)
-        on left: 130 131 132
+        on right: 122
+    type_expression (121)
+        on left: 130
+        on right: 129
+    type_define_statement (122)
+        on left: 131 132 133
         on right: 7 19
-    type_define_struct (122)
-        on left: 134
-        on right: 131
-    $@11 (123)
-        on left: 133
-        on right: 134
-    type_define_enum (124)
+    type_define_struct (123)
         on left: 135
         on right: 132
-    enum_list (125)
-        on left: 136 137 138 139 140 141
-        on right: 135 139 140 141
-    vector_statement (126)
-        on left: 142 143
+    $@12 (124)
+        on left: 134
+        on right: 135
+    type_define_enum (125)
+        on left: 136
+        on right: 133
+    enum_list (126)
+        on left: 137 138 139 140 141 142
+        on right: 136 140 141 142
+    vector_statement (127)
+        on left: 143 144
         on right: 20
-    vector_access <expr> (127)
-        on left: 144
+    vector_access <expr> (128)
+        on left: 145
         on right: 36
-    pointer_statement <expr> (128)
-        on left: 145 146 147 148 149
+    pointer_statement <expr> (129)
+        on left: 146 147 148 149 150
         on right: 37
-    pointer_declaration (129)
-        on left: 150 151
+    pointer_declaration (130)
+        on left: 151 152
         on right: 69
-    pointer_assignment <expr> (130)
-        on left: 152
-        on right: 145
-    pointer_dereference <expr> (131)
+    pointer_assignment <expr> (131)
         on left: 153
         on right: 146
-    member_access_direct <expr> (132)
+    pointer_dereference <expr> (132)
         on left: 154
         on right: 147
-    member_access_dereference <expr> (133)
+    member_access_direct <expr> (133)
         on left: 155
         on right: 148
-    member_access_pointer <expr> (134)
+    member_access_dereference <expr> (134)
         on left: 156
         on right: 149
+    member_access_pointer <expr> (135)
+        on left: 157
+        on right: 150
 
 
 State 0
@@ -597,8 +603,8 @@ State 3
 
 State 4
 
-  130 type_define_statement: KW_DESIGNARE • type_specifier IDENTIFIER SEMICOLON
-  134 type_define_struct: KW_DESIGNARE • IDENTIFIER LBRACE $@11 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
+  131 type_define_statement: KW_DESIGNARE • type_specifier IDENTIFIER SEMICOLON
+  135 type_define_struct: KW_DESIGNARE • IDENTIFIER LBRACE $@12 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -727,7 +733,7 @@ State 13
 State 14
 
    41 unary_expression: OP_ADDR_OF • unary_expression
-  152 pointer_assignment: OP_ADDR_OF • IDENTIFIER
+  153 pointer_assignment: OP_ADDR_OF • IDENTIFIER
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -758,7 +764,7 @@ State 14
 State 15
 
    40 unary_expression: OP_DEREF_POINTER • unary_expression
-  153 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
+  154 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -789,7 +795,7 @@ State 15
 State 16
 
    35 primary_expression: LPAREN • expression RPAREN
-  155 member_access_dereference: LPAREN • OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  156 member_access_dereference: LPAREN • OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -824,11 +830,11 @@ State 17
    29 import_statement: IDENTIFIER • KW_EVOCARE SEMICOLON
    32 primary_expression: IDENTIFIER •
    67 declaration_statement: IDENTIFIER • type_specifier opcional_constant SEMICOLON
-  135 type_define_enum: IDENTIFIER • LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  150 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  136 type_define_enum: IDENTIFIER • LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  151 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     KW_EVOCARE          shift, and go to state 61
     KW_TYPE_ATOMUS      shift, and go to state 39
@@ -908,7 +914,7 @@ State 23
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
    68 declaration_statement: expression • OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
-  151 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  152 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
     OP_ASSIGN          shift, and go to state 70
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -966,16 +972,16 @@ State 28
 
 State 29
 
-  131 type_define_statement: type_define_struct •
+  132 type_define_statement: type_define_struct •
 
-    $default  reduce using rule 131 (type_define_statement)
+    $default  reduce using rule 132 (type_define_statement)
 
 
 State 30
 
-  132 type_define_statement: type_define_enum •
+  133 type_define_statement: type_define_enum •
 
-    $default  reduce using rule 132 (type_define_statement)
+    $default  reduce using rule 133 (type_define_statement)
 
 
 State 31
@@ -1001,37 +1007,37 @@ State 33
 
 State 34
 
-  145 pointer_statement: pointer_assignment •
-
-    $default  reduce using rule 145 (pointer_statement)
-
-
-State 35
-
-  146 pointer_statement: pointer_dereference •
+  146 pointer_statement: pointer_assignment •
 
     $default  reduce using rule 146 (pointer_statement)
 
 
-State 36
+State 35
 
-  147 pointer_statement: member_access_direct •
+  147 pointer_statement: pointer_dereference •
 
     $default  reduce using rule 147 (pointer_statement)
 
 
-State 37
+State 36
 
-  148 pointer_statement: member_access_dereference •
+  148 pointer_statement: member_access_direct •
 
     $default  reduce using rule 148 (pointer_statement)
 
 
-State 38
+State 37
 
-  149 pointer_statement: member_access_pointer •
+  149 pointer_statement: member_access_dereference •
 
     $default  reduce using rule 149 (pointer_statement)
+
+
+State 38
+
+  150 pointer_statement: member_access_pointer •
+
+    $default  reduce using rule 150 (pointer_statement)
 
 
 State 39
@@ -1120,7 +1126,7 @@ State 49
 
    83 type_specifier: IDENTIFIER •
    84               | IDENTIFIER • KW_ENUMERARE
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER • LBRACE $@11 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER • LBRACE $@12 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
 
     KW_ENUMERARE  shift, and go to state 88
     LBRACE        shift, and go to state 89
@@ -1130,7 +1136,7 @@ State 49
 
 State 50
 
-  130 type_define_statement: KW_DESIGNARE type_specifier • IDENTIFIER SEMICOLON
+  131 type_define_statement: KW_DESIGNARE type_specifier • IDENTIFIER SEMICOLON
 
     IDENTIFIER  shift, and go to state 90
 
@@ -1150,9 +1156,9 @@ State 51
 State 52
 
    32 primary_expression: IDENTIFIER •
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     OP_ACCESS_POINTER  shift, and go to state 62
     OP_ACCESS_MEMBER   shift, and go to state 63
@@ -1178,63 +1184,63 @@ State 54
 State 55
 
    32 primary_expression: IDENTIFIER •
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  152 pointer_assignment: OP_ADDR_OF IDENTIFIER •
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  153 pointer_assignment: OP_ADDR_OF IDENTIFIER •
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     OP_ACCESS_POINTER  shift, and go to state 62
     OP_ACCESS_MEMBER   shift, and go to state 63
     LANGLE             shift, and go to state 65
 
     KW_REDIRE          reduce using rule 32 (primary_expression)
-    KW_REDIRE          [reduce using rule 152 (pointer_assignment)]
+    KW_REDIRE          [reduce using rule 153 (pointer_assignment)]
     OP_ASSIGN          reduce using rule 32 (primary_expression)
-    OP_ASSIGN          [reduce using rule 152 (pointer_assignment)]
+    OP_ASSIGN          [reduce using rule 153 (pointer_assignment)]
     OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
-    OP_GREATER_EQUAL   [reduce using rule 152 (pointer_assignment)]
+    OP_GREATER_EQUAL   [reduce using rule 153 (pointer_assignment)]
     OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
-    OP_LESS_EQUAL      [reduce using rule 152 (pointer_assignment)]
+    OP_LESS_EQUAL      [reduce using rule 153 (pointer_assignment)]
     OP_EQUAL           reduce using rule 32 (primary_expression)
-    OP_EQUAL           [reduce using rule 152 (pointer_assignment)]
+    OP_EQUAL           [reduce using rule 153 (pointer_assignment)]
     OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
-    OP_NOT_EQUAL       [reduce using rule 152 (pointer_assignment)]
+    OP_NOT_EQUAL       [reduce using rule 153 (pointer_assignment)]
     OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
-    OP_INTEGER_DIVIDE  [reduce using rule 152 (pointer_assignment)]
+    OP_INTEGER_DIVIDE  [reduce using rule 153 (pointer_assignment)]
     OP_EXP             reduce using rule 32 (primary_expression)
-    OP_EXP             [reduce using rule 152 (pointer_assignment)]
+    OP_EXP             [reduce using rule 153 (pointer_assignment)]
     OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_AND     [reduce using rule 152 (pointer_assignment)]
+    OP_LOGICAL_AND     [reduce using rule 153 (pointer_assignment)]
     OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
-    OP_LOGICAL_OR      [reduce using rule 152 (pointer_assignment)]
+    OP_LOGICAL_OR      [reduce using rule 153 (pointer_assignment)]
     OP_MULTIPLY        reduce using rule 32 (primary_expression)
-    OP_MULTIPLY        [reduce using rule 152 (pointer_assignment)]
+    OP_MULTIPLY        [reduce using rule 153 (pointer_assignment)]
     OP_ADD             reduce using rule 32 (primary_expression)
-    OP_ADD             [reduce using rule 152 (pointer_assignment)]
+    OP_ADD             [reduce using rule 153 (pointer_assignment)]
     OP_SUBTRACT        reduce using rule 32 (primary_expression)
-    OP_SUBTRACT        [reduce using rule 152 (pointer_assignment)]
+    OP_SUBTRACT        [reduce using rule 153 (pointer_assignment)]
     OP_DIVIDE          reduce using rule 32 (primary_expression)
-    OP_DIVIDE          [reduce using rule 152 (pointer_assignment)]
+    OP_DIVIDE          [reduce using rule 153 (pointer_assignment)]
     OP_MODULUS         reduce using rule 32 (primary_expression)
-    OP_MODULUS         [reduce using rule 152 (pointer_assignment)]
+    OP_MODULUS         [reduce using rule 153 (pointer_assignment)]
     OP_GREATER_THAN    reduce using rule 32 (primary_expression)
-    OP_GREATER_THAN    [reduce using rule 152 (pointer_assignment)]
+    OP_GREATER_THAN    [reduce using rule 153 (pointer_assignment)]
     OP_LESS_THAN       reduce using rule 32 (primary_expression)
-    OP_LESS_THAN       [reduce using rule 152 (pointer_assignment)]
+    OP_LESS_THAN       [reduce using rule 153 (pointer_assignment)]
     OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_XOR     [reduce using rule 152 (pointer_assignment)]
+    OP_LOGICAL_XOR     [reduce using rule 153 (pointer_assignment)]
     RANGLE             reduce using rule 32 (primary_expression)
-    RANGLE             [reduce using rule 152 (pointer_assignment)]
+    RANGLE             [reduce using rule 153 (pointer_assignment)]
     COLON              reduce using rule 32 (primary_expression)
-    COLON              [reduce using rule 152 (pointer_assignment)]
+    COLON              [reduce using rule 153 (pointer_assignment)]
     RPAREN             reduce using rule 32 (primary_expression)
-    RPAREN             [reduce using rule 152 (pointer_assignment)]
+    RPAREN             [reduce using rule 153 (pointer_assignment)]
     RBRACKET           reduce using rule 32 (primary_expression)
-    RBRACKET           [reduce using rule 152 (pointer_assignment)]
+    RBRACKET           [reduce using rule 153 (pointer_assignment)]
     PIPE               reduce using rule 32 (primary_expression)
-    PIPE               [reduce using rule 152 (pointer_assignment)]
+    PIPE               [reduce using rule 153 (pointer_assignment)]
     SEMICOLON          reduce using rule 32 (primary_expression)
-    SEMICOLON          [reduce using rule 152 (pointer_assignment)]
+    SEMICOLON          [reduce using rule 153 (pointer_assignment)]
     $default           reduce using rule 32 (primary_expression)
 
 
@@ -1248,63 +1254,63 @@ State 56
 State 57
 
    32 primary_expression: IDENTIFIER •
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     OP_ACCESS_POINTER  shift, and go to state 62
     OP_ACCESS_MEMBER   shift, and go to state 63
     LANGLE             shift, and go to state 65
 
     KW_REDIRE          reduce using rule 32 (primary_expression)
-    KW_REDIRE          [reduce using rule 153 (pointer_dereference)]
+    KW_REDIRE          [reduce using rule 154 (pointer_dereference)]
     OP_ASSIGN          reduce using rule 32 (primary_expression)
-    OP_ASSIGN          [reduce using rule 153 (pointer_dereference)]
+    OP_ASSIGN          [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
-    OP_GREATER_EQUAL   [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_EQUAL   [reduce using rule 154 (pointer_dereference)]
     OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
-    OP_LESS_EQUAL      [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_EQUAL      [reduce using rule 154 (pointer_dereference)]
     OP_EQUAL           reduce using rule 32 (primary_expression)
-    OP_EQUAL           [reduce using rule 153 (pointer_dereference)]
+    OP_EQUAL           [reduce using rule 154 (pointer_dereference)]
     OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
-    OP_NOT_EQUAL       [reduce using rule 153 (pointer_dereference)]
+    OP_NOT_EQUAL       [reduce using rule 154 (pointer_dereference)]
     OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
-    OP_INTEGER_DIVIDE  [reduce using rule 153 (pointer_dereference)]
+    OP_INTEGER_DIVIDE  [reduce using rule 154 (pointer_dereference)]
     OP_EXP             reduce using rule 32 (primary_expression)
-    OP_EXP             [reduce using rule 153 (pointer_dereference)]
+    OP_EXP             [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_AND     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_AND     [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
-    OP_LOGICAL_OR      [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_OR      [reduce using rule 154 (pointer_dereference)]
     OP_MULTIPLY        reduce using rule 32 (primary_expression)
-    OP_MULTIPLY        [reduce using rule 153 (pointer_dereference)]
+    OP_MULTIPLY        [reduce using rule 154 (pointer_dereference)]
     OP_ADD             reduce using rule 32 (primary_expression)
-    OP_ADD             [reduce using rule 153 (pointer_dereference)]
+    OP_ADD             [reduce using rule 154 (pointer_dereference)]
     OP_SUBTRACT        reduce using rule 32 (primary_expression)
-    OP_SUBTRACT        [reduce using rule 153 (pointer_dereference)]
+    OP_SUBTRACT        [reduce using rule 154 (pointer_dereference)]
     OP_DIVIDE          reduce using rule 32 (primary_expression)
-    OP_DIVIDE          [reduce using rule 153 (pointer_dereference)]
+    OP_DIVIDE          [reduce using rule 154 (pointer_dereference)]
     OP_MODULUS         reduce using rule 32 (primary_expression)
-    OP_MODULUS         [reduce using rule 153 (pointer_dereference)]
+    OP_MODULUS         [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_THAN    reduce using rule 32 (primary_expression)
-    OP_GREATER_THAN    [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_THAN    [reduce using rule 154 (pointer_dereference)]
     OP_LESS_THAN       reduce using rule 32 (primary_expression)
-    OP_LESS_THAN       [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_THAN       [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_XOR     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_XOR     [reduce using rule 154 (pointer_dereference)]
     RANGLE             reduce using rule 32 (primary_expression)
-    RANGLE             [reduce using rule 153 (pointer_dereference)]
+    RANGLE             [reduce using rule 154 (pointer_dereference)]
     COLON              reduce using rule 32 (primary_expression)
-    COLON              [reduce using rule 153 (pointer_dereference)]
+    COLON              [reduce using rule 154 (pointer_dereference)]
     RPAREN             reduce using rule 32 (primary_expression)
-    RPAREN             [reduce using rule 153 (pointer_dereference)]
+    RPAREN             [reduce using rule 154 (pointer_dereference)]
     RBRACKET           reduce using rule 32 (primary_expression)
-    RBRACKET           [reduce using rule 153 (pointer_dereference)]
+    RBRACKET           [reduce using rule 154 (pointer_dereference)]
     PIPE               reduce using rule 32 (primary_expression)
-    PIPE               [reduce using rule 153 (pointer_dereference)]
+    PIPE               [reduce using rule 154 (pointer_dereference)]
     SEMICOLON          reduce using rule 32 (primary_expression)
-    SEMICOLON          [reduce using rule 153 (pointer_dereference)]
+    SEMICOLON          [reduce using rule 154 (pointer_dereference)]
     $default           reduce using rule 32 (primary_expression)
 
 
@@ -1318,8 +1324,8 @@ State 58
 State 59
 
    40 unary_expression: OP_DEREF_POINTER • unary_expression
-  153 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER • IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  154 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER • IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -1397,14 +1403,14 @@ State 61
 
 State 62
 
-  156 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER • IDENTIFIER
+  157 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER • IDENTIFIER
 
     IDENTIFIER  shift, and go to state 98
 
 
 State 63
 
-  154 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER • IDENTIFIER
+  155 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER • IDENTIFIER
 
     IDENTIFIER  shift, and go to state 99
 
@@ -1412,7 +1418,7 @@ State 63
 State 64
 
    85 type_specifier: OP_DEREF_POINTER • type_specifier
-  150 pointer_declaration: IDENTIFIER OP_DEREF_POINTER • type_specifier SEMICOLON
+  151 pointer_declaration: IDENTIFIER OP_DEREF_POINTER • type_specifier SEMICOLON
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -1431,7 +1437,7 @@ State 64
 
 State 65
 
-  144 vector_access: IDENTIFIER LANGLE • expression RANGLE
+  145 vector_access: IDENTIFIER LANGLE • expression RANGLE
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -1469,7 +1475,7 @@ State 66
 
 State 67
 
-  135 type_define_enum: IDENTIFIER LBRACE • enum_list RBRACE KW_ENUMERARE SEMICOLON
+  136 type_define_enum: IDENTIFIER LBRACE • enum_list RBRACE KW_ENUMERARE SEMICOLON
 
     IDENTIFIER  shift, and go to state 103
 
@@ -1501,7 +1507,7 @@ State 70
 
    60 expression: expression OP_ASSIGN • IDENTIFIER
    68 declaration_statement: expression OP_ASSIGN • IDENTIFIER type_specifier opcional_constant SEMICOLON
-  151 pointer_declaration: expression OP_ASSIGN • IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN • IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
     IDENTIFIER  shift, and go to state 107
 
@@ -2002,16 +2008,16 @@ State 88
 
 State 89
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE • $@11 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE • $@12 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
 
-    $default  reduce using rule 133 ($@11)
+    $default  reduce using rule 134 ($@12)
 
-    $@11  go to state 124
+    $@12  go to state 124
 
 
 State 90
 
-  130 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER • SEMICOLON
+  131 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER • SEMICOLON
 
     SEMICOLON  shift, and go to state 125
 
@@ -2054,11 +2060,11 @@ State 93
 State 94
 
    32 primary_expression: IDENTIFIER •
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER • RPAREN OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER • RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     OP_ACCESS_POINTER  shift, and go to state 62
     OP_ACCESS_MEMBER   shift, and go to state 63
@@ -2066,41 +2072,41 @@ State 94
     RPAREN             shift, and go to state 129
 
     OP_ASSIGN          reduce using rule 32 (primary_expression)
-    OP_ASSIGN          [reduce using rule 153 (pointer_dereference)]
+    OP_ASSIGN          [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
-    OP_GREATER_EQUAL   [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_EQUAL   [reduce using rule 154 (pointer_dereference)]
     OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
-    OP_LESS_EQUAL      [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_EQUAL      [reduce using rule 154 (pointer_dereference)]
     OP_EQUAL           reduce using rule 32 (primary_expression)
-    OP_EQUAL           [reduce using rule 153 (pointer_dereference)]
+    OP_EQUAL           [reduce using rule 154 (pointer_dereference)]
     OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
-    OP_NOT_EQUAL       [reduce using rule 153 (pointer_dereference)]
+    OP_NOT_EQUAL       [reduce using rule 154 (pointer_dereference)]
     OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
-    OP_INTEGER_DIVIDE  [reduce using rule 153 (pointer_dereference)]
+    OP_INTEGER_DIVIDE  [reduce using rule 154 (pointer_dereference)]
     OP_EXP             reduce using rule 32 (primary_expression)
-    OP_EXP             [reduce using rule 153 (pointer_dereference)]
+    OP_EXP             [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_AND     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_AND     [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
-    OP_LOGICAL_OR      [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_OR      [reduce using rule 154 (pointer_dereference)]
     OP_MULTIPLY        reduce using rule 32 (primary_expression)
-    OP_MULTIPLY        [reduce using rule 153 (pointer_dereference)]
+    OP_MULTIPLY        [reduce using rule 154 (pointer_dereference)]
     OP_ADD             reduce using rule 32 (primary_expression)
-    OP_ADD             [reduce using rule 153 (pointer_dereference)]
+    OP_ADD             [reduce using rule 154 (pointer_dereference)]
     OP_SUBTRACT        reduce using rule 32 (primary_expression)
-    OP_SUBTRACT        [reduce using rule 153 (pointer_dereference)]
+    OP_SUBTRACT        [reduce using rule 154 (pointer_dereference)]
     OP_DIVIDE          reduce using rule 32 (primary_expression)
-    OP_DIVIDE          [reduce using rule 153 (pointer_dereference)]
+    OP_DIVIDE          [reduce using rule 154 (pointer_dereference)]
     OP_MODULUS         reduce using rule 32 (primary_expression)
-    OP_MODULUS         [reduce using rule 153 (pointer_dereference)]
+    OP_MODULUS         [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_THAN    reduce using rule 32 (primary_expression)
-    OP_GREATER_THAN    [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_THAN    [reduce using rule 154 (pointer_dereference)]
     OP_LESS_THAN       reduce using rule 32 (primary_expression)
-    OP_LESS_THAN       [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_THAN       [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_XOR     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_XOR     [reduce using rule 154 (pointer_dereference)]
     RPAREN             [reduce using rule 32 (primary_expression)]
-    RPAREN             [reduce using rule 153 (pointer_dereference)]
+    RPAREN             [reduce using rule 154 (pointer_dereference)]
     $default           reduce using rule 32 (primary_expression)
 
 
@@ -2127,22 +2133,22 @@ State 97
 
 State 98
 
-  156 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER IDENTIFIER •
+  157 member_access_pointer: IDENTIFIER OP_ACCESS_POINTER IDENTIFIER •
 
-    $default  reduce using rule 156 (member_access_pointer)
+    $default  reduce using rule 157 (member_access_pointer)
 
 
 State 99
 
-  154 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER •
+  155 member_access_direct: IDENTIFIER OP_ACCESS_MEMBER IDENTIFIER •
 
-    $default  reduce using rule 154 (member_access_direct)
+    $default  reduce using rule 155 (member_access_direct)
 
 
 State 100
 
    85 type_specifier: OP_DEREF_POINTER type_specifier •
-  150 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier • SEMICOLON
+  151 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier • SEMICOLON
 
     SEMICOLON  shift, and go to state 131
 
@@ -2169,7 +2175,7 @@ State 101
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  144 vector_access: IDENTIFIER LANGLE expression • RANGLE
+  145 vector_access: IDENTIFIER LANGLE expression • RANGLE
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -2200,21 +2206,21 @@ State 102
 
 State 103
 
-  136 enum_list: IDENTIFIER •
-  137          | IDENTIFIER • OP_ASSIGN LIT_INT
-  138          | IDENTIFIER • OP_ASSIGN LIT_CHAR
+  137 enum_list: IDENTIFIER •
+  138          | IDENTIFIER • OP_ASSIGN LIT_INT
+  139          | IDENTIFIER • OP_ASSIGN LIT_CHAR
 
     OP_ASSIGN  shift, and go to state 134
 
-    $default  reduce using rule 136 (enum_list)
+    $default  reduce using rule 137 (enum_list)
 
 
 State 104
 
-  135 type_define_enum: IDENTIFIER LBRACE enum_list • RBRACE KW_ENUMERARE SEMICOLON
-  139 enum_list: enum_list • PIPE IDENTIFIER
-  140          | enum_list • PIPE IDENTIFIER OP_ASSIGN LIT_INT
-  141          | enum_list • PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
+  136 type_define_enum: IDENTIFIER LBRACE enum_list • RBRACE KW_ENUMERARE SEMICOLON
+  140 enum_list: enum_list • PIPE IDENTIFIER
+  141          | enum_list • PIPE IDENTIFIER OP_ASSIGN LIT_INT
+  142          | enum_list • PIPE IDENTIFIER OP_ASSIGN LIT_CHAR
 
     RBRACE  shift, and go to state 135
     PIPE    shift, and go to state 136
@@ -2238,7 +2244,7 @@ State 107
 
    60 expression: expression OP_ASSIGN IDENTIFIER •
    68 declaration_statement: expression OP_ASSIGN IDENTIFIER • type_specifier opcional_constant SEMICOLON
-  151 pointer_declaration: expression OP_ASSIGN IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -2371,7 +2377,7 @@ State 123
 
 State 124
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 • list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 • list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -2407,9 +2413,9 @@ State 124
 
 State 125
 
-  130 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON •
+  131 type_define_statement: KW_DESIGNARE type_specifier IDENTIFIER SEMICOLON •
 
-    $default  reduce using rule 130 (type_define_statement)
+    $default  reduce using rule 131 (type_define_statement)
 
 
 State 126
@@ -2437,7 +2443,7 @@ State 128
 
 State 129
 
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN • OP_ACCESS_MEMBER IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN • OP_ACCESS_MEMBER IDENTIFIER
 
     OP_ACCESS_MEMBER  shift, and go to state 145
 
@@ -2451,16 +2457,16 @@ State 130
 
 State 131
 
-  150 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON •
+  151 pointer_declaration: IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON •
 
-    $default  reduce using rule 150 (pointer_declaration)
+    $default  reduce using rule 151 (pointer_declaration)
 
 
 State 132
 
-  144 vector_access: IDENTIFIER LANGLE expression RANGLE •
+  145 vector_access: IDENTIFIER LANGLE expression RANGLE •
 
-    $default  reduce using rule 144 (vector_access)
+    $default  reduce using rule 145 (vector_access)
 
 
 State 133
@@ -2474,8 +2480,8 @@ State 133
 
 State 134
 
-  137 enum_list: IDENTIFIER OP_ASSIGN • LIT_INT
-  138          | IDENTIFIER OP_ASSIGN • LIT_CHAR
+  138 enum_list: IDENTIFIER OP_ASSIGN • LIT_INT
+  139          | IDENTIFIER OP_ASSIGN • LIT_CHAR
 
     LIT_INT   shift, and go to state 147
     LIT_CHAR  shift, and go to state 148
@@ -2483,16 +2489,16 @@ State 134
 
 State 135
 
-  135 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE • KW_ENUMERARE SEMICOLON
+  136 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE • KW_ENUMERARE SEMICOLON
 
     KW_ENUMERARE  shift, and go to state 149
 
 
 State 136
 
-  139 enum_list: enum_list PIPE • IDENTIFIER
-  140          | enum_list PIPE • IDENTIFIER OP_ASSIGN LIT_INT
-  141          | enum_list PIPE • IDENTIFIER OP_ASSIGN LIT_CHAR
+  140 enum_list: enum_list PIPE • IDENTIFIER
+  141          | enum_list PIPE • IDENTIFIER OP_ASSIGN LIT_INT
+  142          | enum_list PIPE • IDENTIFIER OP_ASSIGN LIT_CHAR
 
     IDENTIFIER  shift, and go to state 150
 
@@ -2507,7 +2513,7 @@ State 137
 State 138
 
    85 type_specifier: OP_DEREF_POINTER • type_specifier
-  151 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER • type_specifier SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER • type_specifier SEMICOLON
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -2539,10 +2545,10 @@ State 140
 
    32 primary_expression: IDENTIFIER •
    67 declaration_statement: IDENTIFIER • type_specifier opcional_constant SEMICOLON
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  150 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  151 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -2602,7 +2608,7 @@ State 141
 
 State 142
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 list_declaration_statement • RBRACE KW_HOMUNCULUS SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 list_declaration_statement • RBRACE KW_HOMUNCULUS SEMICOLON
 
     RBRACE  shift, and go to state 154
 
@@ -2623,7 +2629,7 @@ State 144
 
 State 145
 
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER • IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER • IDENTIFIER
 
     IDENTIFIER  shift, and go to state 156
 
@@ -2639,40 +2645,40 @@ State 146
 
 State 147
 
-  137 enum_list: IDENTIFIER OP_ASSIGN LIT_INT •
-
-    $default  reduce using rule 137 (enum_list)
-
-
-State 148
-
-  138 enum_list: IDENTIFIER OP_ASSIGN LIT_CHAR •
+  138 enum_list: IDENTIFIER OP_ASSIGN LIT_INT •
 
     $default  reduce using rule 138 (enum_list)
 
 
+State 148
+
+  139 enum_list: IDENTIFIER OP_ASSIGN LIT_CHAR •
+
+    $default  reduce using rule 139 (enum_list)
+
+
 State 149
 
-  135 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE • SEMICOLON
+  136 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE • SEMICOLON
 
     SEMICOLON  shift, and go to state 159
 
 
 State 150
 
-  139 enum_list: enum_list PIPE IDENTIFIER •
-  140          | enum_list PIPE IDENTIFIER • OP_ASSIGN LIT_INT
-  141          | enum_list PIPE IDENTIFIER • OP_ASSIGN LIT_CHAR
+  140 enum_list: enum_list PIPE IDENTIFIER •
+  141          | enum_list PIPE IDENTIFIER • OP_ASSIGN LIT_INT
+  142          | enum_list PIPE IDENTIFIER • OP_ASSIGN LIT_CHAR
 
     OP_ASSIGN  shift, and go to state 160
 
-    $default  reduce using rule 139 (enum_list)
+    $default  reduce using rule 140 (enum_list)
 
 
 State 151
 
    85 type_specifier: OP_DEREF_POINTER type_specifier •
-  151 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier • SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier • SEMICOLON
 
     SEMICOLON  shift, and go to state 161
 
@@ -2696,7 +2702,7 @@ State 153
 
 State 154
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 list_declaration_statement RBRACE • KW_HOMUNCULUS SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 list_declaration_statement RBRACE • KW_HOMUNCULUS SEMICOLON
 
     KW_HOMUNCULUS  shift, and go to state 163
 
@@ -2722,9 +2728,9 @@ State 155
 
 State 156
 
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER •
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER •
 
-    $default  reduce using rule 155 (member_access_dereference)
+    $default  reduce using rule 156 (member_access_dereference)
 
 
 State 157
@@ -2745,15 +2751,15 @@ State 158
 
 State 159
 
-  135 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON •
+  136 type_define_enum: IDENTIFIER LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON •
 
-    $default  reduce using rule 135 (type_define_enum)
+    $default  reduce using rule 136 (type_define_enum)
 
 
 State 160
 
-  140 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN • LIT_INT
-  141          | enum_list PIPE IDENTIFIER OP_ASSIGN • LIT_CHAR
+  141 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN • LIT_INT
+  142          | enum_list PIPE IDENTIFIER OP_ASSIGN • LIT_CHAR
 
     LIT_INT   shift, and go to state 166
     LIT_CHAR  shift, and go to state 167
@@ -2761,9 +2767,9 @@ State 160
 
 State 161
 
-  151 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON •
+  152 pointer_declaration: expression OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON •
 
-    $default  reduce using rule 151 (pointer_declaration)
+    $default  reduce using rule 152 (pointer_declaration)
 
 
 State 162
@@ -2775,7 +2781,7 @@ State 162
 
 State 163
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 list_declaration_statement RBRACE KW_HOMUNCULUS • SEMICOLON
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 list_declaration_statement RBRACE KW_HOMUNCULUS • SEMICOLON
 
     SEMICOLON  shift, and go to state 168
 
@@ -2852,23 +2858,23 @@ State 165
 
 State 166
 
-  140 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN LIT_INT •
-
-    $default  reduce using rule 140 (enum_list)
-
-
-State 167
-
-  141 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR •
+  141 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN LIT_INT •
 
     $default  reduce using rule 141 (enum_list)
 
 
+State 167
+
+  142 enum_list: enum_list PIPE IDENTIFIER OP_ASSIGN LIT_CHAR •
+
+    $default  reduce using rule 142 (enum_list)
+
+
 State 168
 
-  134 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@11 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON •
+  135 type_define_struct: KW_DESIGNARE IDENTIFIER LBRACE $@12 list_declaration_statement RBRACE KW_HOMUNCULUS SEMICOLON •
 
-    $default  reduce using rule 134 (type_define_struct)
+    $default  reduce using rule 135 (type_define_struct)
 
 
 State 169
@@ -2880,7 +2886,7 @@ State 169
 
 State 170
 
-  108 causal_statement: KW_CASUS • expression COLON statement_list
+  109 causal_statement: KW_CASUS • expression COLON statement_list
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -2911,7 +2917,7 @@ State 170
 
 State 171
 
-  109 causal_statement: KW_AXIOM • COLON statement_list
+  110 causal_statement: KW_AXIOM • COLON statement_list
 
     COLON  shift, and go to state 200
 
@@ -2951,13 +2957,13 @@ State 176
    93                        | LPAREN • argument_list RPAREN IDENTIFIER SEMICOLON
   102 conditional_statement: LPAREN • expression RPAREN KW_SI $@3 block $@4 conditional_non_statement
   104                      | LPAREN • expression RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
-  111 iteration_statement: LPAREN • expression RPAREN KW_PERSISTO $@6 block
-  113                    | LPAREN • expression_statement expression_statement expression RPAREN KW_ITERARE $@7 block
-  115                    | LPAREN • expression_statement expression_statement RPAREN KW_ITERARE $@8 block
-  117                    | LPAREN • declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 block
-  119                    | LPAREN • declaration_statement expression_statement RPAREN KW_ITERARE $@10 block
-  128 function_magnitudo: LPAREN • type_expression RPAREN KW_MAGNITUDO SEMICOLON
-  155 member_access_dereference: LPAREN • OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  112 iteration_statement: LPAREN • expression RPAREN KW_PERSISTO $@7 block
+  114                    | LPAREN • expression_statement expression_statement expression RPAREN KW_ITERARE $@8 block
+  116                    | LPAREN • expression_statement expression_statement RPAREN KW_ITERARE $@9 block
+  118                    | LPAREN • declaration_statement expression_statement expression RPAREN KW_ITERARE $@10 block
+  120                    | LPAREN • declaration_statement expression_statement RPAREN KW_ITERARE $@11 block
+  129 function_magnitudo: LPAREN • type_expression RPAREN KW_MAGNITUDO SEMICOLON
+  156 member_access_dereference: LPAREN • OP_DEREF_POINTER IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -3004,7 +3010,7 @@ State 176
 
 State 177
 
-  143 vector_statement: LBRACKET • argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
+  144 vector_statement: LBRACKET • argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3045,16 +3051,16 @@ State 179
 
    32 primary_expression: IDENTIFIER •
    67 declaration_statement: IDENTIFIER • type_specifier opcional_constant SEMICOLON
-  124 identifier_langle_list: IDENTIFIER • LANGLE KW_LECTURA SEMICOLON
-  125                       | IDENTIFIER • LANGLE identifier_langle_list
-  126 identifier_rangle_list: IDENTIFIER • RANGLE KW_REVELARE SEMICOLON
-  127                       | IDENTIFIER • RANGLE identifier_rangle_list
-  135 type_define_enum: IDENTIFIER • LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
-  142 vector_statement: IDENTIFIER • type_specifier LANGLE expression RANGLE SEMICOLON
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  150 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  125 identifier_langle_list: IDENTIFIER • LANGLE KW_LECTURA SEMICOLON
+  126                       | IDENTIFIER • LANGLE identifier_langle_list
+  127 identifier_rangle_list: IDENTIFIER • RANGLE KW_REVELARE SEMICOLON
+  128                       | IDENTIFIER • RANGLE identifier_rangle_list
+  136 type_define_enum: IDENTIFIER • LBRACE enum_list RBRACE KW_ENUMERARE SEMICOLON
+  143 vector_statement: IDENTIFIER • type_specifier LANGLE expression RANGLE SEMICOLON
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  151 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -3131,7 +3137,7 @@ State 184
    60           | expression • OP_ASSIGN IDENTIFIER
    68 declaration_statement: expression • OP_ASSIGN IDENTIFIER type_specifier opcional_constant SEMICOLON
    99 jump_statement: expression • KW_REDIRE SEMICOLON
-  151 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  152 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
     KW_REDIRE          shift, and go to state 219
     OP_ASSIGN          shift, and go to state 220
@@ -3205,30 +3211,30 @@ State 191
 
 State 192
 
-  120 io_functions: function_input_output •
+  121 io_functions: function_input_output •
 
-    $default  reduce using rule 120 (io_functions)
+    $default  reduce using rule 121 (io_functions)
 
 
 State 193
 
-  122 function_input_output: identifier_langle_list •
-
-    $default  reduce using rule 122 (function_input_output)
-
-
-State 194
-
-  123 function_input_output: identifier_rangle_list •
+  123 function_input_output: identifier_langle_list •
 
     $default  reduce using rule 123 (function_input_output)
 
 
+State 194
+
+  124 function_input_output: identifier_rangle_list •
+
+    $default  reduce using rule 124 (function_input_output)
+
+
 State 195
 
-  121 io_functions: function_magnitudo •
+  122 io_functions: function_magnitudo •
 
-    $default  reduce using rule 121 (io_functions)
+    $default  reduce using rule 122 (io_functions)
 
 
 State 196
@@ -3273,7 +3279,7 @@ State 199
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  108 causal_statement: KW_CASUS expression • COLON statement_list
+  109 causal_statement: KW_CASUS expression • COLON statement_list
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -3297,7 +3303,7 @@ State 199
 
 State 200
 
-  109 causal_statement: KW_AXIOM COLON • statement_list
+  110 causal_statement: KW_AXIOM COLON • statement_list
 
     $default  reduce using rule 11 (statement_list)
 
@@ -3336,8 +3342,8 @@ State 205
 
    40 unary_expression: OP_DEREF_POINTER • unary_expression
    85 type_specifier: OP_DEREF_POINTER • type_specifier
-  153 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER • IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  154 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER • IDENTIFIER RPAREN OP_ACCESS_MEMBER IDENTIFIER
 
     KW_TYPE_ATOMUS      shift, and go to state 39
     KW_TYPE_FRACTIO     shift, and go to state 40
@@ -3388,10 +3394,10 @@ State 207
    67 declaration_statement: IDENTIFIER • type_specifier opcional_constant SEMICOLON
    83 type_specifier: IDENTIFIER •
    84               | IDENTIFIER • KW_ENUMERARE
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  150 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  151 pointer_declaration: IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     KW_ENUMERARE        shift, and go to state 88
     KW_TYPE_ATOMUS      shift, and go to state 39
@@ -3418,8 +3424,8 @@ State 207
 
 State 208
 
-  113 iteration_statement: LPAREN expression_statement • expression_statement expression RPAREN KW_ITERARE $@7 block
-  115                    | LPAREN expression_statement • expression_statement RPAREN KW_ITERARE $@8 block
+  114 iteration_statement: LPAREN expression_statement • expression_statement expression RPAREN KW_ITERARE $@8 block
+  116                    | LPAREN expression_statement • expression_statement RPAREN KW_ITERARE $@9 block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3474,8 +3480,8 @@ State 209
    94 argument_list: expression •
   102 conditional_statement: LPAREN expression • RPAREN KW_SI $@3 block $@4 conditional_non_statement
   104                      | LPAREN expression • RPAREN KW_VERTERE LBRACE $@5 causal_statement RBRACE
-  111 iteration_statement: LPAREN expression • RPAREN KW_PERSISTO $@6 block
-  151 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  112 iteration_statement: LPAREN expression • RPAREN KW_PERSISTO $@7 block
+  152 pointer_declaration: expression • OP_ASSIGN IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
     OP_ASSIGN          shift, and go to state 70
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -3503,8 +3509,8 @@ State 209
 
 State 210
 
-  117 iteration_statement: LPAREN declaration_statement • expression_statement expression RPAREN KW_ITERARE $@9 block
-  119                    | LPAREN declaration_statement • expression_statement RPAREN KW_ITERARE $@10 block
+  118 iteration_statement: LPAREN declaration_statement • expression_statement expression RPAREN KW_ITERARE $@10 block
+  120                    | LPAREN declaration_statement • expression_statement RPAREN KW_ITERARE $@11 block
 
     LIT_FACTUM        shift, and go to state 6
     LIT_FICTUM        shift, and go to state 7
@@ -3536,9 +3542,9 @@ State 210
 
 State 211
 
-  129 type_expression: type_specifier •
+  130 type_expression: type_specifier •
 
-    $default  reduce using rule 129 (type_expression)
+    $default  reduce using rule 130 (type_expression)
 
 
 State 212
@@ -3552,7 +3558,7 @@ State 212
 
 State 213
 
-  128 function_magnitudo: LPAREN type_expression • RPAREN KW_MAGNITUDO SEMICOLON
+  129 function_magnitudo: LPAREN type_expression • RPAREN KW_MAGNITUDO SEMICOLON
 
     RPAREN  shift, and go to state 235
 
@@ -3602,7 +3608,7 @@ State 214
 State 215
 
    95 argument_list: argument_list • PIPE expression
-  143 vector_statement: LBRACKET argument_list • RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
+  144 vector_statement: LBRACKET argument_list • RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON
 
     RBRACKET  shift, and go to state 236
     PIPE      shift, and go to state 234
@@ -3610,9 +3616,9 @@ State 215
 
 State 216
 
-  124 identifier_langle_list: IDENTIFIER LANGLE • KW_LECTURA SEMICOLON
-  125                       | IDENTIFIER LANGLE • identifier_langle_list
-  144 vector_access: IDENTIFIER LANGLE • expression RANGLE
+  125 identifier_langle_list: IDENTIFIER LANGLE • KW_LECTURA SEMICOLON
+  126                       | IDENTIFIER LANGLE • identifier_langle_list
+  145 vector_access: IDENTIFIER LANGLE • expression RANGLE
 
     KW_LECTURA        shift, and go to state 237
     LIT_FACTUM        shift, and go to state 6
@@ -3645,8 +3651,8 @@ State 216
 
 State 217
 
-  126 identifier_rangle_list: IDENTIFIER RANGLE • KW_REVELARE SEMICOLON
-  127                       | IDENTIFIER RANGLE • identifier_rangle_list
+  127 identifier_rangle_list: IDENTIFIER RANGLE • KW_REVELARE SEMICOLON
+  128                       | IDENTIFIER RANGLE • identifier_rangle_list
 
     KW_REVELARE  shift, and go to state 240
     IDENTIFIER   shift, and go to state 241
@@ -3657,7 +3663,7 @@ State 217
 State 218
 
    67 declaration_statement: IDENTIFIER type_specifier • opcional_constant SEMICOLON
-  142 vector_statement: IDENTIFIER type_specifier • LANGLE expression RANGLE SEMICOLON
+  143 vector_statement: IDENTIFIER type_specifier • LANGLE expression RANGLE SEMICOLON
 
     KW_MOL  shift, and go to state 105
     LANGLE  shift, and go to state 243
@@ -3681,7 +3687,7 @@ State 220
    28                     | expression OP_ASSIGN • IDENTIFIER LANGLE expression RANGLE SEMICOLON
    60 expression: expression OP_ASSIGN • IDENTIFIER
    68 declaration_statement: expression OP_ASSIGN • IDENTIFIER type_specifier opcional_constant SEMICOLON
-  151 pointer_declaration: expression OP_ASSIGN • IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN • IDENTIFIER OP_DEREF_POINTER type_specifier SEMICOLON
 
     IDENTIFIER  shift, and go to state 245
 
@@ -3758,7 +3764,7 @@ State 222
 
 State 223
 
-  108 causal_statement: KW_CASUS expression COLON • statement_list
+  109 causal_statement: KW_CASUS expression COLON • statement_list
 
     $default  reduce using rule 11 (statement_list)
 
@@ -3768,7 +3774,512 @@ State 223
 State 224
 
    12 statement_list: statement_list • statement
-  109 causal_statement: KW_AXIOM COLON statement_list •
+  110 causal_statement: KW_AXIOM COLON statement_list •
+
+    KW_CASUS          shift, and go to state 170
+    KW_AXIOM          shift, and go to state 171
+    KW_CONTINUUM      shift, and go to state 172
+    KW_RUPTIO         shift, and go to state 173
+    KW_DESIGNARE      shift, and go to state 4
+    KW_REDIRE         shift, and go to state 174
+    KW_REVELARE       shift, and go to state 175
+    LIT_FACTUM        shift, and go to state 6
+    LIT_FICTUM        shift, and go to state 7
+    LIT_FLOAT         shift, and go to state 8
+    LIT_INT           shift, and go to state 9
+    LIT_CHAR          shift, and go to state 10
+    LIT_STRING        shift, and go to state 11
+    OP_SUBTRACT       shift, and go to state 12
+    OP_LOGICAL_NOT    shift, and go to state 13
+    OP_ADDR_OF        shift, and go to state 14
+    OP_DEREF_POINTER  shift, and go to state 15
+    LPAREN            shift, and go to state 176
+    LBRACKET          shift, and go to state 177
+    IDENTIFIER        shift, and go to state 179
+
+    KW_CASUS          [reduce using rule 110 (causal_statement)]
+    KW_AXIOM          [reduce using rule 110 (causal_statement)]
+    KW_CONTINUUM      [reduce using rule 110 (causal_statement)]
+    KW_RUPTIO         [reduce using rule 110 (causal_statement)]
+    KW_DESIGNARE      [reduce using rule 110 (causal_statement)]
+    KW_REDIRE         [reduce using rule 110 (causal_statement)]
+    KW_REVELARE       [reduce using rule 110 (causal_statement)]
+    LIT_FACTUM        [reduce using rule 110 (causal_statement)]
+    LIT_FICTUM        [reduce using rule 110 (causal_statement)]
+    LIT_FLOAT         [reduce using rule 110 (causal_statement)]
+    LIT_INT           [reduce using rule 110 (causal_statement)]
+    LIT_CHAR          [reduce using rule 110 (causal_statement)]
+    LIT_STRING        [reduce using rule 110 (causal_statement)]
+    OP_SUBTRACT       [reduce using rule 110 (causal_statement)]
+    OP_LOGICAL_NOT    [reduce using rule 110 (causal_statement)]
+    OP_ADDR_OF        [reduce using rule 110 (causal_statement)]
+    OP_DEREF_POINTER  [reduce using rule 110 (causal_statement)]
+    LPAREN            [reduce using rule 110 (causal_statement)]
+    LBRACKET          [reduce using rule 110 (causal_statement)]
+    IDENTIFIER        [reduce using rule 110 (causal_statement)]
+    $default          reduce using rule 110 (causal_statement)
+
+    statement                  go to state 180
+    assignment_statement       go to state 181
+    print_statement            go to state 182
+    expression_statement       go to state 183
+    primary_expression         go to state 21
+    unary_expression           go to state 22
+    expression                 go to state 184
+    constant                   go to state 24
+    string                     go to state 25
+    declaration_statement      go to state 185
+    function_call_statement    go to state 186
+    jump_statement             go to state 187
+    conditional_statement      go to state 188
+    causal_statement           go to state 189
+    iteration_statement        go to state 190
+    io_functions               go to state 191
+    function_input_output      go to state 192
+    identifier_langle_list     go to state 193
+    identifier_rangle_list     go to state 194
+    function_magnitudo         go to state 195
+    type_define_statement      go to state 196
+    type_define_struct         go to state 29
+    type_define_enum           go to state 30
+    vector_statement           go to state 197
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_declaration        go to state 33
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 225
+
+   30 print_statement: KW_REVELARE LPAREN IDENTIFIER • RPAREN SEMICOLON
+
+    RPAREN  shift, and go to state 249
+
+
+State 226
+
+   40 unary_expression: OP_DEREF_POINTER • unary_expression
+   85 type_specifier: OP_DEREF_POINTER • type_specifier
+  154 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
+
+    KW_TYPE_ATOMUS      shift, and go to state 39
+    KW_TYPE_FRACTIO     shift, and go to state 40
+    KW_TYPE_FRAGMENTUM  shift, and go to state 41
+    KW_TYPE_MAGNUS      shift, and go to state 42
+    KW_TYPE_MINIMUS     shift, and go to state 43
+    KW_TYPE_QUANTUM     shift, and go to state 44
+    KW_TYPE_SCRIPTUM    shift, and go to state 45
+    KW_TYPE_SYMBOLUM    shift, and go to state 46
+    KW_TYPE_VACUUM      shift, and go to state 47
+    LIT_FACTUM          shift, and go to state 6
+    LIT_FICTUM          shift, and go to state 7
+    LIT_FLOAT           shift, and go to state 8
+    LIT_INT             shift, and go to state 9
+    LIT_CHAR            shift, and go to state 10
+    LIT_STRING          shift, and go to state 11
+    OP_SUBTRACT         shift, and go to state 12
+    OP_LOGICAL_NOT      shift, and go to state 13
+    OP_ADDR_OF          shift, and go to state 14
+    OP_DEREF_POINTER    shift, and go to state 226
+    LPAREN              shift, and go to state 16
+    IDENTIFIER          shift, and go to state 250
+
+    primary_expression         go to state 21
+    unary_expression           go to state 58
+    constant                   go to state 24
+    string                     go to state 25
+    type_specifier             go to state 87
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 227
+
+   32 primary_expression: IDENTIFIER •
+   83 type_specifier: IDENTIFIER •
+   84               | IDENTIFIER • KW_ENUMERARE
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  156 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER • RPAREN OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+
+    KW_ENUMERARE       shift, and go to state 88
+    OP_ACCESS_POINTER  shift, and go to state 62
+    OP_ACCESS_MEMBER   shift, and go to state 63
+    LANGLE             shift, and go to state 65
+    RPAREN             shift, and go to state 129
+
+    OP_ASSIGN          reduce using rule 32 (primary_expression)
+    OP_ASSIGN          [reduce using rule 154 (pointer_dereference)]
+    OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
+    OP_GREATER_EQUAL   [reduce using rule 154 (pointer_dereference)]
+    OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
+    OP_LESS_EQUAL      [reduce using rule 154 (pointer_dereference)]
+    OP_EQUAL           reduce using rule 32 (primary_expression)
+    OP_EQUAL           [reduce using rule 154 (pointer_dereference)]
+    OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
+    OP_NOT_EQUAL       [reduce using rule 154 (pointer_dereference)]
+    OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
+    OP_INTEGER_DIVIDE  [reduce using rule 154 (pointer_dereference)]
+    OP_EXP             reduce using rule 32 (primary_expression)
+    OP_EXP             [reduce using rule 154 (pointer_dereference)]
+    OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
+    OP_LOGICAL_AND     [reduce using rule 154 (pointer_dereference)]
+    OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
+    OP_LOGICAL_OR      [reduce using rule 154 (pointer_dereference)]
+    OP_MULTIPLY        reduce using rule 32 (primary_expression)
+    OP_MULTIPLY        [reduce using rule 154 (pointer_dereference)]
+    OP_ADD             reduce using rule 32 (primary_expression)
+    OP_ADD             [reduce using rule 154 (pointer_dereference)]
+    OP_SUBTRACT        reduce using rule 32 (primary_expression)
+    OP_SUBTRACT        [reduce using rule 154 (pointer_dereference)]
+    OP_DIVIDE          reduce using rule 32 (primary_expression)
+    OP_DIVIDE          [reduce using rule 154 (pointer_dereference)]
+    OP_MODULUS         reduce using rule 32 (primary_expression)
+    OP_MODULUS         [reduce using rule 154 (pointer_dereference)]
+    OP_GREATER_THAN    reduce using rule 32 (primary_expression)
+    OP_GREATER_THAN    [reduce using rule 154 (pointer_dereference)]
+    OP_LESS_THAN       reduce using rule 32 (primary_expression)
+    OP_LESS_THAN       [reduce using rule 154 (pointer_dereference)]
+    OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
+    OP_LOGICAL_XOR     [reduce using rule 154 (pointer_dereference)]
+    RPAREN             [reduce using rule 32 (primary_expression)]
+    RPAREN             [reduce using rule 83 (type_specifier)]
+    RPAREN             [reduce using rule 154 (pointer_dereference)]
+    PIPE               reduce using rule 32 (primary_expression)
+    PIPE               [reduce using rule 154 (pointer_dereference)]
+    SEMICOLON          reduce using rule 32 (primary_expression)
+    SEMICOLON          [reduce using rule 154 (pointer_dereference)]
+    $default           reduce using rule 32 (primary_expression)
+
+
+State 228
+
+   92 function_call_statement: LPAREN RPAREN IDENTIFIER • SEMICOLON
+
+    SEMICOLON  shift, and go to state 251
+
+
+State 229
+
+  114 iteration_statement: LPAREN expression_statement expression_statement • expression RPAREN KW_ITERARE $@8 block
+  116                    | LPAREN expression_statement expression_statement • RPAREN KW_ITERARE $@9 block
+
+    LIT_FACTUM        shift, and go to state 6
+    LIT_FICTUM        shift, and go to state 7
+    LIT_FLOAT         shift, and go to state 8
+    LIT_INT           shift, and go to state 9
+    LIT_CHAR          shift, and go to state 10
+    LIT_STRING        shift, and go to state 11
+    OP_SUBTRACT       shift, and go to state 12
+    OP_LOGICAL_NOT    shift, and go to state 13
+    OP_ADDR_OF        shift, and go to state 14
+    OP_DEREF_POINTER  shift, and go to state 15
+    LPAREN            shift, and go to state 16
+    RPAREN            shift, and go to state 252
+    IDENTIFIER        shift, and go to state 52
+
+    primary_expression         go to state 21
+    unary_expression           go to state 22
+    expression                 go to state 253
+    constant                   go to state 24
+    string                     go to state 25
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 230
+
+   31 expression_statement: expression • SEMICOLON
+   44 expression: expression • OP_ADD unary_expression
+   45           | expression • OP_SUBTRACT unary_expression
+   46           | expression • OP_MULTIPLY unary_expression
+   47           | expression • OP_DIVIDE unary_expression
+   48           | expression • OP_MODULUS unary_expression
+   49           | expression • OP_EXP unary_expression
+   50           | expression • OP_INTEGER_DIVIDE unary_expression
+   51           | expression • OP_EQUAL unary_expression
+   52           | expression • OP_NOT_EQUAL unary_expression
+   53           | expression • OP_LESS_THAN unary_expression
+   54           | expression • OP_GREATER_THAN unary_expression
+   55           | expression • OP_LESS_EQUAL unary_expression
+   56           | expression • OP_GREATER_EQUAL unary_expression
+   57           | expression • OP_LOGICAL_AND unary_expression
+   58           | expression • OP_LOGICAL_OR unary_expression
+   59           | expression • OP_LOGICAL_XOR unary_expression
+   60           | expression • OP_ASSIGN IDENTIFIER
+
+    OP_ASSIGN          shift, and go to state 95
+    OP_GREATER_EQUAL   shift, and go to state 71
+    OP_LESS_EQUAL      shift, and go to state 72
+    OP_EQUAL           shift, and go to state 73
+    OP_NOT_EQUAL       shift, and go to state 74
+    OP_INTEGER_DIVIDE  shift, and go to state 75
+    OP_EXP             shift, and go to state 76
+    OP_LOGICAL_AND     shift, and go to state 77
+    OP_LOGICAL_OR      shift, and go to state 78
+    OP_MULTIPLY        shift, and go to state 79
+    OP_ADD             shift, and go to state 80
+    OP_SUBTRACT        shift, and go to state 81
+    OP_DIVIDE          shift, and go to state 82
+    OP_MODULUS         shift, and go to state 83
+    OP_GREATER_THAN    shift, and go to state 84
+    OP_LESS_THAN       shift, and go to state 85
+    OP_LOGICAL_XOR     shift, and go to state 86
+    SEMICOLON          shift, and go to state 221
+
+
+State 231
+
+   35 primary_expression: LPAREN expression RPAREN •
+  102 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block $@4 conditional_non_statement
+  104                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@5 causal_statement RBRACE
+  112 iteration_statement: LPAREN expression RPAREN • KW_PERSISTO $@7 block
+
+    KW_VERTERE   shift, and go to state 254
+    KW_PERSISTO  shift, and go to state 255
+    KW_SI        shift, and go to state 256
+
+    $default  reduce using rule 35 (primary_expression)
+
+
+State 232
+
+  118 iteration_statement: LPAREN declaration_statement expression_statement • expression RPAREN KW_ITERARE $@10 block
+  120                    | LPAREN declaration_statement expression_statement • RPAREN KW_ITERARE $@11 block
+
+    LIT_FACTUM        shift, and go to state 6
+    LIT_FICTUM        shift, and go to state 7
+    LIT_FLOAT         shift, and go to state 8
+    LIT_INT           shift, and go to state 9
+    LIT_CHAR          shift, and go to state 10
+    LIT_STRING        shift, and go to state 11
+    OP_SUBTRACT       shift, and go to state 12
+    OP_LOGICAL_NOT    shift, and go to state 13
+    OP_ADDR_OF        shift, and go to state 14
+    OP_DEREF_POINTER  shift, and go to state 15
+    LPAREN            shift, and go to state 16
+    RPAREN            shift, and go to state 257
+    IDENTIFIER        shift, and go to state 52
+
+    primary_expression         go to state 21
+    unary_expression           go to state 22
+    expression                 go to state 258
+    constant                   go to state 24
+    string                     go to state 25
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 233
+
+   93 function_call_statement: LPAREN argument_list RPAREN • IDENTIFIER SEMICOLON
+
+    IDENTIFIER  shift, and go to state 259
+
+
+State 234
+
+   95 argument_list: argument_list PIPE • expression
+
+    LIT_FACTUM        shift, and go to state 6
+    LIT_FICTUM        shift, and go to state 7
+    LIT_FLOAT         shift, and go to state 8
+    LIT_INT           shift, and go to state 9
+    LIT_CHAR          shift, and go to state 10
+    LIT_STRING        shift, and go to state 11
+    OP_SUBTRACT       shift, and go to state 12
+    OP_LOGICAL_NOT    shift, and go to state 13
+    OP_ADDR_OF        shift, and go to state 14
+    OP_DEREF_POINTER  shift, and go to state 15
+    LPAREN            shift, and go to state 16
+    IDENTIFIER        shift, and go to state 52
+
+    primary_expression         go to state 21
+    unary_expression           go to state 22
+    expression                 go to state 260
+    constant                   go to state 24
+    string                     go to state 25
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 235
+
+  129 function_magnitudo: LPAREN type_expression RPAREN • KW_MAGNITUDO SEMICOLON
+
+    KW_MAGNITUDO  shift, and go to state 261
+
+
+State 236
+
+  144 vector_statement: LBRACKET argument_list RBRACKET • OP_ASSIGN IDENTIFIER SEMICOLON
+
+    OP_ASSIGN  shift, and go to state 262
+
+
+State 237
+
+  125 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA • SEMICOLON
+
+    SEMICOLON  shift, and go to state 263
+
+
+State 238
+
+   32 primary_expression: IDENTIFIER •
+  125 identifier_langle_list: IDENTIFIER • LANGLE KW_LECTURA SEMICOLON
+  126                       | IDENTIFIER • LANGLE identifier_langle_list
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+
+    OP_ACCESS_POINTER  shift, and go to state 62
+    OP_ACCESS_MEMBER   shift, and go to state 63
+    LANGLE             shift, and go to state 216
+
+    $default  reduce using rule 32 (primary_expression)
+
+
+State 239
+
+  126 identifier_langle_list: IDENTIFIER LANGLE identifier_langle_list •
+
+    $default  reduce using rule 126 (identifier_langle_list)
+
+
+State 240
+
+  127 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE • SEMICOLON
+
+    SEMICOLON  shift, and go to state 264
+
+
+State 241
+
+  127 identifier_rangle_list: IDENTIFIER • RANGLE KW_REVELARE SEMICOLON
+  128                       | IDENTIFIER • RANGLE identifier_rangle_list
+
+    RANGLE  shift, and go to state 217
+
+
+State 242
+
+  128 identifier_rangle_list: IDENTIFIER RANGLE identifier_rangle_list •
+
+    $default  reduce using rule 128 (identifier_rangle_list)
+
+
+State 243
+
+  143 vector_statement: IDENTIFIER type_specifier LANGLE • expression RANGLE SEMICOLON
+
+    LIT_FACTUM        shift, and go to state 6
+    LIT_FICTUM        shift, and go to state 7
+    LIT_FLOAT         shift, and go to state 8
+    LIT_INT           shift, and go to state 9
+    LIT_CHAR          shift, and go to state 10
+    LIT_STRING        shift, and go to state 11
+    OP_SUBTRACT       shift, and go to state 12
+    OP_LOGICAL_NOT    shift, and go to state 13
+    OP_ADDR_OF        shift, and go to state 14
+    OP_DEREF_POINTER  shift, and go to state 15
+    LPAREN            shift, and go to state 16
+    IDENTIFIER        shift, and go to state 52
+
+    primary_expression         go to state 21
+    unary_expression           go to state 22
+    expression                 go to state 265
+    constant                   go to state 24
+    string                     go to state 25
+    vector_access              go to state 31
+    pointer_statement          go to state 32
+    pointer_assignment         go to state 34
+    pointer_dereference        go to state 35
+    member_access_direct       go to state 36
+    member_access_dereference  go to state 37
+    member_access_pointer      go to state 38
+
+
+State 244
+
+   99 jump_statement: expression KW_REDIRE SEMICOLON •
+
+    $default  reduce using rule 99 (jump_statement)
+
+
+State 245
+
+   25 struct_member_lvalue: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+   27 assignment_statement: expression OP_ASSIGN IDENTIFIER • SEMICOLON
+   28                     | expression OP_ASSIGN IDENTIFIER • LANGLE expression RANGLE SEMICOLON
+   60 expression: expression OP_ASSIGN IDENTIFIER •
+   68 declaration_statement: expression OP_ASSIGN IDENTIFIER • type_specifier opcional_constant SEMICOLON
+  152 pointer_declaration: expression OP_ASSIGN IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
+
+    KW_TYPE_ATOMUS      shift, and go to state 39
+    KW_TYPE_FRACTIO     shift, and go to state 40
+    KW_TYPE_FRAGMENTUM  shift, and go to state 41
+    KW_TYPE_MAGNUS      shift, and go to state 42
+    KW_TYPE_MINIMUS     shift, and go to state 43
+    KW_TYPE_QUANTUM     shift, and go to state 44
+    KW_TYPE_SCRIPTUM    shift, and go to state 45
+    KW_TYPE_SYMBOLUM    shift, and go to state 46
+    KW_TYPE_VACUUM      shift, and go to state 47
+    OP_ACCESS_MEMBER    shift, and go to state 266
+    OP_DEREF_POINTER    shift, and go to state 138
+    LANGLE              shift, and go to state 267
+    SEMICOLON           shift, and go to state 268
+    IDENTIFIER          shift, and go to state 68
+
+    $default  reduce using rule 60 (expression)
+
+    type_specifier  go to state 139
+
+
+State 246
+
+   26 assignment_statement: expression OP_ASSIGN struct_member_lvalue • SEMICOLON
+
+    SEMICOLON  shift, and go to state 269
+
+
+State 247
+
+   87 function_declaration_statement: KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier $@2 LBRACE statement_list RBRACE •
+
+    $default  reduce using rule 87 (function_declaration_statement)
+
+
+State 248
+
+   12 statement_list: statement_list • statement
+  109 causal_statement: KW_CASUS expression COLON statement_list •
 
     KW_CASUS          shift, and go to state 170
     KW_AXIOM          shift, and go to state 171
@@ -3847,511 +4358,6 @@ State 224
     member_access_pointer      go to state 38
 
 
-State 225
-
-   30 print_statement: KW_REVELARE LPAREN IDENTIFIER • RPAREN SEMICOLON
-
-    RPAREN  shift, and go to state 249
-
-
-State 226
-
-   40 unary_expression: OP_DEREF_POINTER • unary_expression
-   85 type_specifier: OP_DEREF_POINTER • type_specifier
-  153 pointer_dereference: OP_DEREF_POINTER • IDENTIFIER
-
-    KW_TYPE_ATOMUS      shift, and go to state 39
-    KW_TYPE_FRACTIO     shift, and go to state 40
-    KW_TYPE_FRAGMENTUM  shift, and go to state 41
-    KW_TYPE_MAGNUS      shift, and go to state 42
-    KW_TYPE_MINIMUS     shift, and go to state 43
-    KW_TYPE_QUANTUM     shift, and go to state 44
-    KW_TYPE_SCRIPTUM    shift, and go to state 45
-    KW_TYPE_SYMBOLUM    shift, and go to state 46
-    KW_TYPE_VACUUM      shift, and go to state 47
-    LIT_FACTUM          shift, and go to state 6
-    LIT_FICTUM          shift, and go to state 7
-    LIT_FLOAT           shift, and go to state 8
-    LIT_INT             shift, and go to state 9
-    LIT_CHAR            shift, and go to state 10
-    LIT_STRING          shift, and go to state 11
-    OP_SUBTRACT         shift, and go to state 12
-    OP_LOGICAL_NOT      shift, and go to state 13
-    OP_ADDR_OF          shift, and go to state 14
-    OP_DEREF_POINTER    shift, and go to state 226
-    LPAREN              shift, and go to state 16
-    IDENTIFIER          shift, and go to state 250
-
-    primary_expression         go to state 21
-    unary_expression           go to state 58
-    constant                   go to state 24
-    string                     go to state 25
-    type_specifier             go to state 87
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
-State 227
-
-   32 primary_expression: IDENTIFIER •
-   83 type_specifier: IDENTIFIER •
-   84               | IDENTIFIER • KW_ENUMERARE
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  155 member_access_dereference: LPAREN OP_DEREF_POINTER IDENTIFIER • RPAREN OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
-
-    KW_ENUMERARE       shift, and go to state 88
-    OP_ACCESS_POINTER  shift, and go to state 62
-    OP_ACCESS_MEMBER   shift, and go to state 63
-    LANGLE             shift, and go to state 65
-    RPAREN             shift, and go to state 129
-
-    OP_ASSIGN          reduce using rule 32 (primary_expression)
-    OP_ASSIGN          [reduce using rule 153 (pointer_dereference)]
-    OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
-    OP_GREATER_EQUAL   [reduce using rule 153 (pointer_dereference)]
-    OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
-    OP_LESS_EQUAL      [reduce using rule 153 (pointer_dereference)]
-    OP_EQUAL           reduce using rule 32 (primary_expression)
-    OP_EQUAL           [reduce using rule 153 (pointer_dereference)]
-    OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
-    OP_NOT_EQUAL       [reduce using rule 153 (pointer_dereference)]
-    OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
-    OP_INTEGER_DIVIDE  [reduce using rule 153 (pointer_dereference)]
-    OP_EXP             reduce using rule 32 (primary_expression)
-    OP_EXP             [reduce using rule 153 (pointer_dereference)]
-    OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_AND     [reduce using rule 153 (pointer_dereference)]
-    OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
-    OP_LOGICAL_OR      [reduce using rule 153 (pointer_dereference)]
-    OP_MULTIPLY        reduce using rule 32 (primary_expression)
-    OP_MULTIPLY        [reduce using rule 153 (pointer_dereference)]
-    OP_ADD             reduce using rule 32 (primary_expression)
-    OP_ADD             [reduce using rule 153 (pointer_dereference)]
-    OP_SUBTRACT        reduce using rule 32 (primary_expression)
-    OP_SUBTRACT        [reduce using rule 153 (pointer_dereference)]
-    OP_DIVIDE          reduce using rule 32 (primary_expression)
-    OP_DIVIDE          [reduce using rule 153 (pointer_dereference)]
-    OP_MODULUS         reduce using rule 32 (primary_expression)
-    OP_MODULUS         [reduce using rule 153 (pointer_dereference)]
-    OP_GREATER_THAN    reduce using rule 32 (primary_expression)
-    OP_GREATER_THAN    [reduce using rule 153 (pointer_dereference)]
-    OP_LESS_THAN       reduce using rule 32 (primary_expression)
-    OP_LESS_THAN       [reduce using rule 153 (pointer_dereference)]
-    OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_XOR     [reduce using rule 153 (pointer_dereference)]
-    RPAREN             [reduce using rule 32 (primary_expression)]
-    RPAREN             [reduce using rule 83 (type_specifier)]
-    RPAREN             [reduce using rule 153 (pointer_dereference)]
-    PIPE               reduce using rule 32 (primary_expression)
-    PIPE               [reduce using rule 153 (pointer_dereference)]
-    SEMICOLON          reduce using rule 32 (primary_expression)
-    SEMICOLON          [reduce using rule 153 (pointer_dereference)]
-    $default           reduce using rule 32 (primary_expression)
-
-
-State 228
-
-   92 function_call_statement: LPAREN RPAREN IDENTIFIER • SEMICOLON
-
-    SEMICOLON  shift, and go to state 251
-
-
-State 229
-
-  113 iteration_statement: LPAREN expression_statement expression_statement • expression RPAREN KW_ITERARE $@7 block
-  115                    | LPAREN expression_statement expression_statement • RPAREN KW_ITERARE $@8 block
-
-    LIT_FACTUM        shift, and go to state 6
-    LIT_FICTUM        shift, and go to state 7
-    LIT_FLOAT         shift, and go to state 8
-    LIT_INT           shift, and go to state 9
-    LIT_CHAR          shift, and go to state 10
-    LIT_STRING        shift, and go to state 11
-    OP_SUBTRACT       shift, and go to state 12
-    OP_LOGICAL_NOT    shift, and go to state 13
-    OP_ADDR_OF        shift, and go to state 14
-    OP_DEREF_POINTER  shift, and go to state 15
-    LPAREN            shift, and go to state 16
-    RPAREN            shift, and go to state 252
-    IDENTIFIER        shift, and go to state 52
-
-    primary_expression         go to state 21
-    unary_expression           go to state 22
-    expression                 go to state 253
-    constant                   go to state 24
-    string                     go to state 25
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
-State 230
-
-   31 expression_statement: expression • SEMICOLON
-   44 expression: expression • OP_ADD unary_expression
-   45           | expression • OP_SUBTRACT unary_expression
-   46           | expression • OP_MULTIPLY unary_expression
-   47           | expression • OP_DIVIDE unary_expression
-   48           | expression • OP_MODULUS unary_expression
-   49           | expression • OP_EXP unary_expression
-   50           | expression • OP_INTEGER_DIVIDE unary_expression
-   51           | expression • OP_EQUAL unary_expression
-   52           | expression • OP_NOT_EQUAL unary_expression
-   53           | expression • OP_LESS_THAN unary_expression
-   54           | expression • OP_GREATER_THAN unary_expression
-   55           | expression • OP_LESS_EQUAL unary_expression
-   56           | expression • OP_GREATER_EQUAL unary_expression
-   57           | expression • OP_LOGICAL_AND unary_expression
-   58           | expression • OP_LOGICAL_OR unary_expression
-   59           | expression • OP_LOGICAL_XOR unary_expression
-   60           | expression • OP_ASSIGN IDENTIFIER
-
-    OP_ASSIGN          shift, and go to state 95
-    OP_GREATER_EQUAL   shift, and go to state 71
-    OP_LESS_EQUAL      shift, and go to state 72
-    OP_EQUAL           shift, and go to state 73
-    OP_NOT_EQUAL       shift, and go to state 74
-    OP_INTEGER_DIVIDE  shift, and go to state 75
-    OP_EXP             shift, and go to state 76
-    OP_LOGICAL_AND     shift, and go to state 77
-    OP_LOGICAL_OR      shift, and go to state 78
-    OP_MULTIPLY        shift, and go to state 79
-    OP_ADD             shift, and go to state 80
-    OP_SUBTRACT        shift, and go to state 81
-    OP_DIVIDE          shift, and go to state 82
-    OP_MODULUS         shift, and go to state 83
-    OP_GREATER_THAN    shift, and go to state 84
-    OP_LESS_THAN       shift, and go to state 85
-    OP_LOGICAL_XOR     shift, and go to state 86
-    SEMICOLON          shift, and go to state 221
-
-
-State 231
-
-   35 primary_expression: LPAREN expression RPAREN •
-  102 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block $@4 conditional_non_statement
-  104                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@5 causal_statement RBRACE
-  111 iteration_statement: LPAREN expression RPAREN • KW_PERSISTO $@6 block
-
-    KW_VERTERE   shift, and go to state 254
-    KW_PERSISTO  shift, and go to state 255
-    KW_SI        shift, and go to state 256
-
-    $default  reduce using rule 35 (primary_expression)
-
-
-State 232
-
-  117 iteration_statement: LPAREN declaration_statement expression_statement • expression RPAREN KW_ITERARE $@9 block
-  119                    | LPAREN declaration_statement expression_statement • RPAREN KW_ITERARE $@10 block
-
-    LIT_FACTUM        shift, and go to state 6
-    LIT_FICTUM        shift, and go to state 7
-    LIT_FLOAT         shift, and go to state 8
-    LIT_INT           shift, and go to state 9
-    LIT_CHAR          shift, and go to state 10
-    LIT_STRING        shift, and go to state 11
-    OP_SUBTRACT       shift, and go to state 12
-    OP_LOGICAL_NOT    shift, and go to state 13
-    OP_ADDR_OF        shift, and go to state 14
-    OP_DEREF_POINTER  shift, and go to state 15
-    LPAREN            shift, and go to state 16
-    RPAREN            shift, and go to state 257
-    IDENTIFIER        shift, and go to state 52
-
-    primary_expression         go to state 21
-    unary_expression           go to state 22
-    expression                 go to state 258
-    constant                   go to state 24
-    string                     go to state 25
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
-State 233
-
-   93 function_call_statement: LPAREN argument_list RPAREN • IDENTIFIER SEMICOLON
-
-    IDENTIFIER  shift, and go to state 259
-
-
-State 234
-
-   95 argument_list: argument_list PIPE • expression
-
-    LIT_FACTUM        shift, and go to state 6
-    LIT_FICTUM        shift, and go to state 7
-    LIT_FLOAT         shift, and go to state 8
-    LIT_INT           shift, and go to state 9
-    LIT_CHAR          shift, and go to state 10
-    LIT_STRING        shift, and go to state 11
-    OP_SUBTRACT       shift, and go to state 12
-    OP_LOGICAL_NOT    shift, and go to state 13
-    OP_ADDR_OF        shift, and go to state 14
-    OP_DEREF_POINTER  shift, and go to state 15
-    LPAREN            shift, and go to state 16
-    IDENTIFIER        shift, and go to state 52
-
-    primary_expression         go to state 21
-    unary_expression           go to state 22
-    expression                 go to state 260
-    constant                   go to state 24
-    string                     go to state 25
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
-State 235
-
-  128 function_magnitudo: LPAREN type_expression RPAREN • KW_MAGNITUDO SEMICOLON
-
-    KW_MAGNITUDO  shift, and go to state 261
-
-
-State 236
-
-  143 vector_statement: LBRACKET argument_list RBRACKET • OP_ASSIGN IDENTIFIER SEMICOLON
-
-    OP_ASSIGN  shift, and go to state 262
-
-
-State 237
-
-  124 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA • SEMICOLON
-
-    SEMICOLON  shift, and go to state 263
-
-
-State 238
-
-   32 primary_expression: IDENTIFIER •
-  124 identifier_langle_list: IDENTIFIER • LANGLE KW_LECTURA SEMICOLON
-  125                       | IDENTIFIER • LANGLE identifier_langle_list
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
-
-    OP_ACCESS_POINTER  shift, and go to state 62
-    OP_ACCESS_MEMBER   shift, and go to state 63
-    LANGLE             shift, and go to state 216
-
-    $default  reduce using rule 32 (primary_expression)
-
-
-State 239
-
-  125 identifier_langle_list: IDENTIFIER LANGLE identifier_langle_list •
-
-    $default  reduce using rule 125 (identifier_langle_list)
-
-
-State 240
-
-  126 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE • SEMICOLON
-
-    SEMICOLON  shift, and go to state 264
-
-
-State 241
-
-  126 identifier_rangle_list: IDENTIFIER • RANGLE KW_REVELARE SEMICOLON
-  127                       | IDENTIFIER • RANGLE identifier_rangle_list
-
-    RANGLE  shift, and go to state 217
-
-
-State 242
-
-  127 identifier_rangle_list: IDENTIFIER RANGLE identifier_rangle_list •
-
-    $default  reduce using rule 127 (identifier_rangle_list)
-
-
-State 243
-
-  142 vector_statement: IDENTIFIER type_specifier LANGLE • expression RANGLE SEMICOLON
-
-    LIT_FACTUM        shift, and go to state 6
-    LIT_FICTUM        shift, and go to state 7
-    LIT_FLOAT         shift, and go to state 8
-    LIT_INT           shift, and go to state 9
-    LIT_CHAR          shift, and go to state 10
-    LIT_STRING        shift, and go to state 11
-    OP_SUBTRACT       shift, and go to state 12
-    OP_LOGICAL_NOT    shift, and go to state 13
-    OP_ADDR_OF        shift, and go to state 14
-    OP_DEREF_POINTER  shift, and go to state 15
-    LPAREN            shift, and go to state 16
-    IDENTIFIER        shift, and go to state 52
-
-    primary_expression         go to state 21
-    unary_expression           go to state 22
-    expression                 go to state 265
-    constant                   go to state 24
-    string                     go to state 25
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
-State 244
-
-   99 jump_statement: expression KW_REDIRE SEMICOLON •
-
-    $default  reduce using rule 99 (jump_statement)
-
-
-State 245
-
-   25 struct_member_lvalue: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-   27 assignment_statement: expression OP_ASSIGN IDENTIFIER • SEMICOLON
-   28                     | expression OP_ASSIGN IDENTIFIER • LANGLE expression RANGLE SEMICOLON
-   60 expression: expression OP_ASSIGN IDENTIFIER •
-   68 declaration_statement: expression OP_ASSIGN IDENTIFIER • type_specifier opcional_constant SEMICOLON
-  151 pointer_declaration: expression OP_ASSIGN IDENTIFIER • OP_DEREF_POINTER type_specifier SEMICOLON
-
-    KW_TYPE_ATOMUS      shift, and go to state 39
-    KW_TYPE_FRACTIO     shift, and go to state 40
-    KW_TYPE_FRAGMENTUM  shift, and go to state 41
-    KW_TYPE_MAGNUS      shift, and go to state 42
-    KW_TYPE_MINIMUS     shift, and go to state 43
-    KW_TYPE_QUANTUM     shift, and go to state 44
-    KW_TYPE_SCRIPTUM    shift, and go to state 45
-    KW_TYPE_SYMBOLUM    shift, and go to state 46
-    KW_TYPE_VACUUM      shift, and go to state 47
-    OP_ACCESS_MEMBER    shift, and go to state 266
-    OP_DEREF_POINTER    shift, and go to state 138
-    LANGLE              shift, and go to state 267
-    SEMICOLON           shift, and go to state 268
-    IDENTIFIER          shift, and go to state 68
-
-    $default  reduce using rule 60 (expression)
-
-    type_specifier  go to state 139
-
-
-State 246
-
-   26 assignment_statement: expression OP_ASSIGN struct_member_lvalue • SEMICOLON
-
-    SEMICOLON  shift, and go to state 269
-
-
-State 247
-
-   87 function_declaration_statement: KW_FORMULA LPAREN parameter_list RPAREN IDENTIFIER OP_ASSIGN type_specifier $@2 LBRACE statement_list RBRACE •
-
-    $default  reduce using rule 87 (function_declaration_statement)
-
-
-State 248
-
-   12 statement_list: statement_list • statement
-  108 causal_statement: KW_CASUS expression COLON statement_list •
-
-    KW_CASUS          shift, and go to state 170
-    KW_AXIOM          shift, and go to state 171
-    KW_CONTINUUM      shift, and go to state 172
-    KW_RUPTIO         shift, and go to state 173
-    KW_DESIGNARE      shift, and go to state 4
-    KW_REDIRE         shift, and go to state 174
-    KW_REVELARE       shift, and go to state 175
-    LIT_FACTUM        shift, and go to state 6
-    LIT_FICTUM        shift, and go to state 7
-    LIT_FLOAT         shift, and go to state 8
-    LIT_INT           shift, and go to state 9
-    LIT_CHAR          shift, and go to state 10
-    LIT_STRING        shift, and go to state 11
-    OP_SUBTRACT       shift, and go to state 12
-    OP_LOGICAL_NOT    shift, and go to state 13
-    OP_ADDR_OF        shift, and go to state 14
-    OP_DEREF_POINTER  shift, and go to state 15
-    LPAREN            shift, and go to state 176
-    LBRACKET          shift, and go to state 177
-    IDENTIFIER        shift, and go to state 179
-
-    KW_CASUS          [reduce using rule 108 (causal_statement)]
-    KW_AXIOM          [reduce using rule 108 (causal_statement)]
-    KW_CONTINUUM      [reduce using rule 108 (causal_statement)]
-    KW_RUPTIO         [reduce using rule 108 (causal_statement)]
-    KW_DESIGNARE      [reduce using rule 108 (causal_statement)]
-    KW_REDIRE         [reduce using rule 108 (causal_statement)]
-    KW_REVELARE       [reduce using rule 108 (causal_statement)]
-    LIT_FACTUM        [reduce using rule 108 (causal_statement)]
-    LIT_FICTUM        [reduce using rule 108 (causal_statement)]
-    LIT_FLOAT         [reduce using rule 108 (causal_statement)]
-    LIT_INT           [reduce using rule 108 (causal_statement)]
-    LIT_CHAR          [reduce using rule 108 (causal_statement)]
-    LIT_STRING        [reduce using rule 108 (causal_statement)]
-    OP_SUBTRACT       [reduce using rule 108 (causal_statement)]
-    OP_LOGICAL_NOT    [reduce using rule 108 (causal_statement)]
-    OP_ADDR_OF        [reduce using rule 108 (causal_statement)]
-    OP_DEREF_POINTER  [reduce using rule 108 (causal_statement)]
-    LPAREN            [reduce using rule 108 (causal_statement)]
-    LBRACKET          [reduce using rule 108 (causal_statement)]
-    IDENTIFIER        [reduce using rule 108 (causal_statement)]
-    $default          reduce using rule 108 (causal_statement)
-
-    statement                  go to state 180
-    assignment_statement       go to state 181
-    print_statement            go to state 182
-    expression_statement       go to state 183
-    primary_expression         go to state 21
-    unary_expression           go to state 22
-    expression                 go to state 184
-    constant                   go to state 24
-    string                     go to state 25
-    declaration_statement      go to state 185
-    function_call_statement    go to state 186
-    jump_statement             go to state 187
-    conditional_statement      go to state 188
-    causal_statement           go to state 189
-    iteration_statement        go to state 190
-    io_functions               go to state 191
-    function_input_output      go to state 192
-    identifier_langle_list     go to state 193
-    identifier_rangle_list     go to state 194
-    function_magnitudo         go to state 195
-    type_define_statement      go to state 196
-    type_define_struct         go to state 29
-    type_define_enum           go to state 30
-    vector_statement           go to state 197
-    vector_access              go to state 31
-    pointer_statement          go to state 32
-    pointer_declaration        go to state 33
-    pointer_assignment         go to state 34
-    pointer_dereference        go to state 35
-    member_access_direct       go to state 36
-    member_access_dereference  go to state 37
-    member_access_pointer      go to state 38
-
-
 State 249
 
    30 print_statement: KW_REVELARE LPAREN IDENTIFIER RPAREN • SEMICOLON
@@ -4364,10 +4370,10 @@ State 250
    32 primary_expression: IDENTIFIER •
    83 type_specifier: IDENTIFIER •
    84               | IDENTIFIER • KW_ENUMERARE
-  144 vector_access: IDENTIFIER • LANGLE expression RANGLE
-  153 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
-  154 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
-  156 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
+  145 vector_access: IDENTIFIER • LANGLE expression RANGLE
+  154 pointer_dereference: OP_DEREF_POINTER IDENTIFIER •
+  155 member_access_direct: IDENTIFIER • OP_ACCESS_MEMBER IDENTIFIER
+  157 member_access_pointer: IDENTIFIER • OP_ACCESS_POINTER IDENTIFIER
 
     KW_ENUMERARE       shift, and go to state 88
     OP_ACCESS_POINTER  shift, and go to state 62
@@ -4375,46 +4381,46 @@ State 250
     LANGLE             shift, and go to state 65
 
     OP_ASSIGN          reduce using rule 32 (primary_expression)
-    OP_ASSIGN          [reduce using rule 153 (pointer_dereference)]
+    OP_ASSIGN          [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_EQUAL   reduce using rule 32 (primary_expression)
-    OP_GREATER_EQUAL   [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_EQUAL   [reduce using rule 154 (pointer_dereference)]
     OP_LESS_EQUAL      reduce using rule 32 (primary_expression)
-    OP_LESS_EQUAL      [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_EQUAL      [reduce using rule 154 (pointer_dereference)]
     OP_EQUAL           reduce using rule 32 (primary_expression)
-    OP_EQUAL           [reduce using rule 153 (pointer_dereference)]
+    OP_EQUAL           [reduce using rule 154 (pointer_dereference)]
     OP_NOT_EQUAL       reduce using rule 32 (primary_expression)
-    OP_NOT_EQUAL       [reduce using rule 153 (pointer_dereference)]
+    OP_NOT_EQUAL       [reduce using rule 154 (pointer_dereference)]
     OP_INTEGER_DIVIDE  reduce using rule 32 (primary_expression)
-    OP_INTEGER_DIVIDE  [reduce using rule 153 (pointer_dereference)]
+    OP_INTEGER_DIVIDE  [reduce using rule 154 (pointer_dereference)]
     OP_EXP             reduce using rule 32 (primary_expression)
-    OP_EXP             [reduce using rule 153 (pointer_dereference)]
+    OP_EXP             [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_AND     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_AND     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_AND     [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_OR      reduce using rule 32 (primary_expression)
-    OP_LOGICAL_OR      [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_OR      [reduce using rule 154 (pointer_dereference)]
     OP_MULTIPLY        reduce using rule 32 (primary_expression)
-    OP_MULTIPLY        [reduce using rule 153 (pointer_dereference)]
+    OP_MULTIPLY        [reduce using rule 154 (pointer_dereference)]
     OP_ADD             reduce using rule 32 (primary_expression)
-    OP_ADD             [reduce using rule 153 (pointer_dereference)]
+    OP_ADD             [reduce using rule 154 (pointer_dereference)]
     OP_SUBTRACT        reduce using rule 32 (primary_expression)
-    OP_SUBTRACT        [reduce using rule 153 (pointer_dereference)]
+    OP_SUBTRACT        [reduce using rule 154 (pointer_dereference)]
     OP_DIVIDE          reduce using rule 32 (primary_expression)
-    OP_DIVIDE          [reduce using rule 153 (pointer_dereference)]
+    OP_DIVIDE          [reduce using rule 154 (pointer_dereference)]
     OP_MODULUS         reduce using rule 32 (primary_expression)
-    OP_MODULUS         [reduce using rule 153 (pointer_dereference)]
+    OP_MODULUS         [reduce using rule 154 (pointer_dereference)]
     OP_GREATER_THAN    reduce using rule 32 (primary_expression)
-    OP_GREATER_THAN    [reduce using rule 153 (pointer_dereference)]
+    OP_GREATER_THAN    [reduce using rule 154 (pointer_dereference)]
     OP_LESS_THAN       reduce using rule 32 (primary_expression)
-    OP_LESS_THAN       [reduce using rule 153 (pointer_dereference)]
+    OP_LESS_THAN       [reduce using rule 154 (pointer_dereference)]
     OP_LOGICAL_XOR     reduce using rule 32 (primary_expression)
-    OP_LOGICAL_XOR     [reduce using rule 153 (pointer_dereference)]
+    OP_LOGICAL_XOR     [reduce using rule 154 (pointer_dereference)]
     RPAREN             reduce using rule 32 (primary_expression)
     RPAREN             [reduce using rule 83 (type_specifier)]
-    RPAREN             [reduce using rule 153 (pointer_dereference)]
+    RPAREN             [reduce using rule 154 (pointer_dereference)]
     PIPE               reduce using rule 32 (primary_expression)
-    PIPE               [reduce using rule 153 (pointer_dereference)]
+    PIPE               [reduce using rule 154 (pointer_dereference)]
     SEMICOLON          reduce using rule 32 (primary_expression)
-    SEMICOLON          [reduce using rule 153 (pointer_dereference)]
+    SEMICOLON          [reduce using rule 154 (pointer_dereference)]
     $default           reduce using rule 32 (primary_expression)
 
 
@@ -4427,7 +4433,7 @@ State 251
 
 State 252
 
-  115 iteration_statement: LPAREN expression_statement expression_statement RPAREN • KW_ITERARE $@8 block
+  116 iteration_statement: LPAREN expression_statement expression_statement RPAREN • KW_ITERARE $@9 block
 
     KW_ITERARE  shift, and go to state 271
 
@@ -4451,7 +4457,7 @@ State 253
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  113 iteration_statement: LPAREN expression_statement expression_statement expression • RPAREN KW_ITERARE $@7 block
+  114 iteration_statement: LPAREN expression_statement expression_statement expression • RPAREN KW_ITERARE $@8 block
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -4482,11 +4488,11 @@ State 254
 
 State 255
 
-  111 iteration_statement: LPAREN expression RPAREN KW_PERSISTO • $@6 block
+  112 iteration_statement: LPAREN expression RPAREN KW_PERSISTO • $@7 block
 
-    $default  reduce using rule 110 ($@6)
+    $default  reduce using rule 111 ($@7)
 
-    $@6  go to state 274
+    $@7  go to state 274
 
 
 State 256
@@ -4500,7 +4506,7 @@ State 256
 
 State 257
 
-  119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN • KW_ITERARE $@10 block
+  120 iteration_statement: LPAREN declaration_statement expression_statement RPAREN • KW_ITERARE $@11 block
 
     KW_ITERARE  shift, and go to state 276
 
@@ -4524,7 +4530,7 @@ State 258
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression • RPAREN KW_ITERARE $@9 block
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression • RPAREN KW_ITERARE $@10 block
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -4597,30 +4603,30 @@ State 260
 
 State 261
 
-  128 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO • SEMICOLON
+  129 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO • SEMICOLON
 
     SEMICOLON  shift, and go to state 279
 
 
 State 262
 
-  143 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN • IDENTIFIER SEMICOLON
+  144 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN • IDENTIFIER SEMICOLON
 
     IDENTIFIER  shift, and go to state 280
 
 
 State 263
 
-  124 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA SEMICOLON •
+  125 identifier_langle_list: IDENTIFIER LANGLE KW_LECTURA SEMICOLON •
 
-    $default  reduce using rule 124 (identifier_langle_list)
+    $default  reduce using rule 125 (identifier_langle_list)
 
 
 State 264
 
-  126 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE SEMICOLON •
+  127 identifier_rangle_list: IDENTIFIER RANGLE KW_REVELARE SEMICOLON •
 
-    $default  reduce using rule 126 (identifier_rangle_list)
+    $default  reduce using rule 127 (identifier_rangle_list)
 
 
 State 265
@@ -4642,7 +4648,7 @@ State 265
    58           | expression • OP_LOGICAL_OR unary_expression
    59           | expression • OP_LOGICAL_XOR unary_expression
    60           | expression • OP_ASSIGN IDENTIFIER
-  142 vector_statement: IDENTIFIER type_specifier LANGLE expression • RANGLE SEMICOLON
+  143 vector_statement: IDENTIFIER type_specifier LANGLE expression • RANGLE SEMICOLON
 
     OP_ASSIGN          shift, and go to state 95
     OP_GREATER_EQUAL   shift, and go to state 71
@@ -4725,16 +4731,16 @@ State 270
 
 State 271
 
-  115 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE • $@8 block
+  116 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE • $@9 block
 
-    $default  reduce using rule 114 ($@8)
+    $default  reduce using rule 115 ($@9)
 
-    $@8  go to state 284
+    $@9  go to state 284
 
 
 State 272
 
-  113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN • KW_ITERARE $@7 block
+  114 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN • KW_ITERARE $@8 block
 
     KW_ITERARE  shift, and go to state 285
 
@@ -4750,7 +4756,7 @@ State 273
 
 State 274
 
-  111 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@6 • block
+  112 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@7 • block
 
     LBRACE  shift, and go to state 157
 
@@ -4768,16 +4774,16 @@ State 275
 
 State 276
 
-  119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE • $@10 block
+  120 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE • $@11 block
 
-    $default  reduce using rule 118 ($@10)
+    $default  reduce using rule 119 ($@11)
 
-    $@10  go to state 289
+    $@11  go to state 289
 
 
 State 277
 
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN • KW_ITERARE $@9 block
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN • KW_ITERARE $@10 block
 
     KW_ITERARE  shift, and go to state 290
 
@@ -4791,21 +4797,21 @@ State 278
 
 State 279
 
-  128 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON •
+  129 function_magnitudo: LPAREN type_expression RPAREN KW_MAGNITUDO SEMICOLON •
 
-    $default  reduce using rule 128 (function_magnitudo)
+    $default  reduce using rule 129 (function_magnitudo)
 
 
 State 280
 
-  143 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER • SEMICOLON
+  144 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER • SEMICOLON
 
     SEMICOLON  shift, and go to state 291
 
 
 State 281
 
-  142 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE • SEMICOLON
+  143 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE • SEMICOLON
 
     SEMICOLON  shift, and go to state 292
 
@@ -4860,7 +4866,7 @@ State 283
 
 State 284
 
-  115 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@8 • block
+  116 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@9 • block
 
     LBRACE  shift, and go to state 157
 
@@ -4869,11 +4875,11 @@ State 284
 
 State 285
 
-  113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE • $@7 block
+  114 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE • $@8 block
 
-    $default  reduce using rule 112 ($@7)
+    $default  reduce using rule 113 ($@8)
 
-    $@7  go to state 295
+    $@8  go to state 295
 
 
 State 286
@@ -4888,9 +4894,9 @@ State 286
 
 State 287
 
-  111 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@6 block •
+  112 iteration_statement: LPAREN expression RPAREN KW_PERSISTO $@7 block •
 
-    $default  reduce using rule 111 (iteration_statement)
+    $default  reduce using rule 112 (iteration_statement)
 
 
 State 288
@@ -4904,7 +4910,7 @@ State 288
 
 State 289
 
-  119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@10 • block
+  120 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@11 • block
 
     LBRACE  shift, and go to state 157
 
@@ -4913,25 +4919,25 @@ State 289
 
 State 290
 
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE • $@9 block
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE • $@10 block
 
-    $default  reduce using rule 116 ($@9)
+    $default  reduce using rule 117 ($@10)
 
-    $@9  go to state 299
+    $@10  go to state 299
 
 
 State 291
 
-  143 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON •
+  144 vector_statement: LBRACKET argument_list RBRACKET OP_ASSIGN IDENTIFIER SEMICOLON •
 
-    $default  reduce using rule 143 (vector_statement)
+    $default  reduce using rule 144 (vector_statement)
 
 
 State 292
 
-  142 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON •
+  143 vector_statement: IDENTIFIER type_specifier LANGLE expression RANGLE SEMICOLON •
 
-    $default  reduce using rule 142 (vector_statement)
+    $default  reduce using rule 143 (vector_statement)
 
 
 State 293
@@ -4943,14 +4949,14 @@ State 293
 
 State 294
 
-  115 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@8 block •
+  116 iteration_statement: LPAREN expression_statement expression_statement RPAREN KW_ITERARE $@9 block •
 
-    $default  reduce using rule 115 (iteration_statement)
+    $default  reduce using rule 116 (iteration_statement)
 
 
 State 295
 
-  113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@7 • block
+  114 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@8 • block
 
     LBRACE  shift, and go to state 157
 
@@ -4977,14 +4983,14 @@ State 297
 
 State 298
 
-  119 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@10 block •
+  120 iteration_statement: LPAREN declaration_statement expression_statement RPAREN KW_ITERARE $@11 block •
 
-    $default  reduce using rule 119 (iteration_statement)
+    $default  reduce using rule 120 (iteration_statement)
 
 
 State 299
 
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 • block
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@10 • block
 
     LBRACE  shift, and go to state 157
 
@@ -5000,9 +5006,9 @@ State 300
 
 State 301
 
-  113 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@7 block •
+  114 iteration_statement: LPAREN expression_statement expression_statement expression RPAREN KW_ITERARE $@8 block •
 
-    $default  reduce using rule 113 (iteration_statement)
+    $default  reduce using rule 114 (iteration_statement)
 
 
 State 302
@@ -5014,14 +5020,15 @@ State 302
 
 State 303
 
-  106 conditional_non_statement: KW_NON • block
-  107                          | KW_NON • conditional_statement
+  107 conditional_non_statement: KW_NON • $@6 block
+  108                          | KW_NON • conditional_statement
 
     LPAREN  shift, and go to state 306
-    LBRACE  shift, and go to state 157
 
-    block                  go to state 307
-    conditional_statement  go to state 308
+    $default  reduce using rule 106 ($@6)
+
+    conditional_statement  go to state 307
+    $@6                    go to state 308
 
 
 State 304
@@ -5033,9 +5040,9 @@ State 304
 
 State 305
 
-  117 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@9 block •
+  118 iteration_statement: LPAREN declaration_statement expression_statement expression RPAREN KW_ITERARE $@10 block •
 
-    $default  reduce using rule 117 (iteration_statement)
+    $default  reduce using rule 118 (iteration_statement)
 
 
 State 306
@@ -5072,16 +5079,18 @@ State 306
 
 State 307
 
-  106 conditional_non_statement: KW_NON block •
+  108 conditional_non_statement: KW_NON conditional_statement •
 
-    $default  reduce using rule 106 (conditional_non_statement)
+    $default  reduce using rule 108 (conditional_non_statement)
 
 
 State 308
 
-  107 conditional_non_statement: KW_NON conditional_statement •
+  107 conditional_non_statement: KW_NON $@6 • block
 
-    $default  reduce using rule 107 (conditional_non_statement)
+    LBRACE  shift, and go to state 157
+
+    block  go to state 310
 
 
 State 309
@@ -5123,10 +5132,17 @@ State 309
     OP_GREATER_THAN    shift, and go to state 84
     OP_LESS_THAN       shift, and go to state 85
     OP_LOGICAL_XOR     shift, and go to state 86
-    RPAREN             shift, and go to state 310
+    RPAREN             shift, and go to state 311
 
 
 State 310
+
+  107 conditional_non_statement: KW_NON $@6 block •
+
+    $default  reduce using rule 107 (conditional_non_statement)
+
+
+State 311
 
   102 conditional_statement: LPAREN expression RPAREN • KW_SI $@3 block $@4 conditional_non_statement
   104                      | LPAREN expression RPAREN • KW_VERTERE LBRACE $@5 causal_statement RBRACE

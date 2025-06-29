@@ -886,12 +886,12 @@ jump_statement
         const char* type_redite;
 
           switch (expr->type) {
-              case TYPE_ATOMUS:  type_redite = "atomus";  break;
-              case TYPE_FRACTIO: type_redite = "fractio"; break;
+              case TYPE_ATOMUS:  type_redite = "atomus";   break;
+              case TYPE_FRACTIO: type_redite = "fractio";  break;
               case TYPE_SYMBOLUM:type_redite = "symbolum"; break;
-              case TYPE_SCRIPTUM:type_redite = "scriptum";break;
+              case TYPE_SCRIPTUM:type_redite = "scriptum"; break;
               case TYPE_QUANTUM: type_redite = "quantum";  break;
-              default:           type_redite = NULL;        break;
+              default:           type_redite = NULL;       break;
           }
 
         if (!scope_allowed(allowed, 1, type_redite)) semantic_error("Construção não permitida para o escopo atual.");
@@ -920,7 +920,7 @@ conditional_statement
 
 conditional_non_statement
     : {$$ = NULL; }
-    | KW_NON block {  scope_push(BLOCK_CONDITIONAL); $$ = NULL; }
+    | KW_NON { scope_push(BLOCK_CONDITIONAL); } block {   $$ = NULL; }
     | KW_NON conditional_statement {$$ = NULL; }
     ;
 
