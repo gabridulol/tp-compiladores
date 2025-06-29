@@ -235,8 +235,8 @@ block
 alchemia_statement
     : IDENTIFIER LPAREN RPAREN KW_MAIN 
     {
-        scope_insert($1, SYM_FUNC, "void", yylineno, NULL);
-        scope_push_formula(BLOCK_FUNCTION, "void"); 
+        scope_insert($1, SYM_FUNC, "vacuum", yylineno, NULL);
+        scope_push_formula(BLOCK_FUNCTION, "vacuum"); 
         init_tac_generator(); emit("label", "", "", "main");
     } 
     block 
