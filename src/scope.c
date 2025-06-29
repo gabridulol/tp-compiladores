@@ -52,8 +52,8 @@ void scope_pop(void) {
         return;
     }
     // Apenas desfaz o escopo atual, sem liberar, para uso posterior em print
-    fprintf(stderr, "[DEBUG] Desempilhando escopo %d do tipo %s\n",
-           scope_atual->index, BlockTypeNames[scope_atual->block_type]);
+    // fprintf(stderr, "[DEBUG] Desempilhando escopo %d do tipo %s\n",
+        //    scope_atual->index, BlockTypeNames[scope_atual->block_type]);
     scope_atual = scope_atual->prev;
 }
 
@@ -73,22 +73,22 @@ Symbol* scope_lookup(const char *name) {
 
 bool scope_allowed(const BlockType allowed[], int count, char *type_redire) {
     if (!scope_atual) {
-        fprintf(stderr, "[Erro] Nenhum escopo atual definido.");
+        // fprintf(stderr, "[Erro] Nenhum escopo atual definido.");
         return false;
     }
     // Verifica no escopo atual e nos ancestrais
     for (Scope *s = scope_atual; s; s = s->prev) {
         for (int i = 0; i < count; ++i) {
             if (s->block_type == allowed[i]) {
-                printf("\n[DEBUG] Escopo atual (%s) permitido para esta construção.\n", BlockTypeNames[s->block_type]);
-                printf("[DEBUG] Escopo numero (%d) é permitido para esta construção.\n", s->index);
+                // printf("\n[DEBUG] Escopo atual (%s) permitido para esta construção.\n", BlockTypeNames[s->block_type]);
+                // printf("[DEBUG] Escopo numero (%d) é permitido para esta construção.\n", s->index);
 
                 if (s->block_type == BLOCK_FUNCTION) {
                     if (strcmp(type_redire, s->type) == 0) {
-                        fprintf(stderr, "[DEBUG] Escopo atual é uma função do tipo '%s'.\n", s->type);
+                        // fprintf(stderr, "[DEBUG] Escopo atual é uma função do tipo '%s'.\n", s->type);
                     }
                     else {
-                        fprintf(stderr, "[DEBUG] Escopo atual é uma função do tipo '%s', mas foi redirecionado para '%s'.\n", s->type, type_redire);
+                        // fprintf(stderr, "[Erro] Escopo atual é uma função do tipo '%s', mas foi redirecionado para '%s'.\n", s->type, type_redire);
                         return false; 
                     }
                 }
@@ -97,7 +97,7 @@ bool scope_allowed(const BlockType allowed[], int count, char *type_redire) {
         }
     }
 
-    fprintf(stderr, "[Erro] Escopo atual (%s) não permitido para esta construção.\n", BlockTypeNames[scope_atual->block_type]);
+    // fprintf(stderr, "[Erro] Escopo atual (%s) não permitido para esta construção.\n", BlockTypeNames[scope_atual->block_type]);
     return false;
 }
 

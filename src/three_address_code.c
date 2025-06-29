@@ -36,9 +36,9 @@ char* new_label() {
 
 void emit(const char* op, const char* arg1, const char* arg2, const char* result) {
     if (!tac_file) {
-        fprintf(stderr, "TAC file not opened.\n");
+        // fprintf(stderr, "TAC file not opened.\n");
     }
-    fprintf(stderr, "TAC file not opened.\n");
+    // fprintf(stderr, "TAC file not opened.\n");
     if (strcmp(op, "label") == 0) {
         fprintf(tac_file, "%s:\n", result);
     } else if (strcmp(op, "goto") == 0) {

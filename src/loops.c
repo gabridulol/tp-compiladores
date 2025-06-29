@@ -10,7 +10,7 @@
 // --- Execução genérica de bloco AST (stub) ---
 void execute_block(void* bloco) {
     // Substituir por execução real de ASTNode*
-    printf("[DEBUG] Executando bloco (placeholder)\n");
+    // printf("[DEBUG] Executando bloco (placeholder)\n");
 }
 
 // Bloco corrente para uso em wrapper

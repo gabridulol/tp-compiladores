@@ -527,7 +527,7 @@ primary_expression
               $$ = NULL;
           } else {
               DataType type = string_to_type(s->type);
-              fprintf(stderr, "[DEBUG] símbolo '%s', tipo string = '%s', tipo enum = %d\n", $1, s->type, type);
+            //   fprintf(stderr, "[DEBUG] símbolo '%s', tipo string = '%s', tipo enum = %d\n", $1, s->type, type);
               size_t value_size = get_size_from_type(s->type);
               void* value_copy = malloc(value_size);
               if (s->data.value) { 
@@ -1074,53 +1074,53 @@ declaration_statement
           char* var_type = $2;
 
           /* DEBUG: início da declaração */
-          printf("[DEBUG] DECLARATION_START: name='%s', type='%s', current_struct_fields=%p\n",
-                 var_name, var_type, (void*)current_struct_fields);
+        //   printf("[DEBUG] DECLARATION_START: name='%s', type='%s', current_struct_fields=%p\n",
+        //          var_name, var_type, (void*)current_struct_fields);
 
           if (current_struct_fields) {
               /* DEBUG: dentro de definição de struct */
-              printf("[DEBUG] STRUCT CONTEXT: inserindo campo '%s' de tipo '%s'\n",
-                     var_name, var_type);
+            //   printf("[DEBUG] STRUCT CONTEXT: inserindo campo '%s' de tipo '%s'\n",
+            //          var_name, var_type);
               st_insert(&current_struct_fields->fields,
                         var_name, SYM_VAR, var_type, yylineno, NULL);
           } else {
               /* DEBUG: contexto normal, buscando símbolo existente */
-              printf("[DEBUG] NORMAL CONTEXT: scope_lookup('%s')...\n", var_name);
+            //   printf("[DEBUG] NORMAL CONTEXT: scope_lookup('%s')...\n", var_name);
               Symbol *existing = scope_lookup(var_name);
-              printf("[DEBUG] scope_lookup returned %p\n", (void*)existing);
+            //   printf("[DEBUG] scope_lookup returned %p\n", (void*)existing);
 
               if (existing) {
-                  printf("[DEBUG] Símbolo existente: kind=%d (SYM_VAR=%d)\n",
-                         existing->kind, SYM_VAR);
+                //   printf("[DEBUG] Símbolo existente: kind=%d (SYM_VAR=%d)\n",
+                        //  existing->kind, SYM_VAR);
                   if (existing->kind != SYM_VAR) {
                       semantic_error("Variável já declarada com outro tipo!");
                   } else {
                       existing->kind = SYM_VAR;
                       existing->line_declared = yylineno;
-                      printf("[DEBUG] Atualizado existing->kind para SYM_VAR\n");
+                    //   printf("[DEBUG] Atualizado existing->kind para SYM_VAR\n");
                   }
               } else {
-                  /* DEBUG: inserindo nova variável */
-                  printf("[DEBUG] Inserindo '%s' do tipo '%s'\n",
-                         var_name, var_type);
+                //   /* DEBUG: inserindo nova variável */
+                //   printf("[DEBUG] Inserindo '%s' do tipo '%s'\n",
+                        //  var_name, var_type);
                   Symbol *type_sym = scope_lookup(var_type);
-                  printf("[DEBUG] scope_lookup(type '%s') -> %p\n",
-                         var_type, (void*)type_sym);
+                //   printf("[DEBUG] scope_lookup(type '%s') -> %p\n",
+                        //  var_type, (void*)type_sym);
 
                   Symbol *var_sym = scope_insert(var_name, SYM_VAR, var_type,
                                                  yylineno, NULL);
-                  printf("[DEBUG] scope_insert returned %p\n", (void*)var_sym);
+                //   printf("[DEBUG] scope_insert returned %p\n", (void*)var_sym);
 
-                  /* DEBUG: informações do type_sym */
+                //   /* DEBUG: informações do type_sym */
                   if (type_sym) {
-                      printf("[DEBUG] type_sym->kind=%d, field_table=%p\n",
-                             type_sym->kind, (void*)type_sym->field_table);
+                    //   printf("[DEBUG] type_sym->kind=%d, field_table=%p\n",
+                            //  type_sym->kind, (void*)type_sym->field_table);
                   }
 
                   if (type_sym && type_sym->kind == SYM_TYPE
                       && type_sym->field_table) {
-                      /* DEBUG: criando instance_fields */
-                      printf("[DEBUG] Criando instance_fields para '%s'\n", var_name);
+                    //   /* DEBUG: criando instance_fields */
+                    //   printf("[DEBUG] Criando instance_fields para '%s'\n", var_name);
                       var_sym->instance_fields =
                           malloc(sizeof(SymbolTable));
                       st_init(var_sym->instance_fields);
@@ -1129,8 +1129,8 @@ declaration_statement
                           Symbol *field =
                               type_sym->field_table->fields.table[i];
                           while (field) {
-                              printf("[DEBUG] adicionando campo '%s' tipo '%s'\n",
-                                     field->name, field->type);
+                            //   printf("[DEBUG] adicionando campo '%s' tipo '%s'\n",
+                                    //  field->name, field->type);
                               st_insert(var_sym->instance_fields,
                                         field->name,
                                         SYM_VAR,
@@ -1919,11 +1919,11 @@ member_access_direct
           char* member_name = $1;
           char* var_name    = $3;
 
-          printf("[DEBUG] member_access_direct: var='%s', member='%s'\n", var_name, member_name);
+        //   printf("[DEBUG] member_access_direct: var='%s', member='%s'\n", var_name, member_name);
 
           Symbol* var = scope_lookup(var_name);
 
-          printf("[DEBUG] scope_lookup('%s') returned %p\n", var_name, (void*)var);
+        //   printf("[DEBUG] scope_lookup('%s') returned %p\n", var_name, (void*)var);
 
           if (!var) {
               semantic_error("Variável de struct não declarada!");
@@ -1979,7 +1979,7 @@ member_access_direct
                   $$ = create_expression(campo_type, value_copy, new_temp());
 
                   /* DEBUG: expressão criada */
-                  printf("[DEBUG] create_expression returned %p\\n", (void*)$$);
+                //   printf("[DEBUG] create_expression returned %p\\n", (void*)$$);
               }
           }
 
