@@ -1,0 +1,78 @@
+main() Alchemia {
+§§ --- Atribuições corretas ---
+10 --> a atomus;
+3.14 --> b fractio;
+"abc" --> c scriptum;
+'a' --> d symbolum;
+
+§§ --- Atribuições erradas ---
+"abc" --> e atomus;         §§ string em inteiro
+3.14 --> f atomus;          §§ float em inteiro
+10 --> g fractio;           §§ inteiro em float (se não houver conversão implícita)
+'a' --> h atomus;           §§ char em inteiro
+10 --> i scriptum;          §§ inteiro em string
+3.14 --> j scriptum;        §§ float em string
+
+§§ --- Uso de variável não declarada ---
+x + 1;                      §§ x não declarada
+§§y --> z;                    §§ y e z não declaradas
+
+§§ --- Uso de tipo não declarado ---
+"abc" --> k tipoinvalido;   §§ tipo inexistente
+
+§§ --- Operações aritméticas corretas ---
+1 + 2;
+2.0 * 3.5;
+a + 5;                      §§ a atomus declarado acima
+
+§§ --- Operações aritméticas erradas ---
+"abc" + 2;                  §§ string + inteiro
+a + "abc";                  §§ inteiro + string
+"abc" * "def";              §§ string * string
+a + b;                      §§ atomus + fractio (se não houver promoção implícita)
+d + 1;                      §§ symbolum + inteiro
+
+§§ --- Operações lógicas corretas ---
+Factum && Fictum;
+!(Factum);
+
+§§ --- Operações lógicas erradas ---
+1 && 2;                     §§ inteiro em operação lógica
+"abc" || Factum;            §§ string em operação lógica
+
+§§ --- Comparações corretas ---
+a == 10;
+b < 2.5;
+
+§§ --- Comparações erradas ---
+a == "abc";                 §§ inteiro == string
+"abc" < 2.5;                §§ string < float
+
+§§ --- Ponteiros (simples) ---
+a£;                        §§ correto, a existe
+x£;                        §§ erro, x não existe
+
+§§ --- Vetores ---
+v atomus << 5 >>;
+10 --> v <<0>>;                §§ correto
+"abc" --> v <<1>>;             §§ erro, string em atomus
+v <<10>>;                      §§ erro, índice fora do limite
+
+§§ --- Structs ---
+designare Pessoa {
+    nome scriptum;
+    idade atomus;
+} homunculus;
+
+p Pessoa;
+"Joao" --> nome.p;          §§ correto
+20 --> idade.p;             §§ correto
+3.14 --> idade.p;           §§ erro, float em atomus
+"Joao" --> idade.p;         §§ erro, string em atomus
+20 --> nome.p;              §§ erro, inteiro em scriptum
+§§x --> nome.p;               §§ erro, x não declarado
+
+§§ --- Inicialização de variável já declarada ---
+10 --> a atomus;            §§ erro, a já declarada acima
+
+}
